@@ -18,7 +18,16 @@ find_package(PkgConfig)
 pkg_get_variable(STB_INCLUDE_DIR stb includedir)
 
 set(SRC_FILES
-  testbed.cpp
+  main.cpp
+  MainWindow.cpp
+  Application.cpp
+  Testbed.cpp
+)
+
+set(HEADER_FILES
+  MainWindow.h
+  Application.h
+  Testbed.h
 )
 
 set(SHADER_FILES
@@ -30,7 +39,7 @@ set(TEXTURE_FILES
   resources/texture.jpg
 )
 
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -54,7 +54,10 @@
     "stdexcept": "cpp",
     "streambuf": "cpp",
     "cinttypes": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "csignal": "cpp",
+    "map": "cpp",
+    "span": "cpp"
   },
   "cSpell.words": [
     "STRINGIZE",

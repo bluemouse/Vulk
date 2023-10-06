@@ -40,7 +40,7 @@ class Device {
   [[nodiscard]] const Instance& instance() const { return physicalDevice().instance(); }
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice; }
 
-  void initQueue(std::string queueName, uint32_t queueFamilyIndex);
+  void initQueue(const std::string& queueName, uint32_t queueFamilyIndex);
   [[nodiscard]] VkQueue queue(const std::string& queueName) const;
 
   [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }

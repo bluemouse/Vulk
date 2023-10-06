@@ -89,7 +89,7 @@ void Device::create(const PhysicalDevice& physicalDevice,
   MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
 }
 
-void Device::initQueue(std::string queueName, uint32_t queueFamilyIndex) {
+void Device::initQueue(const std::string& queueName, uint32_t queueFamilyIndex) {
   MI_VERIFY(isCreated());
   VkQueue queue = VK_NULL_HANDLE;
   vkGetDeviceQueue(_device, queueFamilyIndex, 0, &queue);
