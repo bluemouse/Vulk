@@ -47,13 +47,29 @@ class Application : public MainWindow {
   void createLogicalDevice();
   void createRenderPass();
   void createSwapchain();
-  void createCommandBuffers();
-  void createSyncObjects();
+
+  void createFrames();
+
+  virtual void createPipeline();
 
   virtual Vulkan::VertexShader createVertexShader(const Vulkan::Device& device) = 0;
   virtual Vulkan::FragmentShader createFragmentShader(const Vulkan::Device& device) = 0;
 
   void resizeSwapChain();
+
+  virtual VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(
+      const std::vector<VkSurfaceFormatKHR>& availableFormats) = 0;
+  virtual VkPresentModeKHR chooseSwapchainPresentMode(
+      const std::vector<VkPresentModeKHR>& availablePresentModes) = 0;
+
+  virtual bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulkan::Surface& surface);
+
+  virtual void nextFrame();
+
+ private:
+  VkExtent2D surfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
+                           uint32_t windowWidth,
+                           uint32_t windowHeight) const;
 
  protected:
   Vulkan::Instance _instance;
@@ -67,12 +83,17 @@ class Application : public MainWindow {
 
   Vulkan::CommandPool _commandPool;
 
-  std::vector<Vulkan::CommandBuffer> _commandBuffers;
+  struct Frame {
+    Vulkan::CommandBuffer commandBuffer;
 
-  std::vector<Vulkan::Semaphore> _imageAvailableSemaphores;
-  std::vector<Vulkan::Semaphore> _renderFinishedSemaphores;
-  std::vector<Vulkan::Fence> _inFlightFences;
+    Vulkan::Semaphore imageAvailableSemaphore;
+    Vulkan::Semaphore renderFinishedSemaphore;
+    Vulkan::Fence fence;
+  };
 
-  uint32_t _currentFrame = 0;
+  std::vector<Frame> _frames;
+  Frame* _currentFrame = nullptr;
+
+  uint32_t _currentFrameIdx = 0;
   uint32_t _maxFrameInFlight = 2;
 };

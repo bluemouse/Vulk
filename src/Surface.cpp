@@ -57,4 +57,9 @@ Surface::Supports Surface::querySupports() const {
   return querySupports(_instance->physicalDevice());
 }
 
+bool Surface::isAdequate(VkPhysicalDevice physicalDevice) const {
+  const auto supports = querySupports(physicalDevice);
+  return !supports.formats.empty() && !supports.presentModes.empty();
+}
+
 NAMESPACE_VULKAN_END

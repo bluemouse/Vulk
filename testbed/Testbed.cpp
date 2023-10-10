@@ -37,8 +37,8 @@ void Testbed::initVulkan() {
   createVertexBuffer();
   createIndexBuffer();
   createTextureImage();
-  createUniformBuffer();
-  createDescriptorSets();
+
+  createFrameExts();
 }
 
 void Testbed::cleanupVulkan() {
@@ -49,38 +49,40 @@ void Testbed::cleanupVulkan() {
   _textureImageView.destroy();
   _textureImage.destroy();
 
-  _uniformBuffers.clear();
-  _descriptorSets.clear();
+  _frameExts.clear();
+
   _descriptorPool.destroy();
 
   Application::cleanupVulkan();
 }
 
 void Testbed::drawFrame() {
-  _inFlightFences[_currentFrame].wait();
+  _currentFrame->fence.wait();
 
   uint32_t imageIndex = 0;
   VkResult result = vkAcquireNextImageKHR(_device,
                                           _swapchain,
                                           UINT64_MAX,
-                                          _imageAvailableSemaphores[_currentFrame],
+                                          _currentFrame->imageAvailableSemaphore,
                                           VK_NULL_HANDLE,
                                           &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    // TODO This may not be a resize issue. We may need to recreate the swapchain if the renderpass
+    // was changed
     resizeSwapChain();
     return;
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("failed to acquire swap chain image!");
   }
 
-  updateUniformBuffer(_currentFrame);
+  updateUniformBuffer();
 
-  _inFlightFences[_currentFrame].reset();
+  _currentFrame->fence.reset();
 
-  _commandBuffers[_currentFrame].reset();
-  _commandBuffers[_currentFrame].executeCommand(
-      [this, imageIndex](const Vulkan::CommandBuffer &commandBuffer) {
+  _currentFrame->commandBuffer.reset();
+  _currentFrame->commandBuffer.executeCommand(
+      [this, imageIndex](const Vulkan::CommandBuffer& commandBuffer) {
         const auto& framebuffer = _swapchain.framebuffer(imageIndex);
         auto extent = framebuffer.extent();
 
@@ -121,7 +123,7 @@ void Testbed::drawFrame() {
                                 _pipeline.layout(),
                                 0,
                                 1,
-                                _descriptorSets[_currentFrame],
+                                _currentFrameExt->descriptorSet,
                                 0,
                                 nullptr);
 
@@ -129,15 +131,15 @@ void Testbed::drawFrame() {
 
         vkCmdEndRenderPass(commandBuffer);
       },
-      {&_imageAvailableSemaphores[_currentFrame]},
-      {&_renderFinishedSemaphores[_currentFrame]},
-      _inFlightFences[_currentFrame]);
+      {&_currentFrame->imageAvailableSemaphore},
+      {&_currentFrame->renderFinishedSemaphore},
+      _currentFrame->fence);
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = _renderFinishedSemaphores[_currentFrame];
+  presentInfo.pWaitSemaphores = _currentFrame->renderFinishedSemaphore;
 
   VkSwapchainKHR swapchains[] = {_swapchain};
   presentInfo.swapchainCount = 1;
@@ -153,18 +155,17 @@ void Testbed::drawFrame() {
     throw std::runtime_error("Failed to present swap chain image!");
   }
 
-  _currentFrame = (_currentFrame + 1) % _maxFrameInFlight;
+  nextFrame();
 }
-
 
 void Testbed::createTextureImage() {
   int texWidth = 0;
   int texHeight = 0;
   int texChannels = 0;
 
-  const char *texFile = "textures/texture.jpg";
+  const char* texFile = "textures/texture.jpg";
 
-  stbi_uc *pixels = stbi_load(texFile, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+  stbi_uc* pixels = stbi_load(texFile, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
   MI_VERIFY(pixels != nullptr);
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
@@ -211,16 +212,37 @@ void Testbed::createIndexBuffer() {
   stagingBuffer.copyToBuffer(Vulkan::CommandBuffer{_commandPool}, _indexBuffer, bufferSize);
 }
 
-void Testbed::createUniformBuffer() {
+void Testbed::createFrameExts() {
+  _descriptorPool.create(_pipeline.descriptorSetLayout(), _maxFrameInFlight);
+
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-  _uniformBuffers.resize(_maxFrameInFlight);
-  _uniformBuffersMapped.resize(_maxFrameInFlight);
+  VkDescriptorBufferInfo bufferInfo{};
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
 
-  for (size_t i = 0; i < _maxFrameInFlight; i++) {
-    _uniformBuffers[i].create(_device, bufferSize);
-    _uniformBuffersMapped[i] = _uniformBuffers[i].map();
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageInfo.imageView = _textureImageView;
+  imageInfo.sampler = _textureSampler;
+
+  _frameExts.resize(_frames.size());
+  for (auto& frame : _frameExts) {
+    frame.uniformBuffer.create(_device, bufferSize);
+    frame.uniformBufferMapped = frame.uniformBuffer.map();
+
+    bufferInfo.buffer = frame.uniformBuffer;
+
+    std::vector<Vulkan::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
+    frame.descriptorSet.allocate(_descriptorPool, _pipeline.descriptorSetLayout(), bindings);
   }
+}
+
+Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
+  Vulkan::FragmentShader fragShader{device, "main", "shaders/frag.spv"};
+  fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+  return fragShader;
 }
 
 Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
@@ -234,15 +256,7 @@ Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
   return vertShader;
 }
 
-Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
-  Vulkan::FragmentShader fragShader{device, "main", "shaders/frag.spv"};
-  fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-
-  return fragShader;
-}
-
-
-void Testbed::updateUniformBuffer(uint32_t currentImage) {
+void Testbed::updateUniformBuffer() {
   using namespace std;
 
   static auto startTime = chrono::high_resolution_clock::now();
@@ -262,25 +276,32 @@ void Testbed::updateUniformBuffer(uint32_t currentImage) {
   ubo.proj = glm::perspective(radians(45.0F), aspect, 0.1F, 10.0F);
   ubo.proj[1][1] *= -1;
 
-  memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+  memcpy(_currentFrameExt->uniformBufferMapped, &ubo, sizeof(ubo));
 }
 
-void Testbed::createDescriptorSets() {
-  _descriptorPool.create(_pipeline.descriptorSetLayout(), _maxFrameInFlight);
-
-  _descriptorSets.reserve(_maxFrameInFlight);
-  for (size_t i = 0; i < _maxFrameInFlight; i++) {
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = _uniformBuffers[i];
-    bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(UniformBufferObject);
-
-    VkDescriptorImageInfo imageInfo{};
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo.imageView = _textureImageView;
-    imageInfo.sampler = _textureSampler;
-
-    std::vector<Vulkan::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
-    _descriptorSets.emplace_back(_descriptorPool, _pipeline.descriptorSetLayout(), bindings);
+VkSurfaceFormatKHR Testbed::chooseSwapchainSurfaceFormat(
+    const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+  for (const auto& availableFormat : availableFormats) {
+    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      return availableFormat;
+    }
   }
+  return availableFormats[0];
+}
+
+VkPresentModeKHR Testbed::chooseSwapchainPresentMode(
+    const std::vector<VkPresentModeKHR>& availablePresentModes) {
+  for (const auto& availablePresentMode : availablePresentModes) {
+    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+      return availablePresentMode;
+    }
+  }
+  return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+void Testbed::nextFrame() {
+  Application::nextFrame();
+
+  _currentFrameExt = &_frameExts[_currentFrameIdx];
 }

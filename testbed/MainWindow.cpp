@@ -50,7 +50,7 @@ MainWindow::Extensions MainWindow::getRequiredInstanceExtensions() {
   uint32_t count = 0;
   const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 
-  return { count, extensions };
+  return {count, extensions};
 }
 
 VkSurfaceKHR MainWindow::createWindowSurface(VkInstance instance) {

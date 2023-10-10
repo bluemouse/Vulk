@@ -12,12 +12,20 @@ class Testbed : public Application {
   Vulkan::VertexShader createVertexShader(const Vulkan::Device& device) override;
   Vulkan::FragmentShader createFragmentShader(const Vulkan::Device& device) override;
 
+  VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(
+      const std::vector<VkSurfaceFormatKHR>& availableFormats) override;
+  VkPresentModeKHR chooseSwapchainPresentMode(
+      const std::vector<VkPresentModeKHR>& availablePresentModes) override;
+
+  void nextFrame() override;
+
+private:
   void createTextureImage();
   void createVertexBuffer();
   void createIndexBuffer();
-  void createUniformBuffer();
-  void createDescriptorSets();
-  void updateUniformBuffer(uint32_t currentImage);
+  void createFrameExts();
+
+  void updateUniformBuffer();
 
  private:
   Vulkan::VertexBuffer _vertexBuffer;
@@ -27,9 +35,14 @@ class Testbed : public Application {
   Vulkan::ImageView _textureImageView;
   Vulkan::Sampler _textureSampler;
 
-  std::vector<Vulkan::UniformBuffer> _uniformBuffers;
-  std::vector<void*> _uniformBuffersMapped;
-
   Vulkan::DescriptorPool _descriptorPool;
-  std::vector<Vulkan::DescriptorSet> _descriptorSets;
+
+  struct FrameExt {
+    Vulkan::UniformBuffer uniformBuffer;
+    void* uniformBufferMapped;
+
+    Vulkan::DescriptorSet descriptorSet;
+  };
+  std::vector<FrameExt> _frameExts;
+  FrameExt* _currentFrameExt = nullptr;
 };

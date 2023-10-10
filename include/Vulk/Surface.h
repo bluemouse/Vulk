@@ -37,6 +37,8 @@ public:
   [[nodiscard]] Supports querySupports(VkPhysicalDevice physicalDevice) const;
   [[nodiscard]] Supports querySupports() const;
 
+  [[nodiscard]] bool isAdequate(VkPhysicalDevice physicalDevice) const;
+
   // Disable copy and assignment operators
   Surface(const Surface&) = delete;
   Surface& operator=(const Surface&) = delete;
