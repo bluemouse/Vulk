@@ -28,6 +28,8 @@ class Framebuffer {
 
   [[nodiscard]] bool isCreated() const { return _buffer != VK_NULL_HANDLE; }
 
+  [[nodiscard]] const RenderPass* renderPass() const { return _renderPass; }
+
  private:
   void moveFrom(Framebuffer& rhs);
 

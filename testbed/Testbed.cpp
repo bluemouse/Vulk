@@ -68,7 +68,7 @@ void Testbed::drawFrame() {
                                           &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    recreateSwapChain();
+    resizeSwapChain();
     return;
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("failed to acquire swap chain image!");
@@ -81,7 +81,7 @@ void Testbed::drawFrame() {
   _commandBuffers[_currentFrame].reset();
   _commandBuffers[_currentFrame].executeCommand(
       [this, imageIndex](const Vulkan::CommandBuffer &commandBuffer) {
-        const auto &framebuffer = _swapchain.framebuffer(imageIndex);
+        const auto& framebuffer = _swapchain.framebuffer(imageIndex);
         auto extent = framebuffer.extent();
 
         VkRenderPassBeginInfo renderPassInfo{};
@@ -148,7 +148,7 @@ void Testbed::drawFrame() {
   result = vkQueuePresentKHR(_device.queue("present"), &presentInfo);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
-    recreateSwapChain();
+    resizeSwapChain();
   } else if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to present swap chain image!");
   }
@@ -250,7 +250,7 @@ void Testbed::updateUniformBuffer(uint32_t currentImage) {
   auto currentTime = chrono::high_resolution_clock::now();
   float time = chrono::duration<float, chrono::seconds::period>(currentTime - startTime).count();
 
-  auto extent = _swapchain.imageExtent();
+  auto extent = _swapchain.surfaceExtent();
 
   using glm::vec3;
   using glm::mat4;

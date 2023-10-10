@@ -14,8 +14,8 @@ constexpr bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-    const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-  for (const auto& availableFormat : availableFormats) {
+    const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+  for (const auto &availableFormat : availableFormats) {
     if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
         availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
       return availableFormat;
@@ -39,12 +39,16 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities,
                             uint32_t width,
                             uint32_t height) {
   if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+    MI_LOG_INFO("capabilities.currentExtent = %d x %d",
+                capabilities.currentExtent.width,
+                capabilities.currentExtent.height);
     return capabilities.currentExtent;
   } else {
     width = std::clamp(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     height =
         std::clamp(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
+    MI_LOG_INFO("Extent = %d x %d", width, height);
     return {width, height};
   }
 }
@@ -60,8 +64,8 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device,
 
   std::set<std::string> requiredExtensions{extensions.begin(), extensions.end()};
 
-  for (const auto &e : availableExtensions) {
-    requiredExtensions.erase(e.extensionName);
+  for (const auto &ext : availableExtensions) {
+    requiredExtensions.erase(ext.extensionName);
   }
 
   return requiredExtensions.empty();
@@ -110,10 +114,9 @@ void Application::mainLoop() {
 void Application::initVulkan() {
   createInstance();
   createLogicalDevice();
-  createSwapchain();
 
   createRenderPass();
-  _swapchain.createFramebuffers(_renderPass);
+  createSwapchain();
 
   createCommandBuffers();
   createSyncObjects();
@@ -123,15 +126,11 @@ void Application::initVulkan() {
   _pipeline.create(_device, _renderPass, vertShader, fragShader);
 }
 
-void Application::createRenderPass() {
-  _renderPass.create(_device, _swapchain.imageFormat());
-}
-
 void Application::cleanupVulkan() {
   _swapchain.destroy();
+  _renderPass.destroy();
 
   _pipeline.destroy();
-  _renderPass.destroy();
 
   _renderFinishedSemaphores.clear();
   _imageAvailableSemaphores.clear();
@@ -166,23 +165,19 @@ void Application::createLogicalDevice() {
   _device.initQueue("present", queueFamilies.presentIndex());
 }
 
+void Application::createRenderPass() {
+  const auto surfaceFormat = chooseSwapSurfaceFormat(_surface.querySupports().formats);
+  _renderPass.create(_device, surfaceFormat.format);
+}
+
 void Application::createSwapchain() {
-  auto chooseSwapSurfaceFormatFunc =
-      [this](const std::vector<VkSurfaceFormatKHR> &formats) -> VkSurfaceFormatKHR {
-    return chooseSwapSurfaceFormat(formats);
-  };
-  auto chooseSwapPresentModeFunc =
-      [this](const std::vector<VkPresentModeKHR> &modes) -> VkPresentModeKHR {
-    return chooseSwapPresentMode(modes);
-  };
-  auto chooseSwapExtentFunc = [this](const VkSurfaceCapabilitiesKHR &caps) -> VkExtent2D {
-    return chooseSwapExtent(caps, width(), height());
-  };
-  _swapchain.create(_device,
-                    _surface,
-                    chooseSwapSurfaceFormatFunc,
-                    chooseSwapPresentModeFunc,
-                    chooseSwapExtentFunc);
+  const auto [capabilities, formats, presentModes] = _surface.querySupports();
+  const auto surfaceFormat = chooseSwapSurfaceFormat(formats);
+  const auto surfaceExtent = chooseSwapExtent(capabilities, width(), height());
+  const auto presentMode = chooseSwapPresentMode(presentModes);
+  _swapchain.create(_device, _surface, surfaceExtent, surfaceFormat, presentMode);
+
+  _swapchain.createFramebuffers(_renderPass);
 }
 
 void Application::createCommandBuffers() {
@@ -206,15 +201,15 @@ void Application::createSyncObjects() {
   }
 }
 
-void Application::recreateSwapChain() {
+void Application::resizeSwapChain() {
   if (isMinimized()) {
     return;
   }
   _device.waitIdle();
 
-  _swapchain.destroy();
-  createSwapchain();
-  _swapchain.createFramebuffers(_renderPass);
+  const auto surfaceExtent =
+      chooseSwapExtent(_surface.querySupports().capabilities, width(), height());
+  _swapchain.resize(surfaceExtent);
 
   setFramebufferResized(false);
 }

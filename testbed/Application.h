@@ -9,6 +9,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/Pipeline.h>
 #include <Vulk/RenderPass.h>
+#include <Vulk/Framebuffer.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/CommandPool.h>
 #include <Vulk/VertexShader.h>
@@ -42,16 +43,17 @@ class Application : public MainWindow {
   virtual void initVulkan();
   virtual void cleanupVulkan();
 
-  void recreateSwapChain();
   void createInstance();
   void createLogicalDevice();
+  void createRenderPass();
   void createSwapchain();
   void createCommandBuffers();
   void createSyncObjects();
-  void createRenderPass();
 
   virtual Vulkan::VertexShader createVertexShader(const Vulkan::Device& device) = 0;
   virtual Vulkan::FragmentShader createFragmentShader(const Vulkan::Device& device) = 0;
+
+  void resizeSwapChain();
 
  protected:
   Vulkan::Instance _instance;

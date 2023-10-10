@@ -5,9 +5,9 @@
 #include <functional>
 #include <vector>
 
-#include <Vulk/Framebuffer.h>
 #include <Vulk/Image.h>
 #include <Vulk/ImageView.h>
+#include <Vulk/Framebuffer.h>
 
 NAMESPACE_VULKAN_BEGIN
 
@@ -27,9 +27,9 @@ class Swapchain {
   Swapchain() = default;
   Swapchain(const Device& device,
             const Surface& surface,
-            const ChooseSurfaceFormat& chooseSurfaceFormat,
-            const ChoosePresentMode& choosePresentMode,
-            const ChooseExtent& chooseSwapExtent);
+            const VkExtent2D& surfaceExtent,
+            const VkSurfaceFormatKHR& surfaceFormat,
+            VkPresentModeKHR presentMode);
   ~Swapchain();
 
   // Disable copy and assignment operators
@@ -38,21 +38,25 @@ class Swapchain {
 
   void create(const Device& device,
               const Surface& surface,
-              const ChooseSurfaceFormat& chooseSurfaceFormat,
-              const ChoosePresentMode& choosePresentMode,
-              const ChooseExtent& chooseSwapExtent);
-  void createFramebuffers(const RenderPass& renderPass);
+              const VkExtent2D& surfaceExtent,
+              const VkSurfaceFormatKHR& surfaceFormat,
+              VkPresentModeKHR presentMode);
   void destroy();
+
+  void resize(const VkExtent2D& surfaceExtent);
+
+  void createFramebuffers(const RenderPass& renderPass);
+  void resizeFramebuffers(const RenderPass& renderPass);
 
   operator VkSwapchainKHR() const { return _swapchain; }
 
-  [[nodiscard]] const std::vector<Image>& images() const { return _images; }
-  [[nodiscard]] VkFormat imageFormat() const { return _images[0].format(); }
-  [[nodiscard]] VkExtent2D imageExtent() const { return {_images[0].width(), _images[0].height()}; }
+  [[nodiscard]] VkFormat surfaceFormat() const { return _surfaceFormat.format; }
+  [[nodiscard]] VkExtent2D surfaceExtent() const { return _surfaceExtent; }
 
+  [[nodiscard]] const std::vector<Image>& images() const { return _images; }
+  [[nodiscard]] const Image& image(size_t i) const { return _images[i]; }
   [[nodiscard]] const std::vector<ImageView>& imageViews() const { return _imageViews; }
   [[nodiscard]] const ImageView& imageView(size_t i) const { return _imageViews[i]; }
-
   [[nodiscard]] const std::vector<Framebuffer>& framebuffers() const { return _framebuffers; }
   [[nodiscard]] const Framebuffer& framebuffer(size_t i) const { return _framebuffers[i]; }
 
@@ -63,11 +67,17 @@ class Swapchain {
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
 
+  VkExtent2D _surfaceExtent{};
+  VkSurfaceFormatKHR _surfaceFormat{};
+
+  VkPresentModeKHR _presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+
   std::vector<Image> _images;
   std::vector<ImageView> _imageViews;
   std::vector<Framebuffer> _framebuffers;
 
   const Device* _device = nullptr;
+  const Surface* _surface = nullptr;
 };
 
 NAMESPACE_VULKAN_END
