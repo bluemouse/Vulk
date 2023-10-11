@@ -109,7 +109,7 @@ void Image::destroy() {
 
   _image = VK_NULL_HANDLE;
   _format = VK_FORMAT_UNDEFINED;
-  _extent = {0, 0};
+  _extent = {0, 0, 0};
   _layout = VK_IMAGE_LAYOUT_UNDEFINED;
   _device = nullptr;
 }

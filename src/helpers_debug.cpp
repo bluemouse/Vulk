@@ -96,7 +96,7 @@ void log(const char* file, int line, const char* tag, const char* msg, ...) {
 void log_backtraces() {
   const int maxBacktraceDepth = 10;
   std::array<void*, maxBacktraceDepth> array{};
-  int numTraces = backtrace(array.data(), maxBacktraceDepth);
+  auto numTraces = static_cast<size_t>(backtrace(array.data(), maxBacktraceDepth));
   char** traces = backtrace_symbols(array.data(), numTraces);
   for (size_t i = 0; i < numTraces; ++i) {
     cerr << traces[i] << endl;

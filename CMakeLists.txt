@@ -94,10 +94,19 @@ target_link_libraries(${PROJECT_NAME}
     Vulkan::Vulkan
 )
 
-target_compile_options(${PROJECT_NAME}
-  PRIVATE
-    -fmacro-prefix-map=${CMAKE_SOURCE_DIR}=. # make __FILE__ relative to project root
-)
+if(MSVC)
+  target_compile_options(${PROJECT_NAME}
+    PRIVATE
+      /W4 /WX
+  )
+else()
+  target_compile_options(${PROJECT_NAME}
+    PRIVATE
+      -Wall -Wextra -Wpedantic -Werror
+      -fmacro-prefix-map=${CMAKE_SOURCE_DIR}=. # make __FILE__ relative to project root
+      $<$<CONFIG:Debug>: -fsanitize=undefined -fsanitize-trap>
+  )
+endif()
 
 add_library(Vulk::Vulk ALIAS ${PROJECT_NAME})
 if(BUILD_TESTBED)

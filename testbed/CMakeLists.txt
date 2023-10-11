@@ -42,19 +42,35 @@ set(TEXTURE_FILES
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
   CXX_STANDARD 17
   RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY}
 )
+
 target_include_directories(${PROJECT_NAME}
   PRIVATE
     ${STB_INCLUDE_DIR}
 )
+
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
     Vulk::Vulk
     glfw
 )
+
+if(MSVC)
+  target_compile_options(${PROJECT_NAME}
+    PRIVATE
+      /W4 /WX
+  )
+else()
+  target_compile_options(${PROJECT_NAME}
+    PRIVATE
+      -Wall -Wextra -Wpedantic -Werror
+      -fmacro-prefix-map=${CMAKE_SOURCE_DIR}=. # make __FILE__ relative to project root
+  )
+endif()
 
 include(AddShadersTarget)
 add_shaders_target(SPIR-V
