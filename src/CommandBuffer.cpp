@@ -64,12 +64,12 @@ void CommandBuffer::free() {
   _pool = nullptr;
 }
 
-void CommandBuffer::executeCommand(const Recorder& recorder,
-                                   const std::vector<Semaphore*>& waits,
-                                   const std::vector<Semaphore*>& signals,
-                                   const Fence& fence) const {
-  recordCommand(recorder);
-  executeCommand(waits, signals, fence);
+void CommandBuffer::executeCommands(const Recorder& recorder,
+                                    const std::vector<Semaphore*>& waits,
+                                    const std::vector<Semaphore*>& signals,
+                                    const Fence& fence) const {
+  recordCommands(recorder);
+  executeCommands(waits, signals, fence);
 }
 
 void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
@@ -77,14 +77,14 @@ void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
                                              const std::vector<Semaphore*>& signals,
                                              const Fence& fence) const {
   recordSingleTimeCommand(recorder);
-  executeCommand(waits, signals, fence);
+  executeCommands(waits, signals, fence);
 }
 
 void CommandBuffer::waitIdle() const {
   vkQueueWaitIdle(_pool->queue());
 }
 
-void CommandBuffer::recordCommand(const Recorder& recorder, bool singleTime) const {
+void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) const {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   if (singleTime) {
@@ -98,9 +98,9 @@ void CommandBuffer::recordCommand(const Recorder& recorder, bool singleTime) con
   MI_VERIFY_VKCMD(vkEndCommandBuffer(_buffer));
 }
 
-void CommandBuffer::executeCommand(const std::vector<Semaphore*>& waits,
-                                   const std::vector<Semaphore*>& signals,
-                                   const Fence& fence) const {
+void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
+                                    const std::vector<Semaphore*>& signals,
+                                    const Fence& fence) const {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;

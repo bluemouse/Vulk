@@ -55,7 +55,7 @@ class Application : public MainWindow {
   virtual Vulkan::VertexShader createVertexShader(const Vulkan::Device& device) = 0;
   virtual Vulkan::FragmentShader createFragmentShader(const Vulkan::Device& device) = 0;
 
-  void resizeSwapChain();
+  void resizeSwapchain();
 
   virtual VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(
       const std::vector<VkSurfaceFormatKHR>& availableFormats) = 0;

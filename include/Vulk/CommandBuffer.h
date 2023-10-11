@@ -29,18 +29,18 @@ class CommandBuffer {
 
   using Recorder = std::function<void(const CommandBuffer& buffer)>;
   // Record the commands played by `recorder` into this command buffer
-  void recordCommand(const Recorder& recorder) const { recordCommand(recorder, false); }
+  void recordCommands(const Recorder& recorder) const { recordCommands(recorder, false); }
   // Execute the commands currently recorded in this command buffer
-  void executeCommand(const std::vector<Semaphore*>& waits = {},
-                      const std::vector<Semaphore*>& signals = {},
-                      const Fence& fence = {}) const;
-  // Record and  the commands played by `recorder` into this command buffer and then execute them
-  void executeCommand(const Recorder& recorder,
-                      const std::vector<Semaphore*>& waits = {},
-                      const std::vector<Semaphore*>& signals = {},
-                      const Fence& fence = {}) const;
+  void executeCommands(const std::vector<Semaphore*>& waits = {},
+                       const std::vector<Semaphore*>& signals = {},
+                       const Fence& fence = {}) const;
+  // Record the commands played by `recorder` into this command buffer and then execute them
+  void executeCommands(const Recorder& recorder,
+                       const std::vector<Semaphore*>& waits = {},
+                       const std::vector<Semaphore*>& signals = {},
+                       const Fence& fence = {}) const;
 
-  void recordSingleTimeCommand(const Recorder& recorder) const { recordCommand(recorder, true); }
+  void recordSingleTimeCommand(const Recorder& recorder) const { recordCommands(recorder, true); }
   void executeSingleTimeCommand(const Recorder& recorder,
                                 const std::vector<Semaphore*>& waits = {},
                                 const std::vector<Semaphore*>& signals = {},
@@ -55,9 +55,8 @@ class CommandBuffer {
 
   [[nodiscard]] bool isAllocated() const { return _buffer != VK_NULL_HANDLE; }
 
-
  private:
-  void recordCommand(const Recorder& recorder, bool singleTime) const;
+  void recordCommands(const Recorder& recorder, bool singleTime) const;
   void moveFrom(CommandBuffer& rhs);
 
  private:

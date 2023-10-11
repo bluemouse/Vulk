@@ -5,6 +5,9 @@
 #include <Vulk/Instance.h>
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/RenderPass.h>
+#include <Vulk/Semaphore.h>
+
+#include <limits>
 
 NAMESPACE_VULKAN_BEGIN
 
@@ -139,6 +142,39 @@ void Swapchain::resize(const VkExtent2D& surfaceExtent) {
   if (renderPass) {
     createFramebuffers(*renderPass);
   }
+}
+
+int32_t Swapchain::acquireNextImage(const Vulkan::Semaphore& imageAvailable) const {
+  uint32_t imageIndex = 0;
+  auto result = vkAcquireNextImageKHR(device(),
+                                      _swapchain,
+                                      std::numeric_limits<uint64_t>::max(),
+                                      imageAvailable,
+                                      VK_NULL_HANDLE,
+                                      &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    return VK_ERROR_OUT_OF_DATE_KHR;
+  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("Error: failed to acquire swapchain image!");
+  }
+
+  return static_cast<int32_t>(imageIndex);
+}
+
+VkResult Swapchain::queuePreset(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const {
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = renderFinished;
+
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &_swapchain;
+
+  presentInfo.pImageIndices = &imageIndex;
+
+  return vkQueuePresentKHR(_device->queue("present"), &presentInfo);
 }
 
 NAMESPACE_VULKAN_END

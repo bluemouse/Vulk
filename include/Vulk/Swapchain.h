@@ -15,6 +15,7 @@ class Device;
 class PhysicalDevice;
 class Surface;
 class RenderPass;
+class Semaphore;
 class Swapchain {
  public:
   using SwapchainCreateInfoOverride = std::function<void(VkSwapchainCreateInfoKHR*)>;
@@ -63,6 +64,10 @@ class Swapchain {
   [[nodiscard]] const Device& device() const { return *_device; }
 
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
+
+  [[nodiscard]] int32_t acquireNextImage(const Vulkan::Semaphore& imageAvailable) const;
+
+  VkResult queuePreset(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const;
 
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;

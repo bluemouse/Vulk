@@ -59,21 +59,10 @@ void Testbed::cleanupVulkan() {
 void Testbed::drawFrame() {
   _currentFrame->fence.wait();
 
-  uint32_t imageIndex = 0;
-  VkResult result = vkAcquireNextImageKHR(_device,
-                                          _swapchain,
-                                          UINT64_MAX,
-                                          _currentFrame->imageAvailableSemaphore,
-                                          VK_NULL_HANDLE,
-                                          &imageIndex);
-
-  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    // TODO This may not be a resize issue. We may need to recreate the swapchain if the renderpass
-    // was changed
-    resizeSwapChain();
+  auto imageIndex = _swapchain.acquireNextImage(_currentFrame->imageAvailableSemaphore);
+  if (imageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
+    resizeSwapchain();
     return;
-  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-    throw std::runtime_error("failed to acquire swap chain image!");
   }
 
   updateUniformBuffer();
@@ -81,7 +70,7 @@ void Testbed::drawFrame() {
   _currentFrame->fence.reset();
 
   _currentFrame->commandBuffer.reset();
-  _currentFrame->commandBuffer.executeCommand(
+  _currentFrame->commandBuffer.executeCommands(
       [this, imageIndex](const Vulkan::CommandBuffer& commandBuffer) {
         const auto& framebuffer = _swapchain.framebuffer(imageIndex);
         auto extent = framebuffer.extent();
@@ -135,24 +124,11 @@ void Testbed::drawFrame() {
       {&_currentFrame->renderFinishedSemaphore},
       _currentFrame->fence);
 
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = _currentFrame->renderFinishedSemaphore;
-
-  VkSwapchainKHR swapchains[] = {_swapchain};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapchains;
-
-  presentInfo.pImageIndices = &imageIndex;
-
-  result = vkQueuePresentKHR(_device.queue("present"), &presentInfo);
-
+  auto result = _swapchain.queuePreset(imageIndex, _currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
-    resizeSwapChain();
+    resizeSwapchain();
   } else if (result != VK_SUCCESS) {
-    throw std::runtime_error("Failed to present swap chain image!");
+    throw std::runtime_error("Error: failed to present swap chain image!");
   }
 
   nextFrame();

@@ -118,7 +118,7 @@ void Application::createPipeline() {
   _pipeline.create(_device, _renderPass, vertShader, fragShader);
 }
 
-void Application::resizeSwapChain() {
+void Application::resizeSwapchain() {
   if (isMinimized()) {
     return;
   }
