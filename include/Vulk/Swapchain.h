@@ -67,7 +67,7 @@ class Swapchain {
 
   [[nodiscard]] int32_t acquireNextImage(const Vulkan::Semaphore& imageAvailable) const;
 
-  VkResult queuePreset(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const;
+  VkResult present(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const;
 
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;

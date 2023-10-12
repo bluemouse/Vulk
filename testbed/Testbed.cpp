@@ -73,58 +73,27 @@ void Testbed::drawFrame() {
   _currentFrame->commandBuffer.executeCommands(
       [this, imageIndex](const Vulkan::CommandBuffer& commandBuffer) {
         const auto& framebuffer = _swapchain.framebuffer(imageIndex);
+
+        commandBuffer.beginRenderPass(_renderPass, framebuffer);
+
+        commandBuffer.bindPipeline(_pipeline);
+
         auto extent = framebuffer.extent();
+        commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = _renderPass;
-        renderPassInfo.framebuffer = framebuffer;
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = extent;
+        commandBuffer.bindVertexBuffer(_vertexBuffer, 0);
+        commandBuffer.bindIndexBuffer(_indexBuffer);
+        commandBuffer.bindDescriptorSet(_pipeline, _currentFrameExt->descriptorSet);
 
-        VkClearValue clearColor = {{{0.0F, 0.0F, 0.0F, 1.0F}}};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
+        commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()));
 
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
-
-        VkViewport viewport{};
-        viewport.x = 0.0F;
-        viewport.y = 0.0F;
-        viewport.width = (float)extent.width;
-        viewport.height = (float)extent.height;
-        viewport.minDepth = 0.0F;
-        viewport.maxDepth = 1.0F;
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-        VkRect2D scissor{};
-        scissor.offset = {0, 0};
-        scissor.extent = extent;
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-        VkBuffer vertexBuffers[] = {_vertexBuffer};
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdBindDescriptorSets(commandBuffer,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                _pipeline.layout(),
-                                0,
-                                1,
-                                _currentFrameExt->descriptorSet,
-                                0,
-                                nullptr);
-
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-
-        vkCmdEndRenderPass(commandBuffer);
+        commandBuffer.endRenderpass();
       },
       {&_currentFrame->imageAvailableSemaphore},
       {&_currentFrame->renderFinishedSemaphore},
       _currentFrame->fence);
 
-  auto result = _swapchain.queuePreset(imageIndex, _currentFrame->renderFinishedSemaphore);
+  auto result = _swapchain.present(imageIndex, _currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -214,13 +183,6 @@ void Testbed::createFrameExts() {
   }
 }
 
-Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
-  Vulkan::FragmentShader fragShader{device, "main", "shaders/frag.spv"};
-  fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-
-  return fragShader;
-}
-
 Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
   Vulkan::VertexShader vertShader{device, "main", "shaders/vert.spv"};
   vertShader.addVertexInputBinding(0, sizeof(Vertex));
@@ -230,6 +192,13 @@ Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
   vertShader.addDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
   return vertShader;
+}
+
+Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
+  Vulkan::FragmentShader fragShader{device, "main", "shaders/frag.spv"};
+  fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+  return fragShader;
 }
 
 void Testbed::updateUniformBuffer() {

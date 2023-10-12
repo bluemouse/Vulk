@@ -5,6 +5,9 @@
 #include <functional>
 #include <vector>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+
 #include <Vulk/Fence.h>
 #include <Vulk/Semaphore.h>
 #include <Vulk/helpers_vulkan.h>
@@ -13,6 +16,12 @@ NAMESPACE_VULKAN_BEGIN
 
 class Device;
 class CommandPool;
+class RenderPass;
+class Framebuffer;
+class Pipeline;
+class VertexBuffer;
+class IndexBuffer;
+class DescriptorSet;
 
 class CommandBuffer {
  public:
@@ -45,6 +54,25 @@ class CommandBuffer {
                                 const std::vector<Semaphore*>& waits = {},
                                 const std::vector<Semaphore*>& signals = {},
                                 const Fence& fence = {}) const;
+
+  void beginRenderPass(const RenderPass& renderPass,
+                       const Framebuffer& framebuffer,
+                       const glm::vec4& clearColor = {0.0F, 0.0F, 0.0F, 1.0F},
+                       float clearDepth = 0.0F,
+                       uint32_t clearStencil = 0) const;
+  void endRenderpass() const;
+
+  void setViewport(const glm::vec2& upperLeft,
+                   const glm::vec2& extent,
+                   const glm::vec2& depthRange = {0.0F, 1.0F}) const;
+
+  void bindPipeline(const Pipeline& pipeline) const;
+
+  void bindVertexBuffer(const VertexBuffer& buffer, uint32_t binding, uint64_t offset = 0) const;
+  void bindIndexBuffer(const IndexBuffer& buffer, uint64_t offset = 0) const;
+  void bindDescriptorSet(const Pipeline& pipeline, const DescriptorSet& descriptorSet) const;
+
+  void drawIndexed(uint32_t indexCount) const;
 
   void waitIdle() const;
 

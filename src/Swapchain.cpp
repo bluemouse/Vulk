@@ -162,7 +162,7 @@ int32_t Swapchain::acquireNextImage(const Vulkan::Semaphore& imageAvailable) con
   return static_cast<int32_t>(imageIndex);
 }
 
-VkResult Swapchain::queuePreset(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const {
+VkResult Swapchain::present(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const {
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
