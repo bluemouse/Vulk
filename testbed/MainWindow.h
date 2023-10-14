@@ -14,6 +14,10 @@ class MainWindow {
 
   virtual void run();
 
+  [[nodiscard]] GLFWwindow* window() const { return _window; }
+  [[nodiscard]] int width() const { return _width; }
+  [[nodiscard]] int height() const { return _height; }
+
  protected:
   virtual void mainLoop();
   virtual void drawFrame() = 0;
@@ -21,10 +25,6 @@ class MainWindow {
   [[nodiscard]] bool isMinimized() const { return _width == 0 || _height == 0; }
 
   static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
-
-  [[nodiscard]] GLFWwindow* window() const { return _window; }
-  [[nodiscard]] int width() const { return _width; }
-  [[nodiscard]] int height() const { return _height; }
 
   void setFramebufferResized(bool resized) { _framebufferResized = resized; }
   [[nodiscard]] bool isFramebufferResized() const { return _framebufferResized; }

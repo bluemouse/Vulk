@@ -20,13 +20,11 @@ pkg_get_variable(STB_INCLUDE_DIR stb includedir)
 set(SRC_FILES
   main.cpp
   MainWindow.cpp
-  Application.cpp
   Testbed.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
-  Application.h
   Testbed.h
 )
 

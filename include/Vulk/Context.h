@@ -1,0 +1,126 @@
+#pragma once
+
+#include <Vulk/Instance.h>
+#include <Vulk/PhysicalDevice.h>
+#include <Vulk/Surface.h>
+#include <Vulk/Swapchain.h>
+#include <Vulk/Device.h>
+#include <Vulk/Pipeline.h>
+#include <Vulk/RenderPass.h>
+#include <Vulk/Framebuffer.h>
+#include <Vulk/CommandBuffer.h>
+#include <Vulk/CommandPool.h>
+#include <Vulk/VertexShader.h>
+#include <Vulk/FragmentShader.h>
+#include <Vulk/DescriptorPool.h>
+#include <Vulk/DescriptorSet.h>
+#include <Vulk/DescriptorSetLayout.h>
+#include <Vulk/Buffer.h>
+#include <Vulk/UniformBuffer.h>
+#include <Vulk/VertexBuffer.h>
+#include <Vulk/IndexBuffer.h>
+#include <Vulk/StagingBuffer.h>
+#include <Vulk/Image.h>
+#include <Vulk/ImageView.h>
+#include <Vulk/Sampler.h>
+#include <Vulk/Semaphore.h>
+#include <Vulk/Fence.h>
+
+#include <Vulk/helpers_vulkan.h>
+
+#include <memory>
+
+NAMESPACE_VULKAN_BEGIN
+
+class Context {
+ public:
+  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(VkInstance instance)>;
+  using CreateVertShaderFunc = std::function<Vulkan::VertexShader(const Vulkan::Device& device)>;
+  using CreateFragShaderFunc = std::function<Vulkan::FragmentShader(const Vulkan::Device& device)>;
+  struct CreateInfo {
+    int versionMajor = 1;
+    int versionMinor = 0;
+    std::vector<const char*> extensions;
+    bool enableValidation = false;
+
+    PhysicalDevice::IsDeviceSuitableFunc isDeviceSuitable;
+
+    CreateWindowSurfaceFunc createWindowSurface;
+
+    Swapchain::ChooseSurfaceExtentFunc chooseSurfaceExtent;
+    Swapchain::ChooseSurfaceFormatFunc chooseSurfaceFormat;
+    Swapchain::ChoosePresentModeFunc choosePresentMode;
+
+    uint32_t maxDescriptorSets = 2;
+
+    CreateVertShaderFunc createVertShader;
+    CreateFragShaderFunc createFragShader;
+  };
+
+ public:
+  Context() = default;
+
+  virtual ~Context() = default;
+
+  Context(const Context& rhs) = delete;
+  Context& operator=(const Context& rhs) = delete;
+
+  virtual void create(const CreateInfo& createInfo);
+  virtual void destroy();
+
+  void waitIdle() const;
+
+  [[nodiscard]] bool isComplete() const;
+
+  [[nodiscard]] Instance& instance() { return _instance; }
+  [[nodiscard]] Surface& surface() { return _surface; }
+  [[nodiscard]] Device& device() { return _device; }
+  [[nodiscard]] Swapchain& swapchain() { return _swapchain; }
+  [[nodiscard]] RenderPass& renderPass() { return _renderPass; }
+  [[nodiscard]] Pipeline& pipeline() { return _pipeline; }
+  [[nodiscard]] DescriptorPool& descriptorPool() { return _descriptorPool; }
+  [[nodiscard]] CommandPool& commandPool() { return _commandPool; }
+
+  [[nodiscard]] const Instance& instance() const { return _instance; }
+  [[nodiscard]] const Surface& surface() const { return _surface; }
+  [[nodiscard]] const Device& device() const { return _device; }
+  [[nodiscard]] const Swapchain& swapchain() const { return _swapchain; }
+  [[nodiscard]] const RenderPass& renderPass() const { return _renderPass; }
+  [[nodiscard]] const Pipeline& pipeline() const { return _pipeline; }
+  [[nodiscard]] const DescriptorPool& descriptorPool() const { return _descriptorPool; }
+  [[nodiscard]] const CommandPool& commandPool() const { return _commandPool; }
+
+ protected:
+  virtual void createInstance(int versionMajor,
+                              int versionMinor,
+                              const std::vector<const char*>& extensions,
+                              bool enableValidation = false);
+  virtual void createSurface(const CreateWindowSurfaceFunc& createWindowSurface);
+  virtual void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
+  virtual void createLogicalDevice();
+  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat);
+  virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
+                               const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                               const Swapchain::ChoosePresentModeFunc& choosePresentMode);
+
+  virtual void createPipeline(const CreateVertShaderFunc& createVertShader,
+                              const CreateFragShaderFunc& createFragShader);
+
+  virtual void createCommandPool();
+  virtual void createDescriptorPool(uint32_t maxSets);
+
+ protected:
+  Vulkan::Instance _instance;
+
+  Vulkan::Surface _surface;
+  Vulkan::Device _device;
+  Vulkan::Swapchain _swapchain;
+
+  Vulkan::RenderPass _renderPass;
+  Vulkan::Pipeline _pipeline;
+
+  Vulkan::DescriptorPool _descriptorPool;
+  Vulkan::CommandPool _commandPool;
+};
+
+NAMESPACE_VULKAN_END

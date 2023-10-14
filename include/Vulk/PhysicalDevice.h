@@ -27,14 +27,14 @@ class PhysicalDevice {
     uint32_t presentIndex() const { return present.value(); }
   };
 
-  using IsDeviceSuitablePredicate = std::function<bool(VkPhysicalDevice)>;
+  using IsDeviceSuitableFunc = std::function<bool(VkPhysicalDevice)>;
 
  public:
   PhysicalDevice() = default;
-  PhysicalDevice(const Instance& instance, const IsDeviceSuitablePredicate& isDeviceSuitable);
+  PhysicalDevice(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
   ~PhysicalDevice();
 
-  void instantiate(const Instance& instance, const IsDeviceSuitablePredicate& isDeviceSuitable);
+  void instantiate(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
   void reset();
 
   void initQueueFamilies(const Surface& surface);

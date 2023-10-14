@@ -8,7 +8,7 @@
 NAMESPACE_VULKAN_BEGIN
 
 PhysicalDevice::PhysicalDevice(const Instance& instance,
-                               const IsDeviceSuitablePredicate& isDeviceSuitable) {
+                               const IsDeviceSuitableFunc& isDeviceSuitable) {
   instantiate(instance, isDeviceSuitable);
 }
 
@@ -17,7 +17,7 @@ PhysicalDevice::~PhysicalDevice() {
 }
 
 void PhysicalDevice::instantiate(const Instance& instance,
-                                 const IsDeviceSuitablePredicate& isDeviceSuitable) {
+                                 const IsDeviceSuitableFunc& isDeviceSuitable) {
   MI_VERIFY(!isInstantiated());
 
   _instance = &instance;

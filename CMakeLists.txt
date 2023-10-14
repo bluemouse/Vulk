@@ -38,6 +38,7 @@ set(SRC_FILES
     src/DeviceMemory.cpp
     src/Semaphore.cpp
     src/Fence.cpp
+    src/Context.cpp
 )
 
 set(HEADER_FILES
@@ -70,6 +71,7 @@ set(HEADER_FILES
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
+    include/Vulk/Context.h
 )
 
 add_library(${PROJECT_NAME} SHARED

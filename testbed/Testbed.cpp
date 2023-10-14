@@ -8,6 +8,15 @@
 #include <stb_image.h>
 
 #include <chrono>
+#include <set>
+
+namespace {
+#ifdef NDEBUG
+constexpr bool ENABLE_VALIDATION_LAYERS = false;
+#else
+constexpr bool ENABLE_VALIDATION_LAYERS = true;
+#endif
+} // namespace
 
 namespace {
 struct Vertex {
@@ -31,35 +40,46 @@ const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 } // namespace
 
-void Testbed::initVulkan() {
-  Application::initVulkan();
+void Testbed::init(int width, int height) {
+  MainWindow::init(width, height);
+
+  createContext();
 
   createVertexBuffer();
   createIndexBuffer();
   createTextureImage();
 
-  createFrameExts();
+  createFrames();
 }
 
-void Testbed::cleanupVulkan() {
-  _indexBuffer.destroy();
-  _vertexBuffer.destroy();
+void Testbed::cleanup() {
+  _frames.clear();
 
   _textureSampler.destroy();
   _textureImageView.destroy();
   _textureImage.destroy();
 
-  _frameExts.clear();
+  _indexBuffer.destroy();
+  _vertexBuffer.destroy();
 
-  _descriptorPool.destroy();
+  _context.destroy();
 
-  Application::cleanupVulkan();
+  MainWindow::cleanup();
+}
+
+void Testbed::run() {
+  MainWindow::run();
+}
+
+void Testbed::mainLoop() {
+  MainWindow::mainLoop();
+  _context.waitIdle();
 }
 
 void Testbed::drawFrame() {
   _currentFrame->fence.wait();
 
-  auto imageIndex = _swapchain.acquireNextImage(_currentFrame->imageAvailableSemaphore);
+  auto imageIndex = _context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore);
   if (imageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
     return;
@@ -72,18 +92,18 @@ void Testbed::drawFrame() {
   _currentFrame->commandBuffer.reset();
   _currentFrame->commandBuffer.executeCommands(
       [this, imageIndex](const Vulkan::CommandBuffer& commandBuffer) {
-        const auto& framebuffer = _swapchain.framebuffer(imageIndex);
+        const auto& framebuffer = _context.swapchain().framebuffer(imageIndex);
 
-        commandBuffer.beginRenderPass(_renderPass, framebuffer);
+        commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
 
-        commandBuffer.bindPipeline(_pipeline);
+        commandBuffer.bindPipeline(_context.pipeline());
 
         auto extent = framebuffer.extent();
         commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
         commandBuffer.bindVertexBuffer(_vertexBuffer, 0);
         commandBuffer.bindIndexBuffer(_indexBuffer);
-        commandBuffer.bindDescriptorSet(_pipeline, _currentFrameExt->descriptorSet);
+        commandBuffer.bindDescriptorSet(_context.pipeline(), _currentFrame->descriptorSet);
 
         commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()));
 
@@ -93,7 +113,7 @@ void Testbed::drawFrame() {
       {&_currentFrame->renderFinishedSemaphore},
       _currentFrame->fence);
 
-  auto result = _swapchain.present(imageIndex, _currentFrame->renderFinishedSemaphore);
+  auto result = _context.swapchain().present(imageIndex, _currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -101,6 +121,39 @@ void Testbed::drawFrame() {
   }
 
   nextFrame();
+}
+
+void Testbed::createContext() {
+  auto [extensionCount, extensions] = getRequiredInstanceExtensions();
+
+  Vulkan::Context::CreateInfo createInfo;
+  createInfo.extensions = {extensions, extensions + extensionCount};
+  createInfo.enableValidation = ENABLE_VALIDATION_LAYERS;
+
+  createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
+    return isPhysicalDeviceSuitable(device, _context.surface());
+  };
+  createInfo.createWindowSurface = [this](VkInstance instance) {
+    return createWindowSurface(instance);
+  };
+  createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
+    return chooseSwapchainSurfaceExtent(caps, width(), height());
+  };
+  createInfo.chooseSurfaceFormat = [](const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+    return chooseSwapchainSurfaceFormat(availableFormats);
+  };
+  createInfo.choosePresentMode = [](const std::vector<VkPresentModeKHR>& availableModes) {
+    return chooseSwapchainPresentMode(availableModes);
+  };
+  createInfo.maxDescriptorSets = 2; // TODO: make this configurable
+  createInfo.createVertShader = [](const Vulkan::Device& device) {
+    return createVertexShader(device);
+  };
+  createInfo.createFragShader = [](const Vulkan::Device& device) {
+    return createFragmentShader(device);
+  };
+
+  _context.create(createInfo);
 }
 
 void Testbed::createTextureImage() {
@@ -115,51 +168,51 @@ void Testbed::createTextureImage() {
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
 
-  Vulkan::StagingBuffer stagingBuffer(_device, imageSize);
+  Vulkan::StagingBuffer stagingBuffer(_context.device(), imageSize);
   stagingBuffer.copyFromHost(pixels, imageSize);
 
   stbi_image_free(pixels);
 
-  _textureImage.create(_device,
+  _textureImage.create(_context.device(),
                        VK_FORMAT_R8G8B8A8_SRGB,
                        {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)});
   _textureImage.allocate();
 
-  Vulkan::CommandBuffer cmdBuffer{_commandPool};
+  Vulkan::CommandBuffer cmdBuffer{_context.commandPool()};
   _textureImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   stagingBuffer.copyToImage(
       cmdBuffer, _textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
   _textureImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  _textureImageView.create(_device, _textureImage);
-  _textureSampler.create(_device, {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
+  _textureImageView.create(_context.device(), _textureImage);
+  _textureSampler.create(_context.device(), {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
 }
 
 void Testbed::createVertexBuffer() {
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-  Vulkan::StagingBuffer stagingBuffer(_device, bufferSize);
+  Vulkan::StagingBuffer stagingBuffer(_context.device(), bufferSize);
   stagingBuffer.copyFromHost(vertices.data(), bufferSize);
 
-  _vertexBuffer.create(_device, bufferSize);
+  _vertexBuffer.create(_context.device(), bufferSize);
 
-  stagingBuffer.copyToBuffer(Vulkan::CommandBuffer{_commandPool}, _vertexBuffer, bufferSize);
+  stagingBuffer.copyToBuffer(
+      Vulkan::CommandBuffer{_context.commandPool()}, _vertexBuffer, bufferSize);
 }
 
 void Testbed::createIndexBuffer() {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-  Vulkan::StagingBuffer stagingBuffer(_device, bufferSize);
+  Vulkan::StagingBuffer stagingBuffer(_context.device(), bufferSize);
   stagingBuffer.copyFromHost(indices.data(), bufferSize);
 
-  _indexBuffer.create(_device, bufferSize);
+  _indexBuffer.create(_context.device(), bufferSize);
 
-  stagingBuffer.copyToBuffer(Vulkan::CommandBuffer{_commandPool}, _indexBuffer, bufferSize);
+  stagingBuffer.copyToBuffer(
+      Vulkan::CommandBuffer{_context.commandPool()}, _indexBuffer, bufferSize);
 }
 
-void Testbed::createFrameExts() {
-  _descriptorPool.create(_pipeline.descriptorSetLayout(), _maxFrameInFlight);
-
+void Testbed::createFrames() {
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
   VkDescriptorBufferInfo bufferInfo{};
@@ -171,16 +224,24 @@ void Testbed::createFrameExts() {
   imageInfo.imageView = _textureImageView;
   imageInfo.sampler = _textureSampler;
 
-  _frameExts.resize(_frames.size());
-  for (auto& frame : _frameExts) {
-    frame.uniformBuffer.create(_device, bufferSize);
+  _frames.resize(_maxFrameInFlight);
+  for (auto& frame : _frames) {
+    frame.commandBuffer.allocate(_context.commandPool());
+    frame.imageAvailableSemaphore.create(_context.device());
+    frame.renderFinishedSemaphore.create(_context.device());
+    frame.fence.create(_context.device(), true);
+
+    frame.uniformBuffer.create(_context.device(), bufferSize);
     frame.uniformBufferMapped = frame.uniformBuffer.map();
 
     bufferInfo.buffer = frame.uniformBuffer;
 
     std::vector<Vulkan::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
-    frame.descriptorSet.allocate(_descriptorPool, _pipeline.descriptorSetLayout(), bindings);
+    frame.descriptorSet.allocate(
+        _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
   }
+
+  nextFrame();
 }
 
 Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
@@ -201,6 +262,19 @@ Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& devic
   return fragShader;
 }
 
+void Testbed::resizeSwapchain() {
+  if (isMinimized()) {
+    return;
+  }
+  _context.waitIdle();
+
+  const auto caps = _context.surface().querySupports().capabilities;
+  const auto extent = chooseSwapchainSurfaceExtent(caps, width(), height());
+  _context.swapchain().resize(extent);
+
+  setFramebufferResized(false);
+}
+
 void Testbed::updateUniformBuffer() {
   using namespace std;
 
@@ -209,7 +283,7 @@ void Testbed::updateUniformBuffer() {
   auto currentTime = chrono::high_resolution_clock::now();
   float time = chrono::duration<float, chrono::seconds::period>(currentTime - startTime).count();
 
-  auto extent = _swapchain.surfaceExtent();
+  auto extent = _context.swapchain().surfaceExtent();
 
   using glm::vec3;
   using glm::mat4;
@@ -221,7 +295,41 @@ void Testbed::updateUniformBuffer() {
   ubo.proj = glm::perspective(radians(45.0F), aspect, 0.1F, 10.0F);
   ubo.proj[1][1] *= -1;
 
-  memcpy(_currentFrameExt->uniformBufferMapped, &ubo, sizeof(ubo));
+  memcpy(_currentFrame->uniformBufferMapped, &ubo, sizeof(ubo));
+}
+
+bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulkan::Surface& surface) {
+  auto queueFamilies = Vulkan::PhysicalDevice::findQueueFamilies(device, surface);
+  bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
+
+  uint32_t extensionCount = 0;
+  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+  std::vector<VkExtensionProperties> availableExtensions{extensionCount};
+  vkEnumerateDeviceExtensionProperties(
+      device, nullptr, &extensionCount, availableExtensions.data());
+  std::set<std::string> requiredExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+  for (const auto& ext : availableExtensions) {
+    requiredExtensions.erase(ext.extensionName);
+  }
+  bool extensionsSupported = requiredExtensions.empty();
+
+  VkPhysicalDeviceFeatures supportedFeatures;
+  vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
+  return isQueueFamiliesComplete && extensionsSupported && surface.isAdequate(device) &&
+         (supportedFeatures.samplerAnisotropy != 0U);
+}
+
+VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
+                                                 uint32_t windowWidth,
+                                                 uint32_t windowHeight) {
+  if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+    return caps.currentExtent;
+  } else {
+    auto width = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
+    auto height = std::clamp(windowHeight, caps.minImageExtent.height, caps.maxImageExtent.height);
+    return {width, height};
+  }
 }
 
 VkSurfaceFormatKHR Testbed::chooseSwapchainSurfaceFormat(
@@ -246,7 +354,6 @@ VkPresentModeKHR Testbed::chooseSwapchainPresentMode(
 }
 
 void Testbed::nextFrame() {
-  Application::nextFrame();
-
-  _currentFrameExt = &_frameExts[_currentFrameIdx];
+  _currentFrameIdx = (_currentFrameIdx + 1) % _maxFrameInFlight;
+  _currentFrame = &_frames[_currentFrameIdx];
 }

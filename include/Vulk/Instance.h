@@ -39,9 +39,8 @@ class Instance {
 
   void destroy();
 
-  using IsDeviceSuitablePredicate = PhysicalDevice::IsDeviceSuitablePredicate;
   void pickPhysicalDevice(const Surface& surface,
-                          const IsDeviceSuitablePredicate& isDeviceSuitable);
+                          const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
 
   operator VkInstance() const { return _instance; }
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return _physicalDevice; }

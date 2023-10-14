@@ -19,10 +19,11 @@ class Semaphore;
 class Swapchain {
  public:
   using SwapchainCreateInfoOverride = std::function<void(VkSwapchainCreateInfoKHR*)>;
-  using ChooseSurfaceFormat =
+  using ChooseSurfaceExtentFunc = std::function<VkExtent2D(const VkSurfaceCapabilitiesKHR&)>;
+  using ChooseSurfaceFormatFunc =
       std::function<VkSurfaceFormatKHR(const std::vector<VkSurfaceFormatKHR>&)>;
-  using ChoosePresentMode = std::function<VkPresentModeKHR(const std::vector<VkPresentModeKHR>&)>;
-  using ChooseExtent = std::function<VkExtent2D(const VkSurfaceCapabilitiesKHR&)>;
+  using ChoosePresentModeFunc =
+      std::function<VkPresentModeKHR(const std::vector<VkPresentModeKHR>&)>;
 
  public:
   Swapchain() = default;
@@ -42,6 +43,11 @@ class Swapchain {
               const VkExtent2D& surfaceExtent,
               const VkSurfaceFormatKHR& surfaceFormat,
               VkPresentModeKHR presentMode);
+  void create(const Device& device,
+              const Surface& surface,
+              const ChooseSurfaceExtentFunc& chooseSurfaceExtent,
+              const ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+              const ChoosePresentModeFunc& choosePresentMode);
   void destroy();
 
   void resize(const VkExtent2D& surfaceExtent);

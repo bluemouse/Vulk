@@ -78,6 +78,18 @@ void Swapchain::create(const Device& device,
   MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
 }
 
+void Swapchain::create(const Device& device,
+                       const Surface& surface,
+                       const ChooseSurfaceExtentFunc& chooseSurfaceExtent,
+                       const ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                       const ChoosePresentModeFunc& choosePresentMode) {
+  const auto [capabilities, formats, presentModes] = surface.querySupports();
+  const auto extent = chooseSurfaceExtent(capabilities);
+  const auto format = chooseSurfaceFormat(formats);
+  const auto presentMode = choosePresentMode(presentModes);
+
+  create(device, surface, extent, format, presentMode);
+}
 void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   MI_VERIFY(isCreated());
 

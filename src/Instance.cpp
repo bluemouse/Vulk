@@ -136,7 +136,7 @@ void Instance::destroy() {
 }
 
 void Instance::pickPhysicalDevice(const Surface& surface,
-                                  const IsDeviceSuitablePredicate& isDeviceSuitable) {
+                                  const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
   _physicalDevice.instantiate(*this, isDeviceSuitable);
   _physicalDevice.initQueueFamilies(surface);
 }
@@ -201,8 +201,13 @@ void Instance::initDefaultValidationCallback() {
         type = "UNKNOWN";
         break;
     }
-    std::cerr << "Vulkan [" << type << " " << severity << "]: " << data->pMessage << std::endl;
 
+    std::string message = std::string{"Vulkan ["} + type + " " + severity + "]: " + data->pMessage;
+    if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+      throw std::runtime_error(message);
+    }
+
+    std::cerr << message << std::endl;
     return VK_FALSE;
   };
 }
