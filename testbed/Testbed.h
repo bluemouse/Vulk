@@ -3,8 +3,16 @@
 #include "MainWindow.h"
 
 #include <Vulk/Context.h>
+#include <Vulk/Drawable.h>
 
 class Testbed : public MainWindow {
+ public:
+  struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+  };
+
  public:
   void init(int width, int height) override;
   void cleanup() override;
@@ -43,9 +51,9 @@ class Testbed : public MainWindow {
  private:
   void createContext();
 
+  void createRenderable();
+
   void createTextureImage();
-  void createVertexBuffer();
-  void createIndexBuffer();
   void createFrames();
 
   void updateUniformBuffer();
@@ -53,8 +61,8 @@ class Testbed : public MainWindow {
  private:
   Vulkan::Context _context;
 
-  Vulkan::VertexBuffer _vertexBuffer;
-  Vulkan::IndexBuffer _indexBuffer;
+  using IndexedDrawable = Vulkan::Drawable<Vertex, uint16_t>;
+  IndexedDrawable _drawable;
 
   Vulkan::Image _textureImage;
   Vulkan::ImageView _textureImageView;

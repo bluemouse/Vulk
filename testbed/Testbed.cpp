@@ -19,24 +19,11 @@ constexpr bool ENABLE_VALIDATION_LAYERS = true;
 } // namespace
 
 namespace {
-struct Vertex {
-  glm::vec2 pos;
-  glm::vec3 color;
-  glm::vec2 texCoord;
-};
-
 struct UniformBufferObject {
   alignas(sizeof(glm::vec4)) glm::mat4 model;
   alignas(sizeof(glm::vec4)) glm::mat4 view;
   alignas(sizeof(glm::vec4)) glm::mat4 proj;
 };
-
-const std::vector<Vertex> vertices = {{{-0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {1.0F, 0.0F}},
-                                      {{0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
-                                      {{0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F}},
-                                      {{-0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
-
-const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 } // namespace
 
@@ -44,11 +31,8 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createContext();
-
-  createVertexBuffer();
-  createIndexBuffer();
+  createRenderable();
   createTextureImage();
-
   createFrames();
 }
 
@@ -59,9 +43,7 @@ void Testbed::cleanup() {
   _textureImageView.destroy();
   _textureImage.destroy();
 
-  _indexBuffer.destroy();
-  _vertexBuffer.destroy();
-
+  _drawable.destroy();
   _context.destroy();
 
   MainWindow::cleanup();
@@ -101,11 +83,11 @@ void Testbed::drawFrame() {
         auto extent = framebuffer.extent();
         commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-        commandBuffer.bindVertexBuffer(_vertexBuffer, 0);
-        commandBuffer.bindIndexBuffer(_indexBuffer);
+        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), 0);
+        commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
         commandBuffer.bindDescriptorSet(_context.pipeline(), _currentFrame->descriptorSet);
 
-        commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()));
+        commandBuffer.drawIndexed(_drawable.numIndices());
 
         commandBuffer.endRenderpass();
       },
@@ -145,7 +127,7 @@ void Testbed::createContext() {
   createInfo.choosePresentMode = [](const std::vector<VkPresentModeKHR>& availableModes) {
     return chooseSwapchainPresentMode(availableModes);
   };
-  createInfo.maxDescriptorSets = 2; // TODO: make this configurable
+  createInfo.maxDescriptorSets = _maxFrameInFlight;
   createInfo.createVertShader = [](const Vulkan::Device& device) {
     return createVertexShader(device);
   };
@@ -188,28 +170,17 @@ void Testbed::createTextureImage() {
   _textureSampler.create(_context.device(), {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
 }
 
-void Testbed::createVertexBuffer() {
-  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+void Testbed::createRenderable() {
+  const std::vector<Vertex> vertices = {
+      {{-0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {1.0F, 0.0F}},
+      {{0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
+      {{0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F}},
+      {{-0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
 
-  Vulkan::StagingBuffer stagingBuffer(_context.device(), bufferSize);
-  stagingBuffer.copyFromHost(vertices.data(), bufferSize);
+  const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
-  _vertexBuffer.create(_context.device(), bufferSize);
-
-  stagingBuffer.copyToBuffer(
-      Vulkan::CommandBuffer{_context.commandPool()}, _vertexBuffer, bufferSize);
-}
-
-void Testbed::createIndexBuffer() {
-  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-  Vulkan::StagingBuffer stagingBuffer(_context.device(), bufferSize);
-  stagingBuffer.copyFromHost(indices.data(), bufferSize);
-
-  _indexBuffer.create(_context.device(), bufferSize);
-
-  stagingBuffer.copyToBuffer(
-      Vulkan::CommandBuffer{_context.commandPool()}, _indexBuffer, bufferSize);
+  _drawable.create(
+      _context.device(), Vulkan::CommandBuffer{_context.commandPool()}, vertices, indices);
 }
 
 void Testbed::createFrames() {
@@ -247,9 +218,12 @@ void Testbed::createFrames() {
 Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
   Vulkan::VertexShader vertShader{device, "main", "shaders/vert.spv"};
   vertShader.addVertexInputBinding(0, sizeof(Vertex));
-  vertShader.addVertexInputAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos));
-  vertShader.addVertexInputAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color));
-  vertShader.addVertexInputAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, texCoord));
+  vertShader.addVertexInputAttribute(
+      0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos));
+  vertShader.addVertexInputAttribute(
+      1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color));
+  vertShader.addVertexInputAttribute(
+      2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, texCoord));
   vertShader.addDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
   return vertShader;

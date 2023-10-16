@@ -72,6 +72,7 @@ set(HEADER_FILES
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
     include/Vulk/Context.h
+    include/Vulk/Drawable.h
 )
 
 add_library(${PROJECT_NAME} SHARED
