@@ -6,7 +6,6 @@
 #include <Vulk/IndexBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
-#include <glm/glm.hpp>
 #include <vector>
 
 NAMESPACE_VULKAN_BEGIN
@@ -40,23 +39,11 @@ class Drawable {
 
 template <typename V, typename I>
 inline void Drawable<V, I>::create(const Vulkan::Device& device,
-                             const Vulkan::CommandBuffer& commandBuffer,
-                             std::vector<vertex_type> vertices,
-                             std::vector<index_type> indices) {
-  { // TODO Create Buffer::loadFromHost() to simplify this
-    VkDeviceSize bufferSize = sizeof(vertex_type) * vertices.size();
-    Vulkan::StagingBuffer stagingBuffer(device, bufferSize);
-    stagingBuffer.copyFromHost(vertices.data(), bufferSize);
-    _vertexBuffer.create(device, bufferSize);
-    stagingBuffer.copyToBuffer(commandBuffer, _vertexBuffer, bufferSize);
-  }
-  { // TODO Create Buffer::loadFromHost() to simplify this
-    VkDeviceSize bufferSize = sizeof(index_type) * indices.size();
-    Vulkan::StagingBuffer stagingBuffer(device, bufferSize);
-    stagingBuffer.copyFromHost(indices.data(), bufferSize);
-    _indexBuffer.create(device, bufferSize);
-    stagingBuffer.copyToBuffer(commandBuffer, _indexBuffer, bufferSize);
-  }
+                                   const Vulkan::CommandBuffer& commandBuffer,
+                                   std::vector<vertex_type> vertices,
+                                   std::vector<index_type> indices) {
+  _vertexBuffer.create(device, commandBuffer, vertices);
+  _indexBuffer.create(device, commandBuffer, indices);
   _numIndices = indices.size();
 }
 

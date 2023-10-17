@@ -2,7 +2,11 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
+#include <Vulk/CommandBuffer.h>
+#include <Vulk/StagingBuffer.h>
 #include <Vulk/helpers_vulkan.h>
+
+#include <cstring>
 
 namespace Vulkan {
 
@@ -99,6 +103,25 @@ void Buffer::allocate(VkMemoryPropertyFlags properties) {
   _memory->allocate(*_device, properties, requirements);
 
   vkBindBufferMemory(*_device, _buffer, *_memory.get(), 0);
+}
+
+void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
+  MI_VERIFY(isAllocated());
+  MI_VERIFY(offset+size <= _size);
+  void* buffer = map(offset, size);
+  std::memcpy(buffer, data, size);
+  unmap();
+}
+
+void Buffer::load(const CommandBuffer& stagingCommandBuffer,
+                  const void* data,
+                  VkDeviceSize size,
+                  VkDeviceSize offset) {
+  MI_VERIFY(isAllocated());
+  MI_VERIFY(offset+size <= _size);
+  StagingBuffer stagingBuffer(*_device, size);
+  stagingBuffer.copyFromHost(data, size);
+  stagingBuffer.copyToBuffer(stagingCommandBuffer, *this, {0, offset, size});
 }
 
 void Buffer::free() {

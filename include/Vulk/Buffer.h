@@ -10,6 +10,7 @@
 NAMESPACE_VULKAN_BEGIN
 
 class Device;
+class CommandBuffer;
 
 class Buffer {
  public:
@@ -41,6 +42,12 @@ class Buffer {
 
   void allocate(VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   void free();
+
+  void load(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+  void load(const CommandBuffer& stagingCommandBuffer,
+            const void* data,
+            VkDeviceSize size,
+            VkDeviceSize offset = 0);
 
   void bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset = 0);
 
