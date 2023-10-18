@@ -14,8 +14,44 @@ namespace {
 #ifdef NDEBUG
 constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #else
-constexpr bool ENABLE_VALIDATION_LAYERS = true;
+constexpr bool kEnableValidationLayers = true;
 #endif
+} // namespace
+
+namespace {
+template <typename T>
+struct ImageTrait {
+  static constexpr VkFormat format = VK_FORMAT_UNDEFINED;
+  static constexpr uint32_t size = 0;
+  static constexpr uint32_t dimension = 0;
+};
+template <>
+struct ImageTrait<float> {
+  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32_SFLOAT;
+  [[maybe_unused]] static constexpr uint32_t size = sizeof(float);
+  [[maybe_unused]] static constexpr uint32_t dimension = 1;
+};
+template <>
+struct ImageTrait<glm::vec2> {
+  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32_SFLOAT;
+  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec2);
+  [[maybe_unused]] static constexpr uint32_t dimension = 2;
+};
+template <>
+struct ImageTrait<glm::vec3> {
+  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32B32_SFLOAT;
+  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec3);
+  [[maybe_unused]] static constexpr uint32_t dimension = 3;
+};
+template <>
+struct ImageTrait<glm::vec4> {
+  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec4);
+  [[maybe_unused]] static constexpr uint32_t dimension = 4;
+};
+
+#define formatof(var) ImageTrait<decltype(var)>::format
+
 } // namespace
 
 namespace {
@@ -110,7 +146,7 @@ void Testbed::createContext() {
 
   Vulkan::Context::CreateInfo createInfo;
   createInfo.extensions = {extensions, extensions + extensionCount};
-  createInfo.enableValidation = ENABLE_VALIDATION_LAYERS;
+  createInfo.enableValidation = kEnableValidationLayers;
 
   createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
     return isPhysicalDeviceSuitable(device, _context.surface());
@@ -171,11 +207,10 @@ void Testbed::createTextureImage() {
 }
 
 void Testbed::createRenderable() {
-  const std::vector<Vertex> vertices = {
-      {{-0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {1.0F, 0.0F}},
-      {{0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
-      {{0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F}},
-      {{-0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
+  const std::vector<Vertex> vertices = {{{-0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {1.0F, 0.0F}},
+                                        {{0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F}},
+                                        {{-0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
 
   const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
@@ -184,17 +219,6 @@ void Testbed::createRenderable() {
 }
 
 void Testbed::createFrames() {
-  VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-  VkDescriptorBufferInfo bufferInfo{};
-  bufferInfo.offset = 0;
-  bufferInfo.range = VK_WHOLE_SIZE;
-
-  VkDescriptorImageInfo imageInfo{};
-  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageInfo.imageView = _textureImageView;
-  imageInfo.sampler = _textureSampler;
-
   _frames.resize(_maxFrameInFlight);
   for (auto& frame : _frames) {
     frame.commandBuffer.allocate(_context.commandPool());
@@ -202,9 +226,20 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore.create(_context.device());
     frame.fence.create(_context.device(), true);
 
-    frame.uniformBuffer.create(_context.device(), bufferSize);
+    frame.uniformBuffer.create(_context.device(), sizeof(UniformBufferObject));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
+  }
 
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageInfo.imageView = _textureImageView;
+  imageInfo.sampler = _textureSampler;
+
+  VkDescriptorBufferInfo bufferInfo{};
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
+
+  for (auto& frame : _frames) {
     bufferInfo.buffer = frame.uniformBuffer;
 
     std::vector<Vulkan::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
@@ -216,21 +251,22 @@ void Testbed::createFrames() {
 }
 
 Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
-  Vulkan::VertexShader vertShader{device, "main", "shaders/vert.spv"};
-  vertShader.addVertexInputBinding(0, sizeof(Vertex));
-  vertShader.addVertexInputAttribute(
-      0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos));
-  vertShader.addVertexInputAttribute(
-      1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color));
-  vertShader.addVertexInputAttribute(
-      2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, texCoord));
+  Vulkan::VertexShader vertShader{device, "shaders/vert.spv"};
+  // vertShader.addVertexInputBinding(0, sizeof(Vertex));
+  vertShader.addVertexInputBindings({{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}});
+
+  vertShader.addVertexInputAttributes(
+      {{0, 0, formatof(Vertex::pos), offsetof(Vertex, pos)},
+       {1, 0, formatof(Vertex::color), offsetof(Vertex, color)},
+       {2, 0, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}});
+
   vertShader.addDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
   return vertShader;
 }
 
 Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
-  Vulkan::FragmentShader fragShader{device, "main", "shaders/frag.spv"};
+  Vulkan::FragmentShader fragShader{device, "shaders/frag.spv"};
   fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
   return fragShader;

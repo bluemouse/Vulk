@@ -21,10 +21,13 @@ class VertexShader : public ShaderModule {
                              uint32_t stride,
                              VkVertexInputRate inputRate = VK_VERTEX_INPUT_RATE_VERTEX);
 
+  void addVertexInputBindings(std::vector<VkVertexInputBindingDescription> bindings);
+
   void addVertexInputAttribute(uint32_t location,
                                uint32_t binding,
                                VkFormat format,
                                uint32_t offset = 0);
+  void addVertexInputAttributes(std::vector<VkVertexInputAttributeDescription> attributes);
 
   void addDescriptorSetLayoutBinding(uint32_t binding,
                                      VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

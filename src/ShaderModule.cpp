@@ -27,12 +27,12 @@ std::vector<char> readFile(const std::string& filename) {
 
 NAMESPACE_VULKAN_BEGIN
 
-ShaderModule::ShaderModule(const Device& device, const char* entry, size_t codeSize, const char* codes) {
-  create(device, entry, codeSize, codes);
+ShaderModule::ShaderModule(const Device& device, const std::vector<char>& codes, const char* entry) {
+  create(device, codes, entry);
 }
 
-ShaderModule::ShaderModule(const Device& device, const char* entry, const char* shaderFile) {
-  create(device, entry, shaderFile);
+ShaderModule::ShaderModule(const Device& device, const char* shaderFile, const char* entry) {
+  create(device, shaderFile, entry);
 }
 
 ShaderModule::~ShaderModule() {
@@ -41,22 +41,21 @@ ShaderModule::~ShaderModule() {
   }
 }
 
-void ShaderModule::create(const Device& device, const char* entry, size_t codeSize, const char* codes) {
+void ShaderModule::create(const Device& device, const std::vector<char>& codes, const char* entry) {
   MI_VERIFY(!isCreated());
   _device = &device;
   _entry = entry;
 
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = codeSize;
-  createInfo.pCode = reinterpret_cast<const uint32_t*>(codes);
+  createInfo.codeSize = codes.size();
+  createInfo.pCode = reinterpret_cast<const uint32_t*>(codes.data());
 
   MI_VERIFY_VKCMD(vkCreateShaderModule(device, &createInfo, nullptr, &_shader));
 }
 
-void ShaderModule::create(const Device& device, const char* entry, const char* shaderFile) {
-  auto code = readFile(shaderFile);
-  create(device, entry, code.size(), code.data());
+void ShaderModule::create(const Device& device, const char* shaderFile, const char* entry) {
+  create(device, readFile(shaderFile), entry);
 }
 
 void ShaderModule::destroy() {

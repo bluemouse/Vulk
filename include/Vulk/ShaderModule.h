@@ -13,12 +13,12 @@ class Device;
 class ShaderModule {
  public:
   ShaderModule() = default;
-  ShaderModule(const Device& device, const char* entry, size_t codeSize, const char* codes);
-  ShaderModule(const Device& device, const char* entry, const char* shaderFile);
+  ShaderModule(const Device& device, const std::vector<char>& codes, const char* entry = "main");
+  ShaderModule(const Device& device, const char* shaderFile, const char* entry = "main");
   virtual ~ShaderModule();
 
-  void create(const Device& device, const char* entry, size_t codeSize, const char* codes);
-  void create(const Device& device, const char* entry, const char* shaderFile);
+  void create(const Device& device, const std::vector<char>& codes, const char* entry = "main");
+  void create(const Device& device, const char* shaderFile, const char* entry = "main");
   void destroy();
 
   // Transfer the ownership from `rhs` to `this`

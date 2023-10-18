@@ -32,11 +32,20 @@ void VertexShader::addVertexInputBinding(uint32_t binding,
   _vertexInputBindings.push_back({binding, stride, inputRate});
 }
 
+void VertexShader::addVertexInputBindings(std::vector<VkVertexInputBindingDescription> bindings) {
+  _vertexInputBindings.insert(_vertexInputBindings.end(), bindings.begin(), bindings.end());
+}
+
 void VertexShader::addVertexInputAttribute(uint32_t location,
                                            uint32_t binding,
                                            VkFormat format,
                                            uint32_t offset) {
   _vertexInputAttributes.push_back({location, binding, format, offset});
+}
+
+void VertexShader::addVertexInputAttributes(
+    std::vector<VkVertexInputAttributeDescription> attributes) {
+  _vertexInputAttributes.insert(_vertexInputAttributes.end(), attributes.begin(), attributes.end());
 }
 
 void VertexShader::addDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType type) {
