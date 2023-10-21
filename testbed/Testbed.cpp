@@ -1,5 +1,7 @@
 #include "Testbed.h"
 
+#include <Vulk/TypeTraits.h>
+
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,42 +18,6 @@ constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #else
 constexpr bool kEnableValidationLayers = true;
 #endif
-} // namespace
-
-namespace {
-template <typename T>
-struct ImageTrait {
-  static constexpr VkFormat format = VK_FORMAT_UNDEFINED;
-  static constexpr uint32_t size = 0;
-  static constexpr uint32_t dimension = 0;
-};
-template <>
-struct ImageTrait<float> {
-  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32_SFLOAT;
-  [[maybe_unused]] static constexpr uint32_t size = sizeof(float);
-  [[maybe_unused]] static constexpr uint32_t dimension = 1;
-};
-template <>
-struct ImageTrait<glm::vec2> {
-  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32_SFLOAT;
-  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec2);
-  [[maybe_unused]] static constexpr uint32_t dimension = 2;
-};
-template <>
-struct ImageTrait<glm::vec3> {
-  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32B32_SFLOAT;
-  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec3);
-  [[maybe_unused]] static constexpr uint32_t dimension = 3;
-};
-template <>
-struct ImageTrait<glm::vec4> {
-  [[maybe_unused]] static constexpr VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
-  [[maybe_unused]] static constexpr uint32_t size = sizeof(glm::vec4);
-  [[maybe_unused]] static constexpr uint32_t dimension = 4;
-};
-
-#define formatof(var) ImageTrait<decltype(var)>::format
-
 } // namespace
 
 namespace {
@@ -95,7 +61,10 @@ void Testbed::mainLoop() {
 }
 
 void Testbed::drawFrame() {
+  nextFrame();
+
   _currentFrame->fence.wait();
+  _currentFrame->fence.reset();
 
   auto imageIndex = _context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore);
   if (imageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -104,8 +73,6 @@ void Testbed::drawFrame() {
   }
 
   updateUniformBuffer();
-
-  _currentFrame->fence.reset();
 
   _currentFrame->commandBuffer.reset();
   _currentFrame->commandBuffer.executeCommands(
@@ -137,8 +104,6 @@ void Testbed::drawFrame() {
   } else if (result != VK_SUCCESS) {
     throw std::runtime_error("Error: failed to present swap chain image!");
   }
-
-  nextFrame();
 }
 
 void Testbed::createContext() {

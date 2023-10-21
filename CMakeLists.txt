@@ -73,6 +73,7 @@ set(HEADER_FILES
     include/Vulk/Fence.h
     include/Vulk/Context.h
     include/Vulk/Drawable.h
+    include/Vulk/TypeTraits.h
 )
 
 add_library(${PROJECT_NAME} SHARED
