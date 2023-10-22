@@ -28,6 +28,7 @@ class Testbed : public MainWindow {
   [[nodiscard]] Vulk::Context& context() { return _context; }
   [[nodiscard]] const Vulk::Context& context() const { return _context; }
 
+  // Callbacks to support creating Context
   [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance) {
     return MainWindow::createWindowSurface(instance);
   }
@@ -46,17 +47,16 @@ class Testbed : public MainWindow {
   [[nodiscard]] static VkPresentModeKHR chooseSwapchainPresentMode(
       const std::vector<VkPresentModeKHR>& availablePresentModes);
 
-  void nextFrame();
-
  private:
   void createContext();
 
   void createRenderable();
 
-  void createTextureImage();
-  void createFrames();
+    void createFrames();
 
   void updateUniformBuffer();
+
+  void nextFrame();
 
  private:
   Vulk::Context _context;

@@ -1,21 +1,20 @@
 #include "Testbed.h"
 
+#include <Vulk/Toolbox.h>
 #include <Vulk/TypeTraits.h>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include <chrono>
 #include <set>
 #include <functional>
+#include <cstring>
 
 namespace {
 #ifdef NDEBUG
-constexpr bool ENABLE_VALIDATION_LAYERS = false;
+constexpr bool kEnableValidationLayers = false;
 #else
 constexpr bool kEnableValidationLayers = true;
 #endif
@@ -35,7 +34,11 @@ void Testbed::init(int width, int height) {
 
   createContext();
   createRenderable();
-  createTextureImage();
+
+  _textureImage = Vulk::Toolbox(_context).createImage("textures/texture.jpg");
+  _textureImageView.create(_context.device(), _textureImage);
+  _textureSampler.create(_context.device(), {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
+
   createFrames();
 }
 
@@ -131,38 +134,6 @@ void Testbed::createContext() {
   createInfo.createFragShader = &Testbed::createFragmentShader;
 
   _context.create(createInfo);
-}
-
-void Testbed::createTextureImage() {
-  int texWidth = 0;
-  int texHeight = 0;
-  int texChannels = 0;
-
-  const char* texFile = "textures/texture.jpg";
-
-  stbi_uc* pixels = stbi_load(texFile, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-  MI_VERIFY(pixels != nullptr);
-
-  auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
-
-  Vulk::StagingBuffer stagingBuffer(_context.device(), imageSize);
-  stagingBuffer.copyFromHost(pixels, imageSize);
-
-  stbi_image_free(pixels);
-
-  _textureImage.create(_context.device(),
-                       VK_FORMAT_R8G8B8A8_SRGB,
-                       {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)});
-  _textureImage.allocate();
-
-  Vulk::CommandBuffer cmdBuffer{_context.commandPool()};
-  _textureImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  stagingBuffer.copyToImage(
-      cmdBuffer, _textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-  _textureImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-  _textureImageView.create(_context.device(), _textureImage);
-  _textureSampler.create(_context.device(), {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
 }
 
 void Testbed::createRenderable() {

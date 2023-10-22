@@ -39,6 +39,7 @@ set(SRC_FILES
     src/Semaphore.cpp
     src/Fence.cpp
     src/Context.cpp
+    src/Toolbox.cpp
 )
 
 set(HEADER_FILES
@@ -73,6 +74,7 @@ set(HEADER_FILES
     include/Vulk/Fence.h
     include/Vulk/Context.h
     include/Vulk/Drawable.h
+    include/Vulk/Toolbox.h
     include/Vulk/TypeTraits.h
 )
 
@@ -89,10 +91,15 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 set(glm_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/glm)
+set(stb_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
+set(tinyobjloader_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/tinyobjloader)
+
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     include
     ${glm_INCLUDE_DIR}
+    ${stb_INCLUDE_DIR}
+    ${tinyobjloader_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -19,7 +19,7 @@ Semaphore::Semaphore(Semaphore&& rhs) noexcept {
 }
 
 Semaphore& Semaphore::operator=(Semaphore&& rhs) noexcept(false) {
-  if (this == &rhs) {
+  if (this != &rhs) {
     moveFrom(rhs);
   }
   return *this;

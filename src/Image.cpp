@@ -36,7 +36,7 @@ Image::Image(Image&& rhs) noexcept {
 }
 
 Image& Image::operator=(Image&& rhs) noexcept(false) {
-  if (this == &rhs) {
+  if (this != &rhs) {
     moveFrom(rhs);
   }
   return *this;

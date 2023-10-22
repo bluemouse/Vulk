@@ -13,10 +13,6 @@ list(APPEND CMAKE_MODULE_PATH
 find_package(glfw3 REQUIRED)
 add_library(glfw::glfw ALIAS glfw)
 
-set(stb_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
-set(tinyobjloader_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
-
-
 set(SRC_FILES
   main.cpp
   MainWindow.cpp
@@ -44,12 +40,6 @@ set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_target_properties(${PROJECT_NAME} PROPERTIES
   CXX_STANDARD 17
   RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY}
-)
-
-target_include_directories(${PROJECT_NAME}
-  PRIVATE
-    ${stb_INCLUDE_DIR}
-    ${tinyobjloader_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -28,8 +28,6 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-#include <memory>
-
 NAMESPACE_Vulk_BEGIN
 
 class Context {
