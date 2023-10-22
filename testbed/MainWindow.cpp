@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 
+#include <Vulk/Instance.h>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -53,7 +55,7 @@ MainWindow::Extensions MainWindow::getRequiredInstanceExtensions() {
   return {count, extensions};
 }
 
-VkSurfaceKHR MainWindow::createWindowSurface(VkInstance instance) {
+VkSurfaceKHR MainWindow::createWindowSurface(const Vulk::Instance& instance) {
   VkSurfaceKHR surface;
   if (glfwCreateWindowSurface(instance, _window, nullptr, &surface) != VK_SUCCESS) {
     throw std::runtime_error("Error: glfwCreateWindowSurface failed");

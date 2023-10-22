@@ -2,6 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/helpers_vulkan.h>
+
+NAMESPACE_Vulk_BEGIN
+class Instance;
+NAMESPACE_Vulk_END
+
 class GLFWwindow;
 
 class MainWindow {
@@ -35,7 +41,7 @@ class MainWindow {
   };
   [[nodiscard]] static Extensions getRequiredInstanceExtensions() ;
 
-  [[nodiscard]] VkSurfaceKHR createWindowSurface(VkInstance instance);
+  [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance);
 
  private:
   GLFWwindow* _window = nullptr;

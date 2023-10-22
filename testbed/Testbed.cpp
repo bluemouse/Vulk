@@ -11,6 +11,7 @@
 
 #include <chrono>
 #include <set>
+#include <functional>
 
 namespace {
 #ifdef NDEBUG
@@ -116,25 +117,18 @@ void Testbed::createContext() {
   createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
     return isPhysicalDeviceSuitable(device, _context.surface());
   };
-  createInfo.createWindowSurface = [this](VkInstance instance) {
+  createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {
     return createWindowSurface(instance);
   };
   createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
-  createInfo.chooseSurfaceFormat = [](const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-    return chooseSwapchainSurfaceFormat(availableFormats);
-  };
-  createInfo.choosePresentMode = [](const std::vector<VkPresentModeKHR>& availableModes) {
-    return chooseSwapchainPresentMode(availableModes);
-  };
+  createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
+  createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
+
   createInfo.maxDescriptorSets = _maxFrameInFlight;
-  createInfo.createVertShader = [](const Vulk::Device& device) {
-    return createVertexShader(device);
-  };
-  createInfo.createFragShader = [](const Vulk::Device& device) {
-    return createFragmentShader(device);
-  };
+  createInfo.createVertShader = &Testbed::createVertexShader;
+  createInfo.createFragShader = &Testbed::createFragmentShader;
 
   _context.create(createInfo);
 }
@@ -251,12 +245,14 @@ void Testbed::resizeSwapchain() {
 }
 
 void Testbed::updateUniformBuffer() {
-  using namespace std;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::duration;
+  using std::chrono::seconds;
 
-  static auto startTime = chrono::high_resolution_clock::now();
+  static auto startTime = high_resolution_clock::now();
 
-  auto currentTime = chrono::high_resolution_clock::now();
-  float time = chrono::duration<float, chrono::seconds::period>(currentTime - startTime).count();
+  auto currentTime = high_resolution_clock::now();
+  float time = duration<float, seconds::period>(currentTime - startTime).count();
 
   auto extent = _context.swapchain().surfaceExtent();
 

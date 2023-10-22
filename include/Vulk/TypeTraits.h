@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/helpers_vulkan.h>
+
 NAMESPACE_Vulk_BEGIN
 
 template <typename T>

@@ -28,7 +28,7 @@ class Testbed : public MainWindow {
   [[nodiscard]] Vulk::Context& context() { return _context; }
   [[nodiscard]] const Vulk::Context& context() const { return _context; }
 
-  [[nodiscard]] VkSurfaceKHR createWindowSurface(VkInstance instance) {
+  [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance) {
     return MainWindow::createWindowSurface(instance);
   }
 

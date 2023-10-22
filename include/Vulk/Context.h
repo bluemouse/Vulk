@@ -34,7 +34,7 @@ NAMESPACE_Vulk_BEGIN
 
 class Context {
  public:
-  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(VkInstance instance)>;
+  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
   using CreateVertShaderFunc = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
   using CreateFragShaderFunc = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
   struct CreateInfo {
