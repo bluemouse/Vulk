@@ -66,8 +66,8 @@ void Testbed::drawFrame() {
   _currentFrame->fence.wait();
   _currentFrame->fence.reset();
 
-  auto imageIndex = _context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore);
-  if (imageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
+  if (_context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore) ==
+      VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
     return;
   }
@@ -76,8 +76,8 @@ void Testbed::drawFrame() {
 
   _currentFrame->commandBuffer.reset();
   _currentFrame->commandBuffer.executeCommands(
-      [this, imageIndex](const Vulkan::CommandBuffer& commandBuffer) {
-        const auto& framebuffer = _context.swapchain().framebuffer(imageIndex);
+      [this](const Vulk::CommandBuffer& commandBuffer) {
+        const auto& framebuffer = _context.swapchain().activeFramebuffer();
 
         commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
 
@@ -98,7 +98,7 @@ void Testbed::drawFrame() {
       {&_currentFrame->renderFinishedSemaphore},
       _currentFrame->fence);
 
-  auto result = _context.swapchain().present(imageIndex, _currentFrame->renderFinishedSemaphore);
+  auto result = _context.swapchain().present(_currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -109,7 +109,7 @@ void Testbed::drawFrame() {
 void Testbed::createContext() {
   auto [extensionCount, extensions] = getRequiredInstanceExtensions();
 
-  Vulkan::Context::CreateInfo createInfo;
+  Vulk::Context::CreateInfo createInfo;
   createInfo.extensions = {extensions, extensions + extensionCount};
   createInfo.enableValidation = kEnableValidationLayers;
 
@@ -129,10 +129,10 @@ void Testbed::createContext() {
     return chooseSwapchainPresentMode(availableModes);
   };
   createInfo.maxDescriptorSets = _maxFrameInFlight;
-  createInfo.createVertShader = [](const Vulkan::Device& device) {
+  createInfo.createVertShader = [](const Vulk::Device& device) {
     return createVertexShader(device);
   };
-  createInfo.createFragShader = [](const Vulkan::Device& device) {
+  createInfo.createFragShader = [](const Vulk::Device& device) {
     return createFragmentShader(device);
   };
 
@@ -151,7 +151,7 @@ void Testbed::createTextureImage() {
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
 
-  Vulkan::StagingBuffer stagingBuffer(_context.device(), imageSize);
+  Vulk::StagingBuffer stagingBuffer(_context.device(), imageSize);
   stagingBuffer.copyFromHost(pixels, imageSize);
 
   stbi_image_free(pixels);
@@ -161,7 +161,7 @@ void Testbed::createTextureImage() {
                        {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)});
   _textureImage.allocate();
 
-  Vulkan::CommandBuffer cmdBuffer{_context.commandPool()};
+  Vulk::CommandBuffer cmdBuffer{_context.commandPool()};
   _textureImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   stagingBuffer.copyToImage(
       cmdBuffer, _textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -180,7 +180,7 @@ void Testbed::createRenderable() {
   const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
   _drawable.create(
-      _context.device(), Vulkan::CommandBuffer{_context.commandPool()}, vertices, indices);
+      _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
 }
 
 void Testbed::createFrames() {
@@ -207,7 +207,7 @@ void Testbed::createFrames() {
   for (auto& frame : _frames) {
     bufferInfo.buffer = frame.uniformBuffer;
 
-    std::vector<Vulkan::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
+    std::vector<Vulk::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
     frame.descriptorSet.allocate(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
   }
@@ -215,8 +215,8 @@ void Testbed::createFrames() {
   nextFrame();
 }
 
-Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
-  Vulkan::VertexShader vertShader{device, "shaders/vert.spv"};
+Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
+  Vulk::VertexShader vertShader{device, "shaders/vert.spv"};
   // vertShader.addVertexInputBinding(0, sizeof(Vertex));
   vertShader.addVertexInputBindings({{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}});
 
@@ -230,8 +230,8 @@ Vulkan::VertexShader Testbed::createVertexShader(const Vulkan::Device& device) {
   return vertShader;
 }
 
-Vulkan::FragmentShader Testbed::createFragmentShader(const Vulkan::Device& device) {
-  Vulkan::FragmentShader fragShader{device, "shaders/frag.spv"};
+Vulk::FragmentShader Testbed::createFragmentShader(const Vulk::Device& device) {
+  Vulk::FragmentShader fragShader{device, "shaders/frag.spv"};
   fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
   return fragShader;
@@ -273,8 +273,8 @@ void Testbed::updateUniformBuffer() {
   memcpy(_currentFrame->uniformBufferMapped, &ubo, sizeof(ubo));
 }
 
-bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulkan::Surface& surface) {
-  auto queueFamilies = Vulkan::PhysicalDevice::findQueueFamilies(device, surface);
+bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface& surface) {
+  auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
   bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
 
   uint32_t extensionCount = 0;

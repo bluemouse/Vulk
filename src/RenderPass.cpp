@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 RenderPass::RenderPass(const Device& device,
                        VkFormat format,
@@ -105,4 +105,4 @@ void RenderPass::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

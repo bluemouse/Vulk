@@ -7,7 +7,7 @@
 #include <vector>
 #include <functional>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 
@@ -51,4 +51,4 @@ class RenderPass {
   const Device* _device = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

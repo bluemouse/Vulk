@@ -6,7 +6,7 @@
 
 #include <Vulk/Surface.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Instance::Instance(
     const ApplicationInfoOverride& appInfoOverride,
@@ -229,4 +229,4 @@ Instance::VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
   return instance->_validationCallback(messageSeverity, messageType, pCallbackData);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

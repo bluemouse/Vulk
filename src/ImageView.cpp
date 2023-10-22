@@ -3,7 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/Image.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 ImageView::ImageView(const Device& device,
                      const Image& image,
@@ -73,4 +73,4 @@ void ImageView::destroy() {
   _image = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

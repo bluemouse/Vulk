@@ -6,7 +6,7 @@
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 DescriptorPool::DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets) {
   create(layout, maxSets);
@@ -75,4 +75,4 @@ void DescriptorPool::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

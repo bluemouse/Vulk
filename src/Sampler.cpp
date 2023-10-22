@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Sampler::Sampler(const Device& device,
                  Filter filter,
@@ -77,4 +77,4 @@ void Sampler::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

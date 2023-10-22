@@ -8,7 +8,7 @@
 
 #include <vector>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 template <typename Vertex, typename Index>
 class Drawable {
@@ -19,27 +19,27 @@ class Drawable {
  public:
   Drawable() = default;
 
-  void create(const Vulkan::Device& device,
-              const Vulkan::CommandBuffer& commandBuffer,
+  void create(const Vulk::Device& device,
+              const Vulk::CommandBuffer& commandBuffer,
               std::vector<vertex_type> vertices,
               std::vector<index_type> indices);
   void destroy();
 
-  [[nodiscard]] const Vulkan::VertexBuffer& vertexBuffer() const { return _vertexBuffer; }
-  [[nodiscard]] const Vulkan::IndexBuffer& indexBuffer() const { return _indexBuffer; }
+  [[nodiscard]] const Vulk::VertexBuffer& vertexBuffer() const { return _vertexBuffer; }
+  [[nodiscard]] const Vulk::IndexBuffer& indexBuffer() const { return _indexBuffer; }
 
   [[nodiscard]] size_t numIndices() const { return _numIndices; }
 
  private:
-  Vulkan::VertexBuffer _vertexBuffer;
-  Vulkan::IndexBuffer _indexBuffer;
+  Vulk::VertexBuffer _vertexBuffer;
+  Vulk::IndexBuffer _indexBuffer;
 
   size_t _numIndices = 0;
 };
 
 template <typename V, typename I>
-inline void Drawable<V, I>::create(const Vulkan::Device& device,
-                                   const Vulkan::CommandBuffer& commandBuffer,
+inline void Drawable<V, I>::create(const Vulk::Device& device,
+                                   const Vulk::CommandBuffer& commandBuffer,
                                    std::vector<vertex_type> vertices,
                                    std::vector<index_type> indices) {
   _vertexBuffer.create(device, commandBuffer, vertices);
@@ -55,4 +55,4 @@ inline void Drawable<V, I>::destroy() {
   _numIndices = 0;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

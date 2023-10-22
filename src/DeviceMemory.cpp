@@ -3,7 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/helpers_vulkan.h>
 
-namespace Vulkan {
+NAMESPACE_Vulk_BEGIN
 
 DeviceMemory::DeviceMemory(const Device& device,
                            VkMemoryPropertyFlags properties,
@@ -101,4 +101,4 @@ uint32_t DeviceMemory::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
   throw std::runtime_error("Failed to find suitable memory type!");
 }
 
-} // namespace Vulkan
+NAMESPACE_Vulk_END

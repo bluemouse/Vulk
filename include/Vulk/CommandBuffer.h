@@ -12,7 +12,7 @@
 #include <Vulk/Semaphore.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class CommandPool;
@@ -93,4 +93,4 @@ class CommandBuffer {
   const CommandPool* _pool = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

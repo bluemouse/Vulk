@@ -8,7 +8,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device {
  public:
@@ -56,4 +56,4 @@ class Device {
   const PhysicalDevice* _physicalDevice = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

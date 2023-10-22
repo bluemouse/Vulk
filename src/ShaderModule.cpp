@@ -25,7 +25,7 @@ std::vector<char> readFile(const std::string& filename) {
 
 } // namespace
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 ShaderModule::ShaderModule(const Device& device, const std::vector<char>& codes, const char* entry) {
   create(device, codes, entry);
@@ -96,4 +96,4 @@ void ShaderModule::addDescriptorSetLayoutBinding(uint32_t binding,
   _descriptorSetLayoutBindings.push_back({binding, descriptorType, 1, stageFlags, nullptr});
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

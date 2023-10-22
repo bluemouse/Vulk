@@ -5,7 +5,7 @@
 #include <Vulk/ShaderModule.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class FragmentShader : public ShaderModule {
  public:
@@ -22,4 +22,4 @@ class FragmentShader : public ShaderModule {
   void moveFrom(FragmentShader& rhs);
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

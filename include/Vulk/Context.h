@@ -30,13 +30,13 @@
 
 #include <memory>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Context {
  public:
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(VkInstance instance)>;
-  using CreateVertShaderFunc = std::function<Vulkan::VertexShader(const Vulkan::Device& device)>;
-  using CreateFragShaderFunc = std::function<Vulkan::FragmentShader(const Vulkan::Device& device)>;
+  using CreateVertShaderFunc = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
+  using CreateFragShaderFunc = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
   struct CreateInfo {
     int versionMajor = 1;
     int versionMinor = 0;
@@ -110,17 +110,17 @@ class Context {
   virtual void createDescriptorPool(uint32_t maxSets);
 
  protected:
-  Vulkan::Instance _instance;
+  Vulk::Instance _instance;
 
-  Vulkan::Surface _surface;
-  Vulkan::Device _device;
-  Vulkan::Swapchain _swapchain;
+  Vulk::Surface _surface;
+  Vulk::Device _device;
+  Vulk::Swapchain _swapchain;
 
-  Vulkan::RenderPass _renderPass;
-  Vulkan::Pipeline _pipeline;
+  Vulk::RenderPass _renderPass;
+  Vulk::Pipeline _pipeline;
 
-  Vulkan::DescriptorPool _descriptorPool;
-  Vulkan::CommandPool _commandPool;
+  Vulk::DescriptorPool _descriptorPool;
+  Vulk::CommandPool _commandPool;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

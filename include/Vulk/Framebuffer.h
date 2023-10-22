@@ -4,7 +4,7 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class RenderPass;
@@ -41,4 +41,4 @@ class Framebuffer {
   const ImageView* _imageView = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

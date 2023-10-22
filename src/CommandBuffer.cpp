@@ -10,7 +10,7 @@
 #include <Vulk/DescriptorSet.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 CommandBuffer::CommandBuffer(const CommandPool& commandPool) {
   allocate(commandPool);
@@ -210,4 +210,4 @@ void CommandBuffer::drawIndexed(uint32_t indexCount) const {
   vkCmdDrawIndexed(_buffer, indexCount, 1, 0, 0, 0);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

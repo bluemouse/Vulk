@@ -8,7 +8,7 @@
 #include <Vulk/VertexShader.h>
 #include <Vulk/FragmentShader.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Pipeline::Pipeline(const Device &device,
                    const RenderPass &renderPass,
@@ -163,4 +163,4 @@ void Pipeline::destroy() {
   _pipeline = VK_NULL_HANDLE;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

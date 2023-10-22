@@ -7,7 +7,7 @@
 
 #include <vector>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class VertexShader : public ShaderModule {
  public:
@@ -48,4 +48,4 @@ class VertexShader : public ShaderModule {
   std::vector<VkVertexInputAttributeDescription> _vertexInputAttributes;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

@@ -25,21 +25,21 @@ class Testbed : public MainWindow {
 
   void resizeSwapchain();
 
-  [[nodiscard]] Vulkan::Context& context() { return _context; }
-  [[nodiscard]] const Vulkan::Context& context() const { return _context; }
+  [[nodiscard]] Vulk::Context& context() { return _context; }
+  [[nodiscard]] const Vulk::Context& context() const { return _context; }
 
   [[nodiscard]] VkSurfaceKHR createWindowSurface(VkInstance instance) {
     return MainWindow::createWindowSurface(instance);
   }
 
   [[nodiscard]] static bool isPhysicalDeviceSuitable(VkPhysicalDevice device,
-                                                     const Vulkan::Surface& surface);
+                                                     const Vulk::Surface& surface);
   [[nodiscard]] static VkExtent2D chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                                uint32_t windowWidth,
                                                                uint32_t windowHeight);
 
-  [[nodiscard]] static Vulkan::VertexShader createVertexShader(const Vulkan::Device& device);
-  [[nodiscard]] static Vulkan::FragmentShader createFragmentShader(const Vulkan::Device& device);
+  [[nodiscard]] static Vulk::VertexShader createVertexShader(const Vulk::Device& device);
+  [[nodiscard]] static Vulk::FragmentShader createFragmentShader(const Vulk::Device& device);
 
   [[nodiscard]] static VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(
       const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -59,26 +59,26 @@ class Testbed : public MainWindow {
   void updateUniformBuffer();
 
  private:
-  Vulkan::Context _context;
+  Vulk::Context _context;
 
-  using IndexedDrawable = Vulkan::Drawable<Vertex, uint16_t>;
+  using IndexedDrawable = Vulk::Drawable<Vertex, uint16_t>;
   IndexedDrawable _drawable;
 
-  Vulkan::Image _textureImage;
-  Vulkan::ImageView _textureImageView;
-  Vulkan::Sampler _textureSampler;
+  Vulk::Image _textureImage;
+  Vulk::ImageView _textureImageView;
+  Vulk::Sampler _textureSampler;
 
   struct Frame {
-    Vulkan::CommandBuffer commandBuffer;
+    Vulk::CommandBuffer commandBuffer;
 
-    Vulkan::Semaphore imageAvailableSemaphore;
-    Vulkan::Semaphore renderFinishedSemaphore;
-    Vulkan::Fence fence;
+    Vulk::Semaphore imageAvailableSemaphore;
+    Vulk::Semaphore renderFinishedSemaphore;
+    Vulk::Fence fence;
 
-    Vulkan::UniformBuffer uniformBuffer;
+    Vulk::UniformBuffer uniformBuffer;
     void* uniformBufferMapped;
 
-    Vulkan::DescriptorSet descriptorSet;
+    Vulk::DescriptorSet descriptorSet;
   };
 
   std::vector<Frame> _frames;

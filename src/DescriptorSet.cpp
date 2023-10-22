@@ -5,7 +5,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 DescriptorSet::DescriptorSet(const DescriptorPool& pool,
                              const DescriptorSetLayout& layout,
@@ -94,4 +94,4 @@ void DescriptorSet::free() {
   _pool = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

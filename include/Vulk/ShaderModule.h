@@ -6,7 +6,7 @@
 
 #include <vector>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 
@@ -52,4 +52,4 @@ class ShaderModule {
   const Device* _device;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

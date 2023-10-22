@@ -4,12 +4,13 @@
 
 #include <functional>
 #include <vector>
+#include <limits>
 
 #include <Vulk/Image.h>
 #include <Vulk/ImageView.h>
 #include <Vulk/Framebuffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class PhysicalDevice;
@@ -71,9 +72,23 @@ class Swapchain {
 
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
 
-  [[nodiscard]] int32_t acquireNextImage(const Vulkan::Semaphore& imageAvailable) const;
+  // Acquire the next image from the swapchain and tag it as the active image.
+  VkResult acquireNextImage(const Vulk::Semaphore& imageAvailable) const;
 
-  VkResult present(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const;
+  // Present the active image to the surface
+  VkResult present(const Vulk::Semaphore& renderFinished) const;
+
+  [[nodiscard]] uint32_t activeImageIndex() const { return _activeImageIndex; }
+
+  [[nodiscard]] const Image& activeImage() const { return image(activeImageIndex()); }
+  [[nodiscard]] const ImageView& activeImageView() const { return imageView(activeImageIndex()); }
+  [[nodiscard]] const Framebuffer& activeFramebuffer() const {
+    return framebuffer(activeImageIndex());
+  }
+
+ private:
+  void deactivateActiveImage() const { _activeImageIndex = std::numeric_limits<uint32_t>::max(); }
+  bool hasActiveImage() const { return _activeImageIndex != std::numeric_limits<uint32_t>::max(); }
 
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
@@ -87,8 +102,10 @@ class Swapchain {
   std::vector<ImageView> _imageViews;
   std::vector<Framebuffer> _framebuffers;
 
+  mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();
+
   const Device* _device = nullptr;
   const Surface* _surface = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

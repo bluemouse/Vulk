@@ -2,7 +2,7 @@
 
 #include <Vulk/Instance.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Surface::Surface(const Instance& instance, VkSurfaceKHR surface) {
   create(instance, surface);
@@ -62,4 +62,4 @@ bool Surface::isAdequate(VkPhysicalDevice physicalDevice) const {
   return !supports.formats.empty() && !supports.presentModes.empty();
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

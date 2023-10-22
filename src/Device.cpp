@@ -5,7 +5,7 @@
 
 #include <Vulk/Instance.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Device::Device(const PhysicalDevice& physicalDevice,
                const std::vector<uint32_t>& queueFamilies,
@@ -114,4 +114,4 @@ void Device::waitIdle() const {
   MI_VERIFY(isCreated());
   vkDeviceWaitIdle(_device);
 }
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

@@ -4,8 +4,8 @@
 
 #include <Vulk/helpers_debug.h>
 
-#define NAMESPACE_VULKAN_BEGIN namespace Vulkan {
-#define NAMESPACE_VULKAN_END } // namespace vulkan
+#define NAMESPACE_Vulk_BEGIN namespace Vulk {
+#define NAMESPACE_Vulk_END } // namespace vulk
 
 #define MI_VERIFY_VKCMD(cmd)                                             \
   if (cmd != VK_SUCCESS) {                                               \

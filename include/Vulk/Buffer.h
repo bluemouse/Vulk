@@ -7,7 +7,7 @@
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class CommandBuffer;
@@ -77,4 +77,4 @@ class Buffer {
   const Device* _device = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

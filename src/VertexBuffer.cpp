@@ -1,6 +1,6 @@
 #include <Vulk/VertexBuffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 VertexBuffer::VertexBuffer(const Device& device, VkDeviceSize size, bool hostVisible) {
   create(device, size, hostVisible);
@@ -20,4 +20,4 @@ void VertexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisi
   Buffer::allocate(properties);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

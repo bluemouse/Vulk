@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class CommandBuffer;
@@ -44,4 +44,4 @@ class StagingBuffer : public Buffer {
                    bool waitForFinish = true);
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

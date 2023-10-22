@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 
@@ -20,4 +20,4 @@ class UniformBuffer : public Buffer {
   void create(const Device& device, VkDeviceSize size);
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

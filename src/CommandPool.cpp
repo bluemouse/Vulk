@@ -3,7 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 CommandPool::CommandPool(const Device& device, uint32_t queueFamilyIndex) {
   create(device, queueFamilyIndex);
@@ -61,4 +61,4 @@ void CommandPool::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

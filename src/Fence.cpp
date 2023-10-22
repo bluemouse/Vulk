@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Fence::Fence(const Device& device, bool signaled) {
   create(device, signaled);
@@ -65,4 +65,4 @@ void Fence::reset() {
   MI_VERIFY_VKCMD(vkResetFences(*_device, 1, &_fence));
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

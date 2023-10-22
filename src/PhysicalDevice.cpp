@@ -5,7 +5,7 @@
 #include <Vulk/Instance.h>
 #include <Vulk/Surface.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 PhysicalDevice::PhysicalDevice(const Instance& instance,
                                const IsDeviceSuitableFunc& isDeviceSuitable) {
@@ -84,4 +84,4 @@ PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice
   return queueFamilies;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 template <typename T>
 struct ImageTrait {
@@ -35,6 +35,6 @@ struct ImageTrait<glm::vec4> {
   [[maybe_unused]] static constexpr uint32_t dimension = 4;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END
 
-#define formatof(var) Vulkan::ImageTrait<decltype(var)>::format
+#define formatof(var) Vulk::ImageTrait<decltype(var)>::format

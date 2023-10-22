@@ -5,7 +5,7 @@
 #include <Vulk/ImageView.h>
 #include <Vulk/RenderPass.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
@@ -80,4 +80,4 @@ void Framebuffer::moveFrom(Framebuffer& rhs) {
   rhs._imageView = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 VertexShader::VertexShader(VertexShader&& rhs) noexcept {
   moveFrom(rhs);
@@ -52,4 +52,4 @@ void VertexShader::addDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorT
   ShaderModule::addDescriptorSetLayoutBinding(binding, type, VK_SHADER_STAGE_VERTEX_BIT);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

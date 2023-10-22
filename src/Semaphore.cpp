@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Semaphore::Semaphore(const Device& device) {
   create(device);
@@ -52,4 +52,4 @@ void Semaphore::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

@@ -8,7 +8,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Surface;
 
@@ -80,4 +80,4 @@ class Instance {
   ValidationCallback _validationCallback;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

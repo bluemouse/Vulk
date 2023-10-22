@@ -8,7 +8,7 @@
 
 #include <cstring>
 
-namespace Vulkan {
+NAMESPACE_Vulk_BEGIN
 
 Buffer::Buffer(const Device& device,
                VkDeviceSize size,
@@ -153,4 +153,4 @@ void Buffer::unmap() {
   _memory->unmap();
 }
 
-} // namespace Vulkan
+NAMESPACE_Vulk_END

@@ -6,7 +6,7 @@
 
 #include <vector>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class DescriptorPool;
 class DescriptorSetLayout;
@@ -51,4 +51,4 @@ class DescriptorSet {
   const DescriptorPool* _pool = nullptr;
 };
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

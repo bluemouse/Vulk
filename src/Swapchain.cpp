@@ -9,7 +9,7 @@
 
 #include <limits>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Swapchain::Swapchain(const Device& device,
                      const Surface& surface,
@@ -107,10 +107,14 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
     _imageViews.emplace_back(*_device, _images.back());
     _framebuffers.emplace_back(*_device, renderPass, _imageViews.back());
   }
+
+  deactivateActiveImage();
 }
 
 void Swapchain::destroy() {
   MI_VERIFY(isCreated());
+
+  deactivateActiveImage();
 
   // Be careful about changing the destroying order.
   _framebuffers.clear();
@@ -156,25 +160,28 @@ void Swapchain::resize(const VkExtent2D& surfaceExtent) {
   }
 }
 
-int32_t Swapchain::acquireNextImage(const Vulkan::Semaphore& imageAvailable) const {
-  uint32_t imageIndex = 0;
+VkResult Swapchain::acquireNextImage(const Vulk::Semaphore& imageAvailable) const {
+  deactivateActiveImage();
+
   auto result = vkAcquireNextImageKHR(device(),
                                       _swapchain,
                                       std::numeric_limits<uint64_t>::max(),
                                       imageAvailable,
                                       VK_NULL_HANDLE,
-                                      &imageIndex);
+                                      &_activeImageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    return VK_ERROR_OUT_OF_DATE_KHR;
+    return VK_ERROR_OUT_OF_DATE_KHR; // Require a swapchain resize
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("Error: failed to acquire swapchain image!");
   }
 
-  return static_cast<int32_t>(imageIndex);
+  return result;
 }
 
-VkResult Swapchain::present(uint32_t imageIndex, const Vulkan::Semaphore& renderFinished) const {
+VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
+  MI_VERIFY(hasActiveImage());
+
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -184,9 +191,9 @@ VkResult Swapchain::present(uint32_t imageIndex, const Vulkan::Semaphore& render
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = &_swapchain;
 
-  presentInfo.pImageIndices = &imageIndex;
+  presentInfo.pImageIndices = &_activeImageIndex;
 
   return vkQueuePresentKHR(_device->queue("present"), &presentInfo);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

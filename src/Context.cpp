@@ -33,7 +33,7 @@ VkPresentModeKHR chooseDefaultPresentMode(
 }
 } // namespace
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 void Context::create(const CreateInfo& createInfo) {
   createInstance(createInfo.versionMajor,
@@ -86,7 +86,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
         return false;
       }
 
-      auto queueFamilies = Vulkan::PhysicalDevice::findQueueFamilies(device, _surface);
+      auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, _surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
       return isQueueFamiliesComplete && _surface.isAdequate(device);
     });
@@ -110,7 +110,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
         return false;
       }
 
-      auto queueFamilies = Vulkan::PhysicalDevice::findQueueFamilies(device, _surface);
+      auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, _surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
       return isQueueFamiliesComplete && _surface.isAdequate(device);
     });
@@ -195,4 +195,4 @@ bool Context::isComplete() const {
   return true;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

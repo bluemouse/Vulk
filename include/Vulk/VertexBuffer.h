@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 class Device;
 class CommandBuffer;
@@ -47,4 +47,4 @@ inline void VertexBuffer::create(const Device& device,
   load(stagingCommandBuffer, vertices.data(), size);
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

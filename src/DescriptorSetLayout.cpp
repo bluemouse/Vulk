@@ -6,7 +6,7 @@
 
 #include <map>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 DescriptorSetLayout::DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders) {
   create(device, std::move(shaders));
@@ -83,4 +83,4 @@ void DescriptorSetLayout::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END

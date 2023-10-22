@@ -3,7 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
 
-NAMESPACE_VULKAN_BEGIN
+NAMESPACE_Vulk_BEGIN
 
 Image::Image(const Device& device,
              VkFormat format,
@@ -224,4 +224,4 @@ VkImageViewType Image::imageViewType() const {
   }
 }
 
-NAMESPACE_VULKAN_END
+NAMESPACE_Vulk_END
