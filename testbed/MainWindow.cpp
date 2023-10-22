@@ -1,11 +1,11 @@
 #include "MainWindow.h"
 
-#include <Vulk/Instance.h>
-
-#define GLFW_INCLUDE_VULKAN
+#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 #include <stdexcept>
+
+#include <Vulk/Instance.h>
 
 void MainWindow::init(int width, int height) {
   glfwInit();

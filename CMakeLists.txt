@@ -88,9 +88,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
+set(glm_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/glm)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     include
+    ${glm_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}

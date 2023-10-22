@@ -11,11 +11,11 @@ list(APPEND CMAKE_MODULE_PATH
 )
 
 find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
-find_package(tinyobjloader REQUIRED)
+add_library(glfw::glfw ALIAS glfw)
 
-find_package(PkgConfig)
-pkg_get_variable(STB_INCLUDE_DIR stb includedir)
+set(stb_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
+set(tinyobjloader_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
+
 
 set(SRC_FILES
   main.cpp
@@ -48,13 +48,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME}
   PRIVATE
-    ${STB_INCLUDE_DIR}
+    ${stb_INCLUDE_DIR}
+    ${tinyobjloader_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
     Vulk::Vulk
-    glfw
+    glfw::glfw
 )
 
 if(MSVC)
