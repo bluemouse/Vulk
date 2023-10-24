@@ -4,15 +4,9 @@
 
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
+#include <Vulk/Texture.h>
 
 class Testbed : public MainWindow {
- public:
-  struct Vertex {
-    glm::vec2 pos;
-    glm::vec3 color;
-    glm::vec2 texCoord;
-  };
-
  public:
   void init(int width, int height) override;
   void cleanup() override;
@@ -61,12 +55,14 @@ class Testbed : public MainWindow {
  private:
   Vulk::Context _context;
 
-  using IndexedDrawable = Vulk::Drawable<Vertex, uint16_t>;
-  IndexedDrawable _drawable;
+  struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+  };
+  Vulk::Drawable<Vertex, uint16_t> _drawable;
 
-  Vulk::Image _textureImage;
-  Vulk::ImageView _textureImageView;
-  Vulk::Sampler _textureSampler;
+  Vulk::Texture _texture;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;

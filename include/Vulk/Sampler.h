@@ -12,6 +12,14 @@ class Device;
 
 class Sampler {
  public:
+  struct Filter {
+    VkFilter mag;
+    VkFilter min;
+
+    Filter(VkFilter filter) : mag(filter), min(filter) {}
+    Filter(VkFilter mag, VkFilter min) : mag(mag), min(min) {}
+  };
+
   struct AddressMode {
     VkSamplerAddressMode u;
     VkSamplerAddressMode v;
@@ -22,13 +30,6 @@ class Sampler {
                 VkSamplerAddressMode v,
                 VkSamplerAddressMode w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
         : u(u), v(v), w(w) {}
-  };
-  struct Filter {
-    VkFilter mag;
-    VkFilter min;
-
-    Filter(VkFilter filter) : mag(filter), min(filter) {}
-    Filter(VkFilter mag, VkFilter min) : mag(mag), min(min) {}
   };
 
   using SamplerCreateInfoOverride = std::function<void(VkSamplerCreateInfo*)>;

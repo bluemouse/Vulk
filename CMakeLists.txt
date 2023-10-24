@@ -10,7 +10,9 @@ option(BUILD_TESTBED  "Build the testbed application" ON)
 find_package(Vulkan REQUIRED)
 
 set(SRC_FILES
+    # Helpers
     src/helpers_debug.cpp
+    # Vulkan core classes
     src/Instance.cpp
     src/PhysicalDevice.cpp
     src/Surface.cpp
@@ -38,13 +40,17 @@ set(SRC_FILES
     src/DeviceMemory.cpp
     src/Semaphore.cpp
     src/Fence.cpp
+    # Engine classes
     src/Context.cpp
     src/Toolbox.cpp
+    src/Texture.cpp
 )
 
 set(HEADER_FILES
+    # Helpers
     include/Vulk/helpers_debug.h
     include/Vulk/helpers_vulkan.h
+    # Vulkan core classes
     include/Vulk/Instance.h
     include/Vulk/PhysicalDevice.h
     include/Vulk/Surface.h
@@ -72,9 +78,11 @@ set(HEADER_FILES
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
+    # Engine classes
     include/Vulk/Context.h
     include/Vulk/Drawable.h
     include/Vulk/Toolbox.h
+    include/Vulk/Texture.h
     include/Vulk/TypeTraits.h
 )
 

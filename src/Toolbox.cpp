@@ -16,6 +16,26 @@ Toolbox::Toolbox(const Context& context)
 }
 
 Image Toolbox::createImage(const char* imageFile) const {
+  auto [stagingBuffer, width, height] = createStagingBuffer(imageFile);
+
+  Image image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  image.allocate();
+  image.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+
+  return image;
+}
+
+Texture Toolbox::createTexture(const char* textureFile) const {
+  auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
+
+  Texture texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+
+  return texture;
+}
+
+auto Toolbox::createStagingBuffer(const char* imageFile) const
+    -> std::tuple<StagingBuffer, width_t, height_t> {
   int texWidth = 0;
   int texHeight = 0;
   int texChannels = 0;
@@ -30,19 +50,7 @@ Image Toolbox::createImage(const char* imageFile) const {
 
   stbi_image_free(pixels);
 
-  Image image;
-  image.create(_context.device(),
-                       VK_FORMAT_R8G8B8A8_SRGB,
-                       {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)});
-  image.allocate();
-
-  CommandBuffer cmdBuffer{_context.commandPool()};
-  image.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  stagingBuffer.copyToImage(
-      cmdBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-  image.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-  return image;
+  return {std::move(stagingBuffer), texWidth, texHeight};
 }
 
 NAMESPACE_Vulk_END

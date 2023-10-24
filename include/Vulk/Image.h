@@ -7,8 +7,9 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class Device;
+    class Device;
 class CommandBuffer;
+class StagingBuffer;
 
 class Image {
  public:
@@ -48,9 +49,7 @@ class Image {
   void* map(VkDeviceSize offset, VkDeviceSize size);
   void unmap();
 
-  void transitToNewLayout(const CommandBuffer& commandBuffer,
-                          VkImageLayout newLayout,
-                          bool waitForFinish = true);
+  void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
 
   operator VkImage() const { return _image; }
 
@@ -75,13 +74,17 @@ class Image {
 
   bool isExternal() const { return _external; }
 
+  void transitToNewLayout(const CommandBuffer& commandBuffer,
+                          VkImageLayout newLayout,
+                          bool waitForFinish = true) const;
+
  private:
   VkImage _image = VK_NULL_HANDLE;
 
   VkImageType _type = VK_IMAGE_TYPE_2D;
   VkFormat _format = VK_FORMAT_UNDEFINED;
   VkExtent3D _extent = {0, 0, 0};
-  VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
+  mutable VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   DeviceMemory::Ptr _memory;
 

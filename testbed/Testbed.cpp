@@ -35,9 +35,7 @@ void Testbed::init(int width, int height) {
   createContext();
   createRenderable();
 
-  _textureImage = Vulk::Toolbox(_context).createImage("textures/texture.jpg");
-  _textureImageView.create(_context.device(), _textureImage);
-  _textureSampler.create(_context.device(), {VK_FILTER_LINEAR}, {VK_SAMPLER_ADDRESS_MODE_REPEAT});
+  _texture = Vulk::Toolbox(_context).createTexture("textures/texture.jpg");
 
   createFrames();
 }
@@ -45,9 +43,7 @@ void Testbed::init(int width, int height) {
 void Testbed::cleanup() {
   _frames.clear();
 
-  _textureSampler.destroy();
-  _textureImageView.destroy();
-  _textureImage.destroy();
+  _texture.destroy();
 
   _drawable.destroy();
   _context.destroy();
@@ -162,8 +158,8 @@ void Testbed::createFrames() {
 
   VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageInfo.imageView = _textureImageView;
-  imageInfo.sampler = _textureSampler;
+  imageInfo.imageView = _texture;
+  imageInfo.sampler = _texture;
 
   VkDescriptorBufferInfo bufferInfo{};
   bufferInfo.offset = 0;

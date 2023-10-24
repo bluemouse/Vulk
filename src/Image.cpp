@@ -2,6 +2,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
+#include <Vulk/StagingBuffer.h>
 
 NAMESPACE_Vulk_BEGIN
 
@@ -161,9 +162,15 @@ void Image::unmap() {
   _memory->unmap();
 }
 
+void Image::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
+  transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  stagingBuffer.copyToImage(cmdBuffer, *this, width(), height());
+  transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
 void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
                                VkImageLayout newLayout,
-                               bool waitForFinish) {
+                               bool waitForFinish) const {
   commandBuffer.executeSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

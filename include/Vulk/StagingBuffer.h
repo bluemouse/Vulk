@@ -27,21 +27,21 @@ class StagingBuffer : public Buffer {
   void copyToBuffer(const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     const VkBufferCopy& roi,
-                    bool waitForFinish = true);
+                    bool waitForFinish = true) const;
   void copyToBuffer(const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     VkDeviceSize size,
-                    bool waitForFinish = true);
+                    bool waitForFinish = true) const;
 
   void copyToImage(const CommandBuffer& commandBuffer,
                    Image& dst,
                    const VkBufferImageCopy& roi,
-                   bool waitForFinish = true);
+                   bool waitForFinish = true) const;
   void copyToImage(const CommandBuffer& commandBuffer,
                    Image& dst,
                    uint32_t width,
                    uint32_t height,
-                   bool waitForFinish = true);
+                   bool waitForFinish = true) const;
 };
 
 NAMESPACE_Vulk_END
