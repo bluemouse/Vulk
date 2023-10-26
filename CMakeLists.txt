@@ -7,6 +7,12 @@ project(Vulk
 
 option(BUILD_TESTBED  "Build the testbed application" ON)
 
+# @add the search path of CMake modules
+list(APPEND CMAKE_MODULE_PATH
+  "${CMAKE_SOURCE_DIR}/cmake" # cmake functions/macros
+  "${CMAKE_SOURCE_DIR}/cmake/modules"# cmake find modules
+)
+
 find_package(Vulkan REQUIRED)
 
 set(SRC_FILES
@@ -92,7 +98,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-  CXX_STANDARD 17
+  CXX_STANDARD 20
   POSITION_INDEPENDENT_CODE ON
   COMPILE_WARNING_AS_ERROR ON
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin

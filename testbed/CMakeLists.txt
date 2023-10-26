@@ -4,12 +4,6 @@ project(Testbed
   DESCRIPTION "Testbed of Vulk library"
 )
 
-# @add the search path of CMake modules
-list(APPEND CMAKE_MODULE_PATH
-  "${CMAKE_SOURCE_DIR}/cmake" # cmake functions/macros
-  "${CMAKE_SOURCE_DIR}/cmake/modules"# cmake find modules
-)
-
 find_package(glfw3 REQUIRED)
 add_library(glfw::glfw ALIAS glfw)
 

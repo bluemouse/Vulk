@@ -11,12 +11,23 @@
 #include <set>
 #include <functional>
 #include <cstring>
+#include <filesystem>
 
 namespace {
 #ifdef NDEBUG
 constexpr bool kEnableValidationLayers = false;
 #else
 constexpr bool kEnableValidationLayers = true;
+#endif
+
+#if defined(__linux__)
+std::filesystem::path executablePath() {
+  return std::filesystem::canonical("/proc/self/exe").parent_path();
+}
+#else
+std::filesystem::path getExecutablePath() {
+  return std::filesystem::path{};
+}
 #endif
 } // namespace
 
@@ -35,7 +46,8 @@ void Testbed::init(int width, int height) {
   createContext();
   createRenderable();
 
-  _texture = Vulk::Toolbox(_context).createTexture("textures/texture.jpg");
+  auto textureFile = executablePath() / "textures/texture.jpg";
+  _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
 
   createFrames();
 }
@@ -177,7 +189,8 @@ void Testbed::createFrames() {
 }
 
 Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
-  Vulk::VertexShader vertShader{device, "shaders/vert.spv"};
+  auto shaderFile = executablePath() / "shaders/vert.spv";
+  Vulk::VertexShader vertShader{device, shaderFile.string().c_str()};
   // vertShader.addVertexInputBinding(0, sizeof(Vertex));
   vertShader.addVertexInputBindings({{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}});
 
@@ -192,7 +205,8 @@ Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
 }
 
 Vulk::FragmentShader Testbed::createFragmentShader(const Vulk::Device& device) {
-  Vulk::FragmentShader fragShader{device, "shaders/frag.spv"};
+  auto shaderFile = executablePath() / "shaders/frag.spv";
+  Vulk::FragmentShader fragShader{device, shaderFile.string().c_str()};
   fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
   return fragShader;
