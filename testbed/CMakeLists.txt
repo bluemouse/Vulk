@@ -24,7 +24,7 @@ set(SHADER_FILES
 )
 
 set(TEXTURE_FILES
-  resources/texture.jpg
+  resources/ScreenTestPattern.png
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})

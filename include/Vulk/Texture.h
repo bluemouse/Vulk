@@ -56,11 +56,12 @@ class Texture {
 
   [[nodiscard]] VkImageType type() const { return _image.type(); }
   [[nodiscard]] VkFormat format() const { return _image.format(); }
-  [[nodiscard]] VkExtent3D extent() const { return _image.extent(); }
+  [[nodiscard]] VkExtent2D extent() const { return {width(), height()}; }
+  [[nodiscard]] VkExtent3D extent3D() const { return _image.extent(); }
 
-  [[nodiscard]] uint32_t width() const { return extent().width; }
-  [[nodiscard]] uint32_t height() const { return extent().height; }
-  [[nodiscard]] uint32_t depth() const { return extent().depth; }
+  [[nodiscard]] uint32_t width() const { return _image.extent().width; }
+  [[nodiscard]] uint32_t height() const { return _image.extent().height; }
+  [[nodiscard]] uint32_t depth() const { return _image.extent().depth; }
 
   [[nodiscard]] bool isCreated() const { return _image.isCreated(); }
   [[nodiscard]] bool isAllocated() const { return _image.isAllocated(); }

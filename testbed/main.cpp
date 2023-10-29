@@ -8,7 +8,7 @@ int main() {
   Testbed testbed;
 
   constexpr int width = 800;
-  constexpr int height = 600;
+  constexpr int height = 800;
   testbed.init(width, height);
   try {
     testbed.run();

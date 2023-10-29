@@ -3,13 +3,13 @@
 #include <Vulk/Toolbox.h>
 #include <Vulk/TypeTraits.h>
 
-#define GLM_FORCE_RADIANS
+//#define GLM_FORCE_LEFT_HANDED
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
-#include <chrono>
 #include <set>
-#include <functional>
 #include <cstring>
 #include <filesystem>
 
@@ -46,7 +46,7 @@ void Testbed::init(int width, int height) {
   createContext();
   createRenderable();
 
-  auto textureFile = executablePath() / "textures/texture.jpg";
+  auto textureFile = executablePath() / "textures/ScreenTestPattern.png";
   _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
 
   createFrames();
@@ -145,10 +145,10 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
-  const std::vector<Vertex> vertices = {{{-0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {1.0F, 0.0F}},
-                                        {{0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F}},
-                                        {{-0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
+  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{-1.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                        {{1.0F, 1.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                        {{1.0F, -1.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
 
   const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
@@ -226,26 +226,46 @@ void Testbed::resizeSwapchain() {
 }
 
 void Testbed::updateUniformBuffer() {
-  using std::chrono::high_resolution_clock;
-  using std::chrono::duration;
-  using std::chrono::seconds;
-
-  static auto startTime = high_resolution_clock::now();
-
-  auto currentTime = high_resolution_clock::now();
-  float time = duration<float, seconds::period>(currentTime - startTime).count();
-
-  auto extent = _context.swapchain().surfaceExtent();
-
   using glm::vec3;
+  using glm::vec4;
   using glm::mat4;
-  using glm::radians;
+
+  auto [textureW, textureH] = _texture.extent();
+  float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
+
   UniformBufferObject ubo{};
-  ubo.model = glm::rotate(mat4(1.0F), time * radians(90.0F), vec3(0.0F, 0.0F, 1.0F));
-  ubo.view = glm::lookAt(vec3(2.0F, 2.0F, 2.0F), vec3(0.0F, 0.0F, 0.0F), vec3(0.0F, 0.0F, 1.0F));
-  float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
-  ubo.proj = glm::perspective(radians(45.0F), aspect, 0.1F, 10.0F);
+
+  // Make the aspect ratio of the rendered texture match the physical texture.
+  ubo.model = mat4{1.0F};
+  if (textureAspect > 1.0F) {
+    ubo.model[1][1] = 1.0F / textureAspect;
+  } else {
+    ubo.model[0][0] = 1.0F / textureAspect;
+  }
+
+  vec3 cameraPos{0.0F, 0.0F, -1.0F};
+  vec3 cameraLookAt{0.0F, 0.0F, 0.0F};
+  vec3 cameraUp{0.0F, -1.0F, 0.0F};
+  auto cameraDist = glm::distance(cameraPos, cameraLookAt);
+
+  ubo.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
+
+  auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
+  float surfaceAspect = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
+
+  vec4 roi = surfaceAspect > 1.0F ? vec4{-surfaceAspect, surfaceAspect, 1.0F, -1.0F}
+                                  : vec4{-1.0F, 1.0F, 1.0F / surfaceAspect, -1.0F / surfaceAspect};
+
+// #define USE_PERSPECTIVE_PROJECTION
+#if defined(USE_PERSPECTIVE_PROJECTION)
+  float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
+  ubo.proj = glm::perspective(fovy, surfaceAspect, 0.0F, cameraDist*2);
   ubo.proj[1][1] *= -1;
+#else
+  auto zNear = cameraLookAt.z - cameraDist;
+  auto zFar = cameraLookAt.z + cameraDist;
+  ubo.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
+#endif
 
   memcpy(_currentFrame->uniformBufferMapped, &ubo, sizeof(ubo));
 }
