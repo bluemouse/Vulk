@@ -5,6 +5,7 @@
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
 #include <Vulk/Texture.h>
+#include <Vulk/TypeTraits.h>
 
 class Testbed : public MainWindow {
  public:
@@ -46,7 +47,7 @@ class Testbed : public MainWindow {
 
   void createRenderable();
 
-    void createFrames();
+  void createFrames();
 
   void updateUniformBuffer();
 
@@ -59,10 +60,33 @@ class Testbed : public MainWindow {
     glm::vec2 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
+
+    static VkVertexInputBindingDescription bindingDescription(uint32_t binding) {
+      return {binding, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
+    }
+    static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
+      // In shader.vert, we have:
+      // layout(location = 0) in vec2 inPos;
+      // layout(location = 1) in vec3 inColor;
+      // layout(location = 2) in vec2 inTexCoord;
+      return {{0, binding, formatof(Vertex::pos), offsetof(Vertex, pos)},
+              {1, binding, formatof(Vertex::color), offsetof(Vertex, color)},
+              {2, binding, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}};
+    }
   };
+  static constexpr uint32_t VertexBufferBinding = 0U;
+
   Vulk::Drawable<Vertex, uint16_t> _drawable;
 
   Vulk::Texture _texture;
+  static constexpr uint32_t TextureBinding = 1U;
+
+  struct UniformBufferObject {
+    alignas(sizeof(glm::vec4)) glm::mat4 model;
+    alignas(sizeof(glm::vec4)) glm::mat4 view;
+    alignas(sizeof(glm::vec4)) glm::mat4 proj;
+  };
+  static constexpr uint32_t UniformBufferBinding = 0U;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;

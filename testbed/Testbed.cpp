@@ -31,15 +31,6 @@ std::filesystem::path getExecutablePath() {
 #endif
 } // namespace
 
-namespace {
-struct UniformBufferObject {
-  alignas(sizeof(glm::vec4)) glm::mat4 model;
-  alignas(sizeof(glm::vec4)) glm::mat4 view;
-  alignas(sizeof(glm::vec4)) glm::mat4 proj;
-};
-
-} // namespace
-
 void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
@@ -98,7 +89,7 @@ void Testbed::drawFrame() {
         auto extent = framebuffer.extent();
         commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), 0);
+        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), VertexBufferBinding);
         commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
         commandBuffer.bindDescriptorSet(_context.pipeline(), _currentFrame->descriptorSet);
 
@@ -191,15 +182,16 @@ void Testbed::createFrames() {
 Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
   auto shaderFile = executablePath() / "shaders/vert.spv";
   Vulk::VertexShader vertShader{device, shaderFile.string().c_str()};
-  // vertShader.addVertexInputBinding(0, sizeof(Vertex));
-  vertShader.addVertexInputBindings({{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}});
+  vertShader.addVertexInputBindings({Vertex::bindingDescription(VertexBufferBinding)});
+  vertShader.addVertexInputAttributes(Vertex::attributesDescription(VertexBufferBinding));
 
-  vertShader.addVertexInputAttributes(
-      {{0, 0, formatof(Vertex::pos), offsetof(Vertex, pos)},
-       {1, 0, formatof(Vertex::color), offsetof(Vertex, color)},
-       {2, 0, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}});
-
-  vertShader.addDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+  // In shader.vert, we have:
+  // layout(binding = 0) uniform UniformBufferObject {
+  //     mat4 model;
+  //     mat4 view;
+  //     mat4 proj;
+  // } ubo;
+  vertShader.addDescriptorSetLayoutBinding(UniformBufferBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
   return vertShader;
 }
@@ -207,7 +199,10 @@ Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
 Vulk::FragmentShader Testbed::createFragmentShader(const Vulk::Device& device) {
   auto shaderFile = executablePath() / "shaders/frag.spv";
   Vulk::FragmentShader fragShader{device, shaderFile.string().c_str()};
-  fragShader.addDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+  // In shader.frag, we have:
+  // layout(binding = 1) uniform sampler2D texSampler;
+  fragShader.addDescriptorSetLayoutBinding(TextureBinding,
+                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
   return fragShader;
 }
@@ -259,7 +254,7 @@ void Testbed::updateUniformBuffer() {
 // #define USE_PERSPECTIVE_PROJECTION
 #if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
-  ubo.proj = glm::perspective(fovy, surfaceAspect, 0.0F, cameraDist*2);
+  ubo.proj = glm::perspective(fovy, surfaceAspect, 0.0F, cameraDist * 2);
   ubo.proj[1][1] *= -1;
 #else
   auto zNear = cameraLookAt.z - cameraDist;
