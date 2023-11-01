@@ -79,14 +79,14 @@ class Testbed : public MainWindow {
   Vulk::Drawable<Vertex, uint16_t> _drawable;
 
   Vulk::Texture _texture;
-  static constexpr uint32_t TextureBinding = 1U;
 
-  struct UniformBufferObject {
+  struct Transformation {
+    static constexpr const char* typeName = "Transformation";
+
     alignas(sizeof(glm::vec4)) glm::mat4 model;
     alignas(sizeof(glm::vec4)) glm::mat4 view;
     alignas(sizeof(glm::vec4)) glm::mat4 proj;
   };
-  static constexpr uint32_t UniformBufferBinding = 0U;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;

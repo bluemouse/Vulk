@@ -15,6 +15,12 @@ list(APPEND CMAKE_MODULE_PATH
 
 find_package(Vulkan REQUIRED)
 
+set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "")
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "")
+add_subdirectory(external/SPIRV-Reflect)
+add_library(spirv-reflect::spirv-reflect ALIAS spirv-reflect-static)
+
+
 set(SRC_FILES
     # Helpers
     src/helpers_debug.cpp
@@ -50,6 +56,7 @@ set(SRC_FILES
     src/Context.cpp
     src/Toolbox.cpp
     src/Texture.cpp
+    src/TypeTraits.cpp
 )
 
 set(HEADER_FILES
@@ -119,6 +126,8 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     Vulkan::Vulkan
+    spirv-reflect::spirv-reflect
+    # spirv-cross::c
 )
 
 if(MSVC)

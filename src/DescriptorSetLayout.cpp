@@ -5,6 +5,8 @@
 #include <Vulk/helpers_vulkan.h>
 
 #include <map>
+#include <vector>
+#include <algorithm>
 
 NAMESPACE_Vulk_BEGIN
 
@@ -50,18 +52,36 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
   for (auto* shader : shaders) {
     numBindings += shader->descriptorSetLayoutBindings().size();
   }
-
-  std::map<VkDescriptorType, int> types;
   _bindings.reserve(numBindings);
+
+    // Append all bindings from all shaders to `_bindings`
   for (auto* shader : shaders) {
-    for (const auto& binding : shader->descriptorSetLayoutBindings()) {
-      _bindings.push_back(binding);
-      types[binding.descriptorType] += 1;
-    }
+    _bindings.insert(std::end(_bindings),
+                     std::begin(shader->descriptorSetLayoutBindings()),
+                     std::end(shader->descriptorSetLayoutBindings()));
   }
 
-  _poolSizes.reserve(types.size());
-  for (const auto& [type, count] : types) {
+  std::sort(std::begin(_bindings),
+            std::end(_bindings),
+            [](const VkDescriptorSetLayoutBinding& a, const VkDescriptorSetLayoutBinding& b) {
+              return a.binding < b.binding;
+            });
+
+  std::unique(std::begin(_bindings),
+              std::end(_bindings),
+              [](const VkDescriptorSetLayoutBinding& a, const VkDescriptorSetLayoutBinding& b) {
+                return a.binding == b.binding;
+              });
+
+  //TODO Should we verify that there is no mutiple types in one the bindings?
+
+  std::map<VkDescriptorType, int> typeCounts;
+  for (const auto& binding : _bindings) {
+    typeCounts[binding.descriptorType] += 1;
+  }
+
+  _poolSizes.reserve(typeCounts.size());
+  for (const auto& [type, count] : typeCounts) {
     _poolSizes.push_back({type, static_cast<uint32_t>(count)});
   }
 

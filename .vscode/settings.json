@@ -57,7 +57,19 @@
     "typeinfo": "cpp",
     "csignal": "cpp",
     "map": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "any": "cpp",
+    "bitset": "cpp",
+    "codecvt": "cpp",
+    "condition_variable": "cpp",
+    "unordered_set": "cpp",
+    "regex": "cpp",
+    "iomanip": "cpp",
+    "mutex": "cpp",
+    "semaphore": "cpp",
+    "stop_token": "cpp",
+    "thread": "cpp",
+    "variant": "cpp"
   },
   "cSpell.words": [
     "STRINGIZE",

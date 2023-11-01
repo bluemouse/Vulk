@@ -55,6 +55,7 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
 
   const auto& layoutBindings = layout.bindings();
   MI_VERIFY(bindings.size() == layoutBindings.size());
+  //TODO Verify the stored order of bindings match the order of layoutBindings
 
   std::vector<VkWriteDescriptorSet> writes{bindings.size()};
 
@@ -67,9 +68,9 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
     writes[i].descriptorCount = 1;
     if (layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
       MI_VERIFY(bindings[i].bufferInfo != nullptr);
+      //TODO Verify typename of bindings[i].bufferInfo match the typename of layoutBindings[i]
       writes[i].pBufferInfo = bindings[i].bufferInfo;
-    }
-    if (layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+    } else if (layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
       MI_VERIFY(bindings[i].imageInfo != nullptr);
       writes[i].pImageInfo = bindings[i].imageInfo;
     }

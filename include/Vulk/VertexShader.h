@@ -9,6 +9,8 @@
 
 NAMESPACE_Vulk_BEGIN
 
+    class Device;
+
 class VertexShader : public ShaderModule {
  public:
   using ShaderModule::ShaderModule;
@@ -42,10 +44,6 @@ class VertexShader : public ShaderModule {
 
  private:
   void moveFrom(VertexShader& rhs);
-
- private:
-  std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
-  std::vector<VkVertexInputAttributeDescription> _vertexInputAttributes;
 };
 
 NAMESPACE_Vulk_END

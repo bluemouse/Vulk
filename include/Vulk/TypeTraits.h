@@ -4,6 +4,8 @@
 
 #include <Vulk/helpers_vulkan.h>
 
+#include <glm/glm.hpp>
+
 NAMESPACE_Vulk_BEGIN
 
 template <typename T>
@@ -37,6 +39,12 @@ struct ImageTrait<glm::vec4> {
   [[maybe_unused]] static constexpr uint32_t dimension = 4;
 };
 
+struct FormatInfo {
+  // Return the number of bytes of the given format
+  static uint32_t size(VkFormat format);
+};
+
 NAMESPACE_Vulk_END
 
 #define formatof(var) Vulk::ImageTrait<decltype(var)>::format
+#define formatsizeof(format) Vulk::FormatInfo::size(format)

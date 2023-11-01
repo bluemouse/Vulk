@@ -3,9 +3,9 @@
 #include <Vulk/Toolbox.h>
 #include <Vulk/TypeTraits.h>
 
+#include <glm/glm.hpp>
 //#define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
@@ -155,7 +155,7 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore.create(_context.device());
     frame.fence.create(_context.device(), true);
 
-    frame.uniformBuffer.create(_context.device(), sizeof(UniformBufferObject));
+    frame.uniformBuffer.create(_context.device(), sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
   }
 
@@ -181,30 +181,12 @@ void Testbed::createFrames() {
 
 Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
   auto shaderFile = executablePath() / "shaders/vert.spv";
-  Vulk::VertexShader vertShader{device, shaderFile.string().c_str()};
-  vertShader.addVertexInputBindings({Vertex::bindingDescription(VertexBufferBinding)});
-  vertShader.addVertexInputAttributes(Vertex::attributesDescription(VertexBufferBinding));
-
-  // In shader.vert, we have:
-  // layout(binding = 0) uniform UniformBufferObject {
-  //     mat4 model;
-  //     mat4 view;
-  //     mat4 proj;
-  // } ubo;
-  vertShader.addDescriptorSetLayoutBinding(UniformBufferBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-
-  return vertShader;
+  return {device, shaderFile.string().c_str()};
 }
 
 Vulk::FragmentShader Testbed::createFragmentShader(const Vulk::Device& device) {
   auto shaderFile = executablePath() / "shaders/frag.spv";
-  Vulk::FragmentShader fragShader{device, shaderFile.string().c_str()};
-  // In shader.frag, we have:
-  // layout(binding = 1) uniform sampler2D texSampler;
-  fragShader.addDescriptorSetLayoutBinding(TextureBinding,
-                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-
-  return fragShader;
+  return {device, shaderFile.string().c_str()};
 }
 
 void Testbed::resizeSwapchain() {
@@ -228,14 +210,14 @@ void Testbed::updateUniformBuffer() {
   auto [textureW, textureH] = _texture.extent();
   float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
 
-  UniformBufferObject ubo{};
+  Transformation xform{};
 
   // Make the aspect ratio of the rendered texture match the physical texture.
-  ubo.model = mat4{1.0F};
+  xform.model = mat4{1.0F};
   if (textureAspect > 1.0F) {
-    ubo.model[1][1] = 1.0F / textureAspect;
+    xform.model[1][1] = 1.0F / textureAspect;
   } else {
-    ubo.model[0][0] = 1.0F / textureAspect;
+    xform.model[0][0] = 1.0F / textureAspect;
   }
 
   vec3 cameraPos{0.0F, 0.0F, -1.0F};
@@ -243,7 +225,7 @@ void Testbed::updateUniformBuffer() {
   vec3 cameraUp{0.0F, -1.0F, 0.0F};
   auto cameraDist = glm::distance(cameraPos, cameraLookAt);
 
-  ubo.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
+  xform.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
 
   auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
   float surfaceAspect = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
@@ -259,10 +241,10 @@ void Testbed::updateUniformBuffer() {
 #else
   auto zNear = cameraLookAt.z - cameraDist;
   auto zFar = cameraLookAt.z + cameraDist;
-  ubo.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
+  xform.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
 #endif
 
-  memcpy(_currentFrame->uniformBufferMapped, &ubo, sizeof(ubo));
+  memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));
 }
 
 bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface& surface) {
