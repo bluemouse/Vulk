@@ -62,7 +62,7 @@ class Testbed : public MainWindow {
     glm::vec2 texCoord;
 
     static VkVertexInputBindingDescription bindingDescription(uint32_t binding) {
-      return {binding, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
+      return {binding, Vertex::size(), VK_VERTEX_INPUT_RATE_VERTEX};
     }
     static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
       // In shader.vert, we have:
@@ -73,20 +73,26 @@ class Testbed : public MainWindow {
               {1, binding, formatof(Vertex::color), offsetof(Vertex, color)},
               {2, binding, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}};
     }
+    static constexpr uint32_t size() { return sizeof(Vertex); }
   };
-  static constexpr uint32_t VertexBufferBinding = 0U;
-
-  Vulk::Drawable<Vertex, uint16_t> _drawable;
-
-  Vulk::Texture _texture;
+  uint32_t _vertexBufferBinding = 0U;
 
   struct Transformation {
-    static constexpr const char* typeName = "Transformation";
-
     alignas(sizeof(glm::vec4)) glm::mat4 model;
     alignas(sizeof(glm::vec4)) glm::mat4 view;
     alignas(sizeof(glm::vec4)) glm::mat4 proj;
+
+    static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
+      return {binding,
+              VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+              1,
+              VK_SHADER_STAGE_VERTEX_BIT,
+              nullptr};
+    }
   };
+
+  Vulk::Drawable<Vertex, uint16_t> _drawable;
+  Vulk::Texture _texture;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;

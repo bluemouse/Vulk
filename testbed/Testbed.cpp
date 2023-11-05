@@ -89,7 +89,7 @@ void Testbed::drawFrame() {
         auto extent = framebuffer.extent();
         commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), VertexBufferBinding);
+        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
         commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
         commandBuffer.bindDescriptorSet(_context.pipeline(), _currentFrame->descriptorSet);
 
@@ -133,6 +133,9 @@ void Testbed::createContext() {
   createInfo.createFragShader = &Testbed::createFragmentShader;
 
   _context.create(createInfo);
+
+  _vertexBufferBinding = _context.pipeline().findBinding<Vertex>();
+  MI_VERIFY(_vertexBufferBinding != std::numeric_limits<uint32_t>::max());
 }
 
 void Testbed::createRenderable() {
@@ -149,6 +152,16 @@ void Testbed::createRenderable() {
 
 void Testbed::createFrames() {
   _frames.resize(_maxFrameInFlight);
+
+  VkDescriptorImageInfo textureImageInfo{};
+  textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  textureImageInfo.imageView = _texture;
+  textureImageInfo.sampler = _texture;
+
+  VkDescriptorBufferInfo transformationBufferInfo{};
+  transformationBufferInfo.offset = 0;
+  transformationBufferInfo.range = VK_WHOLE_SIZE;
+
   for (auto& frame : _frames) {
     frame.commandBuffer.allocate(_context.commandPool());
     frame.imageAvailableSemaphore.create(_context.device());
@@ -157,21 +170,14 @@ void Testbed::createFrames() {
 
     frame.uniformBuffer.create(_context.device(), sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
-  }
 
-  VkDescriptorImageInfo imageInfo{};
-  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageInfo.imageView = _texture;
-  imageInfo.sampler = _texture;
+    transformationBufferInfo.buffer = frame.uniformBuffer;
 
-  VkDescriptorBufferInfo bufferInfo{};
-  bufferInfo.offset = 0;
-  bufferInfo.range = VK_WHOLE_SIZE;
-
-  for (auto& frame : _frames) {
-    bufferInfo.buffer = frame.uniformBuffer;
-
-    std::vector<Vulk::DescriptorSet::Binding> bindings = {&bufferInfo, &imageInfo};
+    // The order of bindings must match the order of bindings in shaders. The name and the type need
+    // to match them in the shader as well.
+    std::vector<Vulk::DescriptorSet::Binding> bindings = {
+        {"xform", "Transformation", &transformationBufferInfo},
+        {"texSampler", "sampler2D", &textureImageInfo}};
     frame.descriptorSet.allocate(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
   }

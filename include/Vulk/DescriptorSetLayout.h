@@ -4,14 +4,17 @@
 
 #include <vector>
 
+#include <Vulk/ShaderModule.h>
 #include <Vulk/helpers_vulkan.h>
 
 NAMESPACE_Vulk_BEGIN
 
-class Device;
-class ShaderModule;
+    class Device;
 
 class DescriptorSetLayout {
+ public:
+  using DescriptorSetLayoutBinding = ShaderModule::DescriptorSetLayoutBinding;
+
  public:
   DescriptorSetLayout() = default;
   DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders);
@@ -32,7 +35,7 @@ class DescriptorSetLayout {
   [[nodiscard]] const Device& device() const { return *_device; }
 
   [[nodiscard]] const std::vector<VkDescriptorPoolSize>& poolSizes() const { return _poolSizes; }
-  [[nodiscard]] const std::vector<VkDescriptorSetLayoutBinding>& bindings() const {
+  [[nodiscard]] const std::vector<DescriptorSetLayoutBinding>& bindings() const {
     return _bindings;
   }
 
@@ -42,7 +45,7 @@ class DescriptorSetLayout {
  private:
   VkDescriptorSetLayout _layout = VK_NULL_HANDLE;
 
-  std::vector<VkDescriptorSetLayoutBinding> _bindings;
+  std::vector<DescriptorSetLayoutBinding> _bindings;
   std::vector<VkDescriptorPoolSize> _poolSizes;
 
   const Device* _device = nullptr;

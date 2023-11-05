@@ -36,20 +36,25 @@ void VertexShader::addVertexInputBindings(std::vector<VkVertexInputBindingDescri
   _vertexInputBindings.insert(_vertexInputBindings.end(), bindings.begin(), bindings.end());
 }
 
-void VertexShader::addVertexInputAttribute(uint32_t location,
+void VertexShader::addVertexInputAttribute(const std::string& name,
+                                           const std::string& type,
+                                           uint32_t location,
                                            uint32_t binding,
                                            VkFormat format,
                                            uint32_t offset) {
-  _vertexInputAttributes.push_back({location, binding, format, offset});
+  _vertexInputAttributes.push_back({name, type, {location, binding, format, offset}});
 }
 
-void VertexShader::addVertexInputAttributes(
-    std::vector<VkVertexInputAttributeDescription> attributes) {
+void VertexShader::addVertexInputAttributes(std::vector<VertexInputAttribute> attributes) {
   _vertexInputAttributes.insert(_vertexInputAttributes.end(), attributes.begin(), attributes.end());
 }
 
-void VertexShader::addDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType type) {
-  ShaderModule::addDescriptorSetLayoutBinding(binding, type, VK_SHADER_STAGE_VERTEX_BIT);
+void VertexShader::addDescriptorSetLayoutBinding(const std::string& name,
+                                                 const std::string& type,
+                                                 uint32_t binding,
+                                                 VkDescriptorType descriptorType) {
+  ShaderModule::addDescriptorSetLayoutBinding(
+      name, type, binding, descriptorType, VK_SHADER_STAGE_VERTEX_BIT);
 }
 
 NAMESPACE_Vulk_END

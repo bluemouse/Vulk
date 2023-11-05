@@ -8,17 +8,22 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class DescriptorPool;
+    class DescriptorPool;
 class DescriptorSetLayout;
 
 class DescriptorSet {
  public:
   struct Binding {
+    std::string name;
+    std::string type;
+
     VkDescriptorBufferInfo* bufferInfo = nullptr;
     VkDescriptorImageInfo* imageInfo = nullptr;
 
-    Binding(VkDescriptorBufferInfo* bufferInfo) : bufferInfo(bufferInfo) {}
-    Binding(VkDescriptorImageInfo* imageInfo) : imageInfo(imageInfo) {}
+    Binding(const std::string& name, const std::string& type, VkDescriptorBufferInfo* bufferInfo)
+        : name(name), type(type), bufferInfo(bufferInfo) {}
+    Binding(const std::string& name, const std::string& type, VkDescriptorImageInfo* imageInfo)
+        : name(name), type(type), imageInfo(imageInfo) {}
   };
 
  public:

@@ -55,30 +55,32 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
 
   const auto& layoutBindings = layout.bindings();
   MI_VERIFY(bindings.size() == layoutBindings.size());
-  //TODO Verify the stored order of bindings match the order of layoutBindings
 
   std::vector<VkWriteDescriptorSet> writes{bindings.size()};
 
   for (size_t i = 0; i < writes.size(); ++i) {
+    const auto& layoutBinding = layoutBindings[i].vkBinding;
     writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writes[i].dstSet = *this;
-    writes[i].dstBinding = layoutBindings[i].binding;
+    writes[i].dstBinding = layoutBinding.binding;
     writes[i].dstArrayElement = 0;
-    writes[i].descriptorType = layoutBindings[i].descriptorType;
+    writes[i].descriptorType = layoutBinding.descriptorType;
     writes[i].descriptorCount = 1;
-    if (layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+
+    MI_VERIFY(bindings[i].name == layoutBindings[i].name &&
+              bindings[i].type == layoutBindings[i].type);
+    if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
       MI_VERIFY(bindings[i].bufferInfo != nullptr);
-      //TODO Verify typename of bindings[i].bufferInfo match the typename of layoutBindings[i]
       writes[i].pBufferInfo = bindings[i].bufferInfo;
-    } else if (layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+    } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
       MI_VERIFY(bindings[i].imageInfo != nullptr);
       writes[i].pImageInfo = bindings[i].imageInfo;
     }
 
     // We only support these two types for now.
     // TODO: support other types.
-    MI_ASSERT(layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
-              layoutBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    MI_ASSERT(layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+              layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
   }
 
   vkUpdateDescriptorSets(_pool->device(), writes.size(), writes.data(), 0, nullptr);

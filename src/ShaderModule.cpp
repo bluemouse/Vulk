@@ -37,6 +37,58 @@ namespace {
   }
   return {};
 }
+[[nodiscard]] std::string glsltypeof(const SpvReflectTypeDescription& type) {
+  switch (type.op) {
+    case SpvOpTypeVector:
+      switch (type.traits.numeric.scalar.width) {
+        case 32:
+          switch (type.traits.numeric.vector.component_count) {
+            case 2:
+              return "vec2";
+            case 3:
+              return "vec3";
+            case 4:
+              return "vec4";
+          }
+          break;
+        case 64:
+          switch (type.traits.numeric.vector.component_count) {
+            case 2:
+              return "dvec2";
+            case 3:
+              return "dvec3";
+            case 4:
+              return "dvec4";
+          }
+          break;
+      }
+      break;
+    case SpvOpTypeVoid:
+      return "void";
+    case SpvOpTypeBool:
+      return "bool";
+    case SpvOpTypeInt:
+      return type.traits.numeric.scalar.signedness ? "int" : "uint";
+    case SpvOpTypeFloat:
+      switch (type.traits.numeric.scalar.width) {
+        case 32:
+          return "float";
+        case 64:
+          return "double";
+        default:
+          break;
+      }
+      break;
+    case SpvOpTypeStruct:
+      return "struct";
+    case SpvOpTypePointer:
+      return "ptr";
+    default:
+      return "undefined";
+  }
+  return "undefined";
+}
+
 } // namespace
 
 #if defined(PRINT_SPIRV_REFLECT_INFO)
@@ -255,10 +307,13 @@ void ShaderModule::moveFrom(ShaderModule& rhs) {
   rhs._device = nullptr;
 }
 
-void ShaderModule::addDescriptorSetLayoutBinding(uint32_t binding,
+void ShaderModule::addDescriptorSetLayoutBinding(const std::string& name,
+                                                 const std::string& type,
+                                                 uint32_t binding,
                                                  VkDescriptorType descriptorType,
                                                  VkShaderStageFlags stageFlags) {
-  _descriptorSetLayoutBindings.push_back({binding, descriptorType, 1, stageFlags, nullptr});
+  _descriptorSetLayoutBindings.push_back(
+      {name, type, {binding, descriptorType, 1, stageFlags, nullptr}});
 }
 
 #define MI_VERIFY_SPVREFLECT_CMD(cmd)                                    \
@@ -316,22 +371,21 @@ void ShaderModule::reflectDescriptorSets(const SpvReflectShaderModule& module) {
 #endif
 
   for (const auto* descriptorSet : descriptorSets) {
-    DescriptorSetLayoutBindingBindingMeta layoutBindingMeta;
-    VkDescriptorSetLayoutBinding layoutBinding{};
+    DescriptorSetLayoutBinding layoutBinding;
     for (uint32_t bindingIdx = 0; bindingIdx < descriptorSet->binding_count; ++bindingIdx) {
       const auto& descriptorBinding = *(descriptorSet->bindings[bindingIdx]);
-      layoutBindingMeta.name = descriptorBinding.name;
-      layoutBindingMeta.typeName = typenameof(descriptorBinding);
-      layoutBinding.binding = descriptorBinding.binding;
-      layoutBinding.descriptorType =
-          static_cast<VkDescriptorType>(descriptorBinding.descriptor_type);
-      layoutBinding.descriptorCount = 1;
-      for (uint32_t dimIdx = 0; dimIdx < descriptorBinding.array.dims_count; ++dimIdx) {
-        layoutBinding.descriptorCount *= descriptorBinding.array.dims[dimIdx];
-      }
-      layoutBinding.stageFlags = static_cast<VkShaderStageFlagBits>(module.shader_stage);
+      layoutBinding.name = descriptorBinding.name;
+      layoutBinding.type = typenameof(descriptorBinding);
 
-      _descriptorSetLayoutBindingsMeta.push_back(layoutBindingMeta);
+      auto& vkBinding = layoutBinding.vkBinding;
+      vkBinding.binding = descriptorBinding.binding;
+      vkBinding.descriptorType = static_cast<VkDescriptorType>(descriptorBinding.descriptor_type);
+      vkBinding.descriptorCount = 1;
+      for (uint32_t dimIdx = 0; dimIdx < descriptorBinding.array.dims_count; ++dimIdx) {
+        vkBinding.descriptorCount *= descriptorBinding.array.dims[dimIdx];
+      }
+      vkBinding.stageFlags = static_cast<VkShaderStageFlagBits>(module.shader_stage);
+
       _descriptorSetLayoutBindings.push_back(layoutBinding);
     }
   }
@@ -359,7 +413,7 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
     //   float4 -> VK_FORMAT_R32G32B32A32_FLOAT, etc. No attribute compression
     //   is applied.
     // - All attributes are provided per-vertex, not per-instance.
-    VkVertexInputBindingDescription bindingDescription{0, 0, VK_VERTEX_INPUT_RATE_VERTEX};
+    constexpr uint32_t bindingIdx = 0;
 
     _vertexInputAttributes.reserve(inVars.size());
     for (const auto* var : inVars) {
@@ -367,27 +421,32 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
       if (var->decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) {
         continue;
       }
-      VkVertexInputAttributeDescription desc{};
-      desc.location = var->location;
-      desc.binding = bindingDescription.binding;
-      desc.format = static_cast<VkFormat>(var->format);
-      desc.offset = 0; // final offset computed below after sorting.
-      _vertexInputAttributes.push_back(desc);
+      VertexInputAttribute attr{};
+      attr.name = var->name;
+      attr.type = glsltypeof(*var->type_description);
+      auto& vkAttr = attr.vkDescription;
+      vkAttr.location = var->location;
+      vkAttr.binding = bindingIdx;
+      vkAttr.format = static_cast<VkFormat>(var->format);
+      vkAttr.offset = 0; // final offset computed below after sorting.
+      _vertexInputAttributes.push_back(attr);
     }
 
     // Sort attributes by location
     std::sort(std::begin(_vertexInputAttributes),
               std::end(_vertexInputAttributes),
-              [](const VkVertexInputAttributeDescription& a,
-                 const VkVertexInputAttributeDescription& b) { return a.location < b.location; });
+              [](const auto& lhs, const auto& rhs) {
+                return lhs.vkDescription.location < rhs.vkDescription.location;
+              });
 
     // Compute final offsets of each attribute, and total vertex stride.
+    uint32_t bindingStride = 0;
     for (auto& attribute : _vertexInputAttributes) {
-      attribute.offset = bindingDescription.stride;
-      bindingDescription.stride += formatsizeof(attribute.format);
+      attribute.vkDescription.offset = bindingStride;
+      bindingStride += formatsizeof(attribute.vkDescription.format);
     }
 
-    _vertexInputBindings.push_back(bindingDescription);
+    _vertexInputBindings.push_back({bindingIdx, bindingStride, VK_VERTEX_INPUT_RATE_VERTEX});
   }
 }
 

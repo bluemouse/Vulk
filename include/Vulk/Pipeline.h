@@ -7,6 +7,8 @@
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/helpers_vulkan.h>
 
+#include <limits>
+
 NAMESPACE_Vulk_BEGIN
 
 class Device;
@@ -42,6 +44,18 @@ class Pipeline {
     return _descriptorSetLayout;
   }
 
+  template <typename VertexInput>
+  [[nodiscard]] uint32_t findBinding() const {
+    // We are going to use the first binding that match the size of Vertex type.
+    // TODO More robust test is to match the individual attributes.
+    for (const auto& binding : _vertexInputBindings) {
+      if (binding.stride == sizeof(VertexInput)) {
+        return binding.binding;
+      }
+    }
+    return std::numeric_limits<uint32_t>::max();
+  }
+
  private:
   void moveFrom(Pipeline& rhs);
 
@@ -50,6 +64,8 @@ class Pipeline {
   VkPipelineLayout _layout = VK_NULL_HANDLE;
 
   DescriptorSetLayout _descriptorSetLayout;
+
+  std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
 
   const Device* _device = nullptr;
 };

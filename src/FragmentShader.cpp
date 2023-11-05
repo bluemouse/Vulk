@@ -20,9 +20,12 @@ void FragmentShader::moveFrom(FragmentShader& rhs) {
   ShaderModule::moveFrom(rhs);
 }
 
-void FragmentShader::addDescriptorSetLayoutBinding(uint32_t binding,
-                                                   VkDescriptorType type) {
-  ShaderModule::addDescriptorSetLayoutBinding(binding, type, VK_SHADER_STAGE_FRAGMENT_BIT);
+void FragmentShader::addDescriptorSetLayoutBinding(const std::string& name,
+                                                   const std::string& type,
+                                                   uint32_t binding,
+                                                   VkDescriptorType descriptorType) {
+  ShaderModule::addDescriptorSetLayoutBinding(
+      name, type, binding, descriptorType, VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
 NAMESPACE_Vulk_END

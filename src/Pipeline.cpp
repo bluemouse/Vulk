@@ -69,12 +69,16 @@ void Pipeline::create(const Device &device,
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  const auto &vertexBindings = vertShader.vertexInputBindings();
-  vertexInputInfo.vertexBindingDescriptionCount = vertexBindings.size();
-  vertexInputInfo.pVertexBindingDescriptions = vertexBindings.data();
+  _vertexInputBindings = vertShader.vertexInputBindings();
+  vertexInputInfo.vertexBindingDescriptionCount = _vertexInputBindings.size();
+  vertexInputInfo.pVertexBindingDescriptions = _vertexInputBindings.data();
   const auto &vertexAttributes = vertShader.vertexInputAttributes();
-  vertexInputInfo.vertexAttributeDescriptionCount = vertexAttributes.size();
-  vertexInputInfo.pVertexAttributeDescriptions = vertexAttributes.data();
+  std::vector<VkVertexInputAttributeDescription> attributesDescriptions{};
+  for (const auto& attr : vertexAttributes) {
+    attributesDescriptions.push_back(attr.vkDescription);
+  }
+  vertexInputInfo.vertexAttributeDescriptionCount = attributesDescriptions.size();
+  vertexInputInfo.pVertexAttributeDescriptions = attributesDescriptions.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
   inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

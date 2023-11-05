@@ -15,6 +15,25 @@ NAMESPACE_Vulk_BEGIN
 
 class ShaderModule {
  public:
+  struct DescriptorSetLayoutBinding {
+    std::string name;
+    std::string type;
+    VkDescriptorSetLayoutBinding vkBinding{};
+
+    bool operator==(const DescriptorSetLayoutBinding& rhs) const {
+      return name == rhs.name && type == rhs.type && vkBinding.binding == rhs.vkBinding.binding &&
+             vkBinding.descriptorType == rhs.vkBinding.descriptorType &&
+             vkBinding.descriptorCount == rhs.vkBinding.descriptorCount &&
+             vkBinding.stageFlags == rhs.vkBinding.stageFlags;
+    }
+  };
+  struct VertexInputAttribute {
+    std::string name;
+    std::string type;
+    VkVertexInputAttributeDescription vkDescription{};
+  };
+
+ public:
   ShaderModule() = default;
   // If `reflection` is true, SPIRV-Reflect is used to generate VkDescriptorSetLayoutBinding,
   // VkVertexInputBindingDescription (vertex shader only) and VkVertexInputAttributeDescription
@@ -39,12 +58,13 @@ class ShaderModule {
 
   [[nodiscard]] bool isCreated() const { return _shader != VK_NULL_HANDLE; }
 
-  void addDescriptorSetLayoutBinding(uint32_t binding,
+  void addDescriptorSetLayoutBinding(const std::string& name,
+                                     const std::string& type,
+                                     uint32_t binding,
                                      VkDescriptorType descriptorType,
                                      VkShaderStageFlags stageFlags);
 
-  [[nodiscard]] const std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings()
-      const {
+  [[nodiscard]] const std::vector<DescriptorSetLayoutBinding>& descriptorSetLayoutBindings() const {
     return _descriptorSetLayoutBindings;
   }
 
@@ -64,20 +84,9 @@ class ShaderModule {
 
   std::string _entry{};
 
-  struct DescriptorSetLayoutBindingBindingMeta {
-    std::string name;
-    std::string typeName;
-  };
-  std::vector<DescriptorSetLayoutBindingBindingMeta> _descriptorSetLayoutBindingsMeta;
-  std::vector<VkDescriptorSetLayoutBinding> _descriptorSetLayoutBindings;
-
+  std::vector<DescriptorSetLayoutBinding> _descriptorSetLayoutBindings;
+  std::vector<VertexInputAttribute> _vertexInputAttributes;
   std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
-  struct VertexInputAttributeMeta {
-    std::string name;
-    std::string type;
-  };
-  std::vector<VertexInputAttributeMeta> _vertexInputAttributesMeta;
-  std::vector<VkVertexInputAttributeDescription> _vertexInputAttributes;
 
   const Device* _device;
 };

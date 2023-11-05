@@ -67,6 +67,12 @@ class Texture {
   [[nodiscard]] bool isAllocated() const { return _image.isAllocated(); }
   [[nodiscard]] bool isMapped() const { return _image.isMapped(); }
 
+  static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(
+      uint32_t binding,
+      VkShaderStageFlags stage = VK_SHADER_STAGE_ALL_GRAPHICS) {
+    return {binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, stage, nullptr};
+  }
+
  private:
   Image _image;
   ImageView _view;

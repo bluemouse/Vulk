@@ -25,20 +25,25 @@ class VertexShader : public ShaderModule {
 
   void addVertexInputBindings(std::vector<VkVertexInputBindingDescription> bindings);
 
-  void addVertexInputAttribute(uint32_t location,
+  void addVertexInputAttribute(const std::string& name,
+                               const std::string& type,
+                               uint32_t location,
                                uint32_t binding,
                                VkFormat format,
                                uint32_t offset = 0);
-  void addVertexInputAttributes(std::vector<VkVertexInputAttributeDescription> attributes);
+  void addVertexInputAttributes(std::vector<VertexInputAttribute> attributes);
 
-  void addDescriptorSetLayoutBinding(uint32_t binding,
-                                     VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+  void addDescriptorSetLayoutBinding(
+      const std::string& name,
+      const std::string& type,
+      uint32_t binding,
+      VkDescriptorType descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
   const std::vector<VkVertexInputBindingDescription>& vertexInputBindings() const {
     return _vertexInputBindings;
   }
 
-  const std::vector<VkVertexInputAttributeDescription>& vertexInputAttributes() const {
+  const std::vector<VertexInputAttribute>& vertexInputAttributes() const {
     return _vertexInputAttributes;
   }
 
