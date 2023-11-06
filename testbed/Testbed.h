@@ -15,6 +15,10 @@ class Testbed : public MainWindow {
 
   void drawFrame() override;
 
+  using ValidationLevel = Vulk::Context::ValidationLevel;
+  static void setValidationLevel(ValidationLevel level);
+  static void setPrintReflect(bool print);
+
  protected:
   void mainLoop() override;
 
@@ -112,4 +116,6 @@ class Testbed : public MainWindow {
 
   uint32_t _currentFrameIdx = 0;
   uint32_t _maxFrameInFlight = 2;
+
+  static ValidationLevel _validationLevel;
 };

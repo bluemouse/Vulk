@@ -32,6 +32,9 @@ NAMESPACE_Vulk_BEGIN
 
 class Context {
  public:
+  using ValidationLevel = Instance::ValidationLevel;
+
+ public:
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
   using CreateVertShaderFunc = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
   using CreateFragShaderFunc = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
@@ -39,7 +42,7 @@ class Context {
     int versionMajor = 1;
     int versionMinor = 0;
     std::vector<const char*> extensions;
-    bool enableValidation = false;
+    ValidationLevel validationLevel = ValidationLevel::kNone;
 
     PhysicalDevice::IsDeviceSuitableFunc isDeviceSuitable;
 
@@ -92,7 +95,7 @@ class Context {
   virtual void createInstance(int versionMajor,
                               int versionMinor,
                               const std::vector<const char*>& extensions,
-                              bool enableValidation = false);
+                              ValidationLevel validation = ValidationLevel::kNone);
   virtual void createSurface(const CreateWindowSurfaceFunc& createWindowSurface);
   virtual void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
   virtual void createLogicalDevice();

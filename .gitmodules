@@ -10,3 +10,6 @@
 [submodule "external/SPIRV-Reflect"]
 	path = external/SPIRV-Reflect
 	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+[submodule "external/cxxopts"]
+	path = external/cxxopts
+	url = https://github.com/jarro2783/cxxopts

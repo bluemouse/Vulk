@@ -7,6 +7,9 @@ project(Testbed
 find_package(glfw3 REQUIRED)
 add_library(glfw::glfw ALIAS glfw)
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/cxxopts external/cxxopts)
+
+
 set(SRC_FILES
   main.cpp
   MainWindow.cpp
@@ -40,6 +43,7 @@ target_link_libraries(${PROJECT_NAME}
   PRIVATE
     Vulk::Vulk
     glfw::glfw
+    cxxopts::cxxopts
 )
 
 if(MSVC)

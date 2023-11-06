@@ -2,6 +2,7 @@
 
 #include <Vulk/Toolbox.h>
 #include <Vulk/TypeTraits.h>
+#include <Vulk/ShaderModule.h>
 
 #include <glm/glm.hpp>
 //#define GLM_FORCE_LEFT_HANDED
@@ -13,13 +14,17 @@
 #include <cstring>
 #include <filesystem>
 
-namespace {
-#ifdef NDEBUG
-constexpr bool kEnableValidationLayers = false;
-#else
-constexpr bool kEnableValidationLayers = true;
-#endif
+Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::kError;
 
+void Testbed::setValidationLevel(ValidationLevel level) {
+  _validationLevel = level;
+}
+void Testbed::setPrintReflect(bool print) {
+  print ? Vulk::ShaderModule::enablePrintReflection()
+        : Vulk::ShaderModule::disablePrintReflection();
+}
+
+namespace {
 #if defined(__linux__)
 std::filesystem::path executablePath() {
   return std::filesystem::canonical("/proc/self/exe").parent_path();
@@ -114,7 +119,7 @@ void Testbed::createContext() {
 
   Vulk::Context::CreateInfo createInfo;
   createInfo.extensions = {extensions, extensions + extensionCount};
-  createInfo.enableValidation = kEnableValidationLayers;
+  createInfo.validationLevel = _validationLevel;
 
   createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
     return isPhysicalDeviceSuitable(device, _context.surface());

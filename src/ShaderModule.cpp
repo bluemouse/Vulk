@@ -7,11 +7,14 @@
 #include <Vulk/Device.h>
 #include <Vulk/TypeTraits.h>
 
-#define PRINT_SPIRV_REFLECT_INFO
-
 #include <spirv_reflect.h>
+// Helpers for SpirvReflect
+#include <common/output_stream.h>
+#include <common/output_stream.cpp>
 
 namespace {
+bool gEnablePrintReflection = false;
+
 [[nodiscard]] std::string typenameof(const SpvReflectDescriptorBinding& binding) {
   if (binding.type_description->type_name) {
     return binding.type_description->type_name;
@@ -37,6 +40,7 @@ namespace {
   }
   return {};
 }
+
 [[nodiscard]] std::string glsltypeof(const SpvReflectTypeDescription& type) {
   switch (type.op) {
     case SpvOpTypeVector:
@@ -89,13 +93,6 @@ namespace {
   return "undefined";
 }
 
-} // namespace
-
-#if defined(PRINT_SPIRV_REFLECT_INFO)
-// Helpers for SpirvReflect
-#  include <common/output_stream.h>
-#  include <common/output_stream.cpp>
-
 std::string ToStringSpvReflectShaderStage(SpvReflectShaderStageFlagBits stage) {
   switch (stage) {
     default:
@@ -130,7 +127,6 @@ std::string ToStringQualifier(SpvReflectDecorationFlags qualifier) {
   return "";
 }
 
-namespace {
 [[maybe_unused]] void PrintModuleInfo(std::ostream& os, const SpvReflectShaderModule& module) {
   os << "  entry point     : " << module.entry_point_name << "\n";
   os << "  source lang     : " << spvReflectSourceLanguage(module.source_language) << "\n";
@@ -205,11 +201,7 @@ namespace {
   os << "    format    : " << ToStringFormat(variable.format) << "\n";
   os << "    qualifier : " << ToStringQualifier(variable.decoration_flags) << "\n";
 }
-} // namespace
 
-#endif // PRINT_SPIRV_REFLECT_INFO
-
-namespace {
 std::vector<char> readFile(const std::string& filename) {
   std::ifstream inputFile(filename, std::ios::binary | std::ios::ate);
 
@@ -326,27 +318,26 @@ void ShaderModule::reflectShader(const std::vector<char>& codes) {
   MI_VERIFY_SPVREFLECT_CMD(spvReflectCreateShaderModule(codes.size(), codes.data(), &module));
   _entry = module.entry_point_name;
 
-#if defined(PRINT_SPIRV_REFLECT_INFO)
-  std::cout << "Module:\n";
-  PrintModuleInfo(std::cout, module);
-#endif
+  if (gEnablePrintReflection) {
+    std::cout << "Module:\n";
+    PrintModuleInfo(std::cout, module);
+  }
 
   reflectDescriptorSets(module);
   reflectVertexInputs(module);
 
-#if defined(PRINT_SPIRV_REFLECT_INFO)
-  // OutputVariables
-  uint32_t count = 0;
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, nullptr));
-  std::vector<SpvReflectInterfaceVariable*> outVars(count);
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, outVars.data()));
+  if (gEnablePrintReflection) {
+    // OutputVariables
+    uint32_t count = 0;
+    MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, nullptr));
+    std::vector<SpvReflectInterfaceVariable*> outVars(count);
+    MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, outVars.data()));
 
-  std::cout << "Output variables:\n";
-  for (auto* var : outVars) {
-    PrintInterfaceVariable(std::cout, module.source_language, *var);
+    std::cout << "Output variables:\n";
+    for (auto* var : outVars) {
+      PrintInterfaceVariable(std::cout, module.source_language, *var);
+    }
   }
-#endif
-
   spvReflectDestroyShaderModule(&module);
 }
 
@@ -363,12 +354,12 @@ void ShaderModule::reflectDescriptorSets(const SpvReflectShaderModule& module) {
   MI_VERIFY_SPVREFLECT_CMD(
       spvReflectEnumerateDescriptorSets(&module, &count, descriptorSets.data()));
 
-#if defined(PRINT_SPIRV_REFLECT_INFO)
-  std::cout << "Descriptor sets:\n";
-  for (auto& set : descriptorSets) {
-    PrintDescriptorSet(std::cout, *set);
+  if (gEnablePrintReflection) {
+    std::cout << "Descriptor sets:\n";
+    for (auto& set : descriptorSets) {
+      PrintDescriptorSet(std::cout, *set);
+    }
   }
-#endif
 
   for (const auto* descriptorSet : descriptorSets) {
     DescriptorSetLayoutBinding layoutBinding;
@@ -397,12 +388,12 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
   std::vector<SpvReflectInterfaceVariable*> inVars(count);
   MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateInputVariables(&module, &count, inVars.data()));
 
-#if defined(PRINT_SPIRV_REFLECT_INFO)
-  std::cout << "Input variables:\n";
-  for (auto* var : inVars) {
-    PrintInterfaceVariable(std::cout, module.source_language, *var);
+  if (gEnablePrintReflection) {
+    std::cout << "Input variables:\n";
+    for (auto* var : inVars) {
+      PrintInterfaceVariable(std::cout, module.source_language, *var);
+    }
   }
-#endif
 
   if (module.shader_stage == SPV_REFLECT_SHADER_STAGE_VERTEX_BIT) {
     // Simplifying assumptions:
@@ -448,6 +439,13 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
 
     _vertexInputBindings.push_back({bindingIdx, bindingStride, VK_VERTEX_INPUT_RATE_VERTEX});
   }
+}
+
+void ShaderModule::enablePrintReflection() {
+  gEnablePrintReflection = true;
+}
+void ShaderModule::disablePrintReflection() {
+  gEnablePrintReflection = false;
 }
 
 NAMESPACE_Vulk_END

@@ -39,7 +39,7 @@ void Context::create(const CreateInfo& createInfo) {
   createInstance(createInfo.versionMajor,
                  createInfo.versionMinor,
                  createInfo.extensions,
-                 createInfo.enableValidation);
+                 createInfo.validationLevel);
   createSurface(createInfo.createWindowSurface);
   pickPhysicalDevice(createInfo.isDeviceSuitable);
   createLogicalDevice();
@@ -71,8 +71,8 @@ void Context::destroy() {
 void Context::createInstance(int versionMajor,
                              int versionMinor,
                              const std::vector<const char*>& extensions,
-                             bool enableValidation) {
-  _instance.create(versionMajor, versionMinor, extensions, enableValidation);
+                             ValidationLevel validation) {
+  _instance.create(versionMajor, versionMinor, extensions, validation);
 }
 
 void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {

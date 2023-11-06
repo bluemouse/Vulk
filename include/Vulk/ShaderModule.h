@@ -71,6 +71,9 @@ class ShaderModule {
   void setEntry(const char* entry) { _entry = entry; }
   [[nodiscard]] const char* entry() const { return _entry.c_str(); }
 
+  static void enablePrintReflection();
+  static void disablePrintReflection();
+
  protected:
   void moveFrom(ShaderModule& rhs);
 

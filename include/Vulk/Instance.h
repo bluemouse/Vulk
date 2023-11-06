@@ -14,6 +14,15 @@ class Surface;
 
 class Instance {
  public:
+  enum ValidationLevel {
+    kNone = 0,
+    kError = 1,
+    kWarning = 2,
+    kInfo = 3,
+    kVerbose = 4,
+  };
+
+ public:
   using ApplicationInfoOverride = std::function<void(VkApplicationInfo*)>;
   using InstanceCreateInfoOverride = std::function<void(VkInstanceCreateInfo*)>;
   using DebugUtilsMessengerCreateInfoOverride =
@@ -26,7 +35,7 @@ class Instance {
   Instance(int versionMajor,
            int versionMinor,
            std::vector<const char*> extensions,
-           bool enableValidation = false);
+           ValidationLevel validation = kNone);
   ~Instance();
 
   void create(const ApplicationInfoOverride& appInfoOverride = {},
@@ -35,7 +44,7 @@ class Instance {
   void create(int versionMajor,
               int versionMinor,
               std::vector<const char*> extensions,
-              bool enableValidation = false);
+              ValidationLevel validation = kNone);
 
   void destroy();
 
