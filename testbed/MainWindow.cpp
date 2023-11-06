@@ -7,6 +7,12 @@
 
 #include <Vulk/Instance.h>
 
+bool MainWindow::_continuousUpdate = false;
+void MainWindow::setContinuousUpdate(bool continous) {
+  _continuousUpdate = continous;
+}
+
+
 void MainWindow::init(int width, int height) {
   glfwInit();
 
@@ -41,7 +47,11 @@ void MainWindow::run() {
 
 void MainWindow::mainLoop() {
   while (glfwWindowShouldClose(_window) == 0) {
-    glfwPollEvents();
+    if (_continuousUpdate) {
+      glfwPollEvents();
+    } else {
+      glfwWaitEvents();
+    }
     if (!isMinimized()) {
       drawFrame();
     }

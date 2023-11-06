@@ -24,6 +24,9 @@ class MainWindow {
   [[nodiscard]] int width() const { return _width; }
   [[nodiscard]] int height() const { return _height; }
 
+  // Settings of the MainWindow execution
+  static void setContinuousUpdate(bool continous);
+
  protected:
   virtual void mainLoop();
   virtual void drawFrame() = 0;
@@ -50,4 +53,7 @@ class MainWindow {
   int _height = 0;
 
   bool _framebufferResized = false;
+
+  // Settings of the MainWindow
+  static bool _continuousUpdate;
 };
