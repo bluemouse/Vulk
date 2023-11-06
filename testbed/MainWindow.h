@@ -33,6 +33,7 @@ class MainWindow {
 
   [[nodiscard]] bool isMinimized() const { return _width == 0 || _height == 0; }
 
+  static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
   static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
   void setFramebufferResized(bool resized) { _framebufferResized = resized; }

@@ -12,7 +12,6 @@ void MainWindow::setContinuousUpdate(bool continous) {
   _continuousUpdate = continous;
 }
 
-
 void MainWindow::init(int width, int height) {
   glfwInit();
 
@@ -24,7 +23,17 @@ void MainWindow::init(int width, int height) {
   _framebufferResized = false;
 
   glfwSetWindowUserPointer(_window, this);
+
+  glfwSetKeyCallback(_window, keyCallback);
   glfwSetFramebufferSizeCallback(_window, framebufferResizeCallback);
+}
+
+void MainWindow::keyCallback(GLFWwindow* window, int key, int /*scancode*/, int action, int mods) {
+  // auto win = reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(window));
+
+  if (key == GLFW_KEY_Q && mods == GLFW_MOD_CONTROL && action == GLFW_RELEASE) {
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+  }
 }
 
 void MainWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
