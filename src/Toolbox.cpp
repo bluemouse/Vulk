@@ -15,20 +15,20 @@ Toolbox::Toolbox(const Context& context)
     : _context(context) {
 }
 
-Image Toolbox::createImage(const char* imageFile) const {
+Image2D Toolbox::createImage2D(const char* imageFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(imageFile);
 
-  Image image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  Image2D image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
   image.allocate();
   image.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
 
   return image;
 }
 
-Texture Toolbox::createTexture(const char* textureFile) const {
+Texture2D Toolbox::createTexture(const char* textureFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
 
-  Texture texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  Texture2D texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
   texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
 
   return texture;

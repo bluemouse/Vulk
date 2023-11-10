@@ -20,7 +20,7 @@ class RenderPass {
  public:
   RenderPass() = default;
   RenderPass(const Device& device,
-             VkFormat format,
+             VkFormat coloFormat,
              const AttachmentDescriptionOverride& attachmentOverride = {},
              const SubpassDescriptionOverride& subpassOverride = {},
              const SubpassDependencyOverride& dependencyOverride = {});
@@ -31,7 +31,7 @@ class RenderPass {
   RenderPass& operator=(RenderPass&& rhs) noexcept(false);
 
   void create(const Device& device,
-              VkFormat format,
+              VkFormat colorFormat,
               const AttachmentDescriptionOverride& attachmentOverride = {},
               const SubpassDescriptionOverride& subpassOverride = {},
               const SubpassDependencyOverride& dependencyOverride = {});

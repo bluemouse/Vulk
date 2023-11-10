@@ -27,6 +27,7 @@ set(SHADER_FILES
 )
 
 set(TEXTURE_FILES
+  resources/texture.jpg
   resources/ScreenTestPattern.png
 )
 

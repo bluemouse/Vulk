@@ -5,11 +5,11 @@
 NAMESPACE_Vulk_BEGIN
 
 RenderPass::RenderPass(const Device& device,
-                       VkFormat format,
+                       VkFormat colorFormat,
                        const AttachmentDescriptionOverride& attachmentOverride,
                        const SubpassDescriptionOverride& subpassOverride,
                        const SubpassDependencyOverride& dependencyOverride) {
-  create(device, format, attachmentOverride, subpassOverride, dependencyOverride);
+  create(device, colorFormat, attachmentOverride, subpassOverride, dependencyOverride);
 }
 
 RenderPass::~RenderPass() {
@@ -39,7 +39,7 @@ void RenderPass::moveFrom(RenderPass& rhs) {
 }
 
 void RenderPass::create(const Device& device,
-                        VkFormat format,
+                        VkFormat colorFormat,
                         const AttachmentDescriptionOverride& attachmentOverride,
                         const SubpassDescriptionOverride& subpassOverride,
                         const SubpassDependencyOverride& dependencyOverride) {
@@ -47,7 +47,7 @@ void RenderPass::create(const Device& device,
   _device = &device;
 
   std::vector<VkAttachmentDescription> attachments{1};
-  attachments[0].format = format;
+  attachments[0].format = colorFormat;
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
   attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;

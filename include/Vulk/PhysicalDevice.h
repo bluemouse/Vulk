@@ -10,7 +10,7 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class Instance;
+    class Instance;
 class Surface;
 
 class PhysicalDevice {
@@ -53,6 +53,10 @@ class PhysicalDevice {
   PhysicalDevice& operator=(const PhysicalDevice&) = delete;
 
   [[nodiscard]] bool isInstantiated() const { return _device != VK_NULL_HANDLE; }
+
+  VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
+                               VkImageTiling tiling,
+                               VkFormatFeatureFlags features) const;
 
  private:
   [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device);

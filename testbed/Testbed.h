@@ -4,7 +4,7 @@
 
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
-#include <Vulk/Texture.h>
+#include <Vulk/Texture2D.h>
 #include <Vulk/TypeTraits.h>
 
 class Testbed : public MainWindow {
@@ -62,7 +62,7 @@ class Testbed : public MainWindow {
   Vulk::Context _context;
 
   struct Vertex {
-    glm::vec2 pos;
+    glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
 
@@ -71,7 +71,7 @@ class Testbed : public MainWindow {
     }
     static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
       // In shader.vert, we have:
-      // layout(location = 0) in vec2 inPos;
+      // layout(location = 0) in vec3 inPos;
       // layout(location = 1) in vec3 inColor;
       // layout(location = 2) in vec2 inTexCoord;
       return {{0, binding, formatof(Vertex::pos), offsetof(Vertex, pos)},
@@ -97,7 +97,7 @@ class Testbed : public MainWindow {
   };
 
   Vulk::Drawable<Vertex, uint16_t> _drawable;
-  Vulk::Texture _texture;
+  Vulk::Texture2D _texture;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;

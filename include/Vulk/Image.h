@@ -7,49 +7,31 @@
 
 NAMESPACE_Vulk_BEGIN
 
-    class Device;
+class Device;
 class CommandBuffer;
 class StagingBuffer;
 
 class Image {
  public:
-  using ImageCreateInfoOverride = std::function<void(VkImageCreateInfo*)>;
-
- public:
   Image() = default;
-  Image(const Device& device,
-        VkFormat format,
-        VkExtent2D extent,
-        const ImageCreateInfoOverride& override = {});
-  Image(const Device& device,
-        VkFormat format,
-        VkExtent2D extent,
-        VkMemoryPropertyFlags properties,
-        const ImageCreateInfoOverride& override = {});
-  ~Image() noexcept(false);
-
-  Image(VkImage image, VkFormat format, VkExtent2D extent); // special use by Swapchain
+  virtual ~Image() noexcept(false);
 
   // Transfer the ownership from `rhs` to `this`
   Image(Image&& rhs) noexcept;
   Image& operator=(Image&& rhs) noexcept(false);
 
-  void create(const Device& device,
-              VkFormat format,
-              VkExtent2D extent,
-              const ImageCreateInfoOverride& override = {});
-  void destroy();
+  virtual void destroy();
 
-  void allocate(VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  void free();
+  virtual void allocate(VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  virtual void free();
 
-  void bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset = 0);
+  virtual void bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset = 0);
 
-  void* map();
-  void* map(VkDeviceSize offset, VkDeviceSize size);
-  void unmap();
+  virtual void* map();
+  virtual void* map(VkDeviceSize offset, VkDeviceSize size);
+  virtual void unmap();
 
-  void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  virtual void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
 
   operator VkImage() const { return _image; }
 
@@ -69,16 +51,17 @@ class Image {
 
   [[nodiscard]] VkImageViewType imageViewType() const;
 
- private:
-  void moveFrom(Image& rhs);
-
-  bool isExternal() const { return _external; }
+protected:
+  void create(const Device& device, const VkImageCreateInfo& imageInfo);
 
   void transitToNewLayout(const CommandBuffer& commandBuffer,
                           VkImageLayout newLayout,
                           bool waitForFinish = true) const;
 
  private:
+  void moveFrom(Image& rhs);
+
+ protected:
   VkImage _image = VK_NULL_HANDLE;
 
   VkImageType _type = VK_IMAGE_TYPE_2D;
@@ -89,8 +72,6 @@ class Image {
   DeviceMemory::Ptr _memory;
 
   const Device* _device = nullptr;
-
-  bool _external = false;
 };
 
 NAMESPACE_Vulk_END

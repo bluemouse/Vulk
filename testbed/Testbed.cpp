@@ -42,7 +42,7 @@ void Testbed::init(int width, int height) {
   createContext();
   createRenderable();
 
-  auto textureFile = executablePath() / "textures/ScreenTestPattern.png";
+  auto textureFile = executablePath() / "textures/texture.jpg";
   _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
 
   createFrames();
@@ -144,12 +144,17 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
-  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{-1.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                        {{1.0F, 1.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                        {{1.0F, -1.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{-1.0F, 1.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                        {{1.0F, 1.0F, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                        {{1.0F, -1.0F, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}},
 
-  const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+                                        {{-0.5F, -0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{-0.5F, 0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                        {{0.5F, 0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                        {{0.5F, -0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+
+  const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
   _drawable.create(
       _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);

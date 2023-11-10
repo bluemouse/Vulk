@@ -6,7 +6,7 @@
 #include <vector>
 #include <limits>
 
-#include <Vulk/Image.h>
+#include <Vulk/Image2D.h>
 #include <Vulk/ImageView.h>
 #include <Vulk/Framebuffer.h>
 
@@ -61,8 +61,8 @@ class Swapchain {
   [[nodiscard]] VkFormat surfaceFormat() const { return _surfaceFormat.format; }
   [[nodiscard]] VkExtent2D surfaceExtent() const { return _surfaceExtent; }
 
-  [[nodiscard]] const std::vector<Image>& images() const { return _images; }
-  [[nodiscard]] const Image& image(size_t i) const { return _images[i]; }
+  [[nodiscard]] const std::vector<Image2D>& images() const { return _images; }
+  [[nodiscard]] const Image2D& image(size_t i) const { return _images[i]; }
   [[nodiscard]] const std::vector<ImageView>& imageViews() const { return _imageViews; }
   [[nodiscard]] const ImageView& imageView(size_t i) const { return _imageViews[i]; }
   [[nodiscard]] const std::vector<Framebuffer>& framebuffers() const { return _framebuffers; }
@@ -90,6 +90,8 @@ class Swapchain {
   void deactivateActiveImage() const { _activeImageIndex = std::numeric_limits<uint32_t>::max(); }
   bool hasActiveImage() const { return _activeImageIndex != std::numeric_limits<uint32_t>::max(); }
 
+  VkFormat findDepthFormat() const;
+
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
 
@@ -98,9 +100,12 @@ class Swapchain {
 
   VkPresentModeKHR _presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
-  std::vector<Image> _images;
+  std::vector<Image2D> _images;
   std::vector<ImageView> _imageViews;
   std::vector<Framebuffer> _framebuffers;
+
+  Image _depthImage;
+  ImageView _depthImageView;
 
   mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();
 

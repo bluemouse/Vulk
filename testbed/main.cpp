@@ -11,16 +11,16 @@ int main(int argc, char** argv) {
 
 #if defined(_NDEBUG)
 // None
-#  define DEFAULT_VALIDATION "0"
+  constexpr const char* kDefaultValidation = "0";
 #else
-// Warning
-#  define DEFAULT_VALIDATION "2"
+  // Warning
+  constexpr const char* kDefaultValidation = "2";
 #endif
 
   options.add_options()(
       "v,validation-level",
       "Set Vulkan validation level (0: none, 1: error, 2: warning, 3: info, 4: verbose)",
-      cxxopts::value<int>()->default_value(DEFAULT_VALIDATION))(
+      cxxopts::value<int>()->default_value(kDefaultValidation))(
       "r,reflect-info",
       "Print SPIRV-Reflect information",
       cxxopts::value<bool>()->default_value("false"))(

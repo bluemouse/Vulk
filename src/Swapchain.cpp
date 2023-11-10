@@ -108,6 +108,13 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
     _framebuffers.emplace_back(*_device, renderPass, _imageViews.back());
   }
 
+  // _depthImage.create(*_device,
+  //                    findDepthFormat(),
+  //                    _surfaceExtent,
+  //                    [](VkImageCreateInfo* info) {
+  //                      info->usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  //                    });
+
   deactivateActiveImage();
 }
 
@@ -195,5 +202,14 @@ VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
 
   return vkQueuePresentKHR(_device->queue("present"), &presentInfo);
 }
+
+VkFormat Swapchain::findDepthFormat() const {
+    return _device->physicalDevice().findSupportedFormat(
+        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+}
+
 
 NAMESPACE_Vulk_END

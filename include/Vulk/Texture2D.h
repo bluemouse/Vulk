@@ -2,32 +2,32 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/Image.h>
+#include <Vulk/Image2D.h>
 #include <Vulk/ImageView.h>
 #include <Vulk/Sampler.h>
 #include <Vulk/helpers_vulkan.h>
 
 NAMESPACE_Vulk_BEGIN
 
-    class Device;
+class Device;
 
-class Texture {
+class Texture2D {
  public:
   using Filter = Sampler::Filter;
   using AddressMode = Sampler::AddressMode;
 
  public:
-  Texture() = default;
-  Texture(const Device& device,
-          VkFormat format,
-          VkExtent2D extent,
-          Filter filter = {VK_FILTER_LINEAR},
-          AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
-  ~Texture() = default;
+  Texture2D() = default;
+  Texture2D(const Device& device,
+            VkFormat format,
+            VkExtent2D extent,
+            Filter filter = {VK_FILTER_LINEAR},
+            AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
+  ~Texture2D() = default;
 
   // Transfer the ownership from `rhs` to `this`
-  Texture(Texture&& rhs) noexcept = default;
-  Texture& operator=(Texture&& rhs) noexcept(false) = default;
+  Texture2D(Texture2D&& rhs) noexcept = default;
+  Texture2D& operator=(Texture2D&& rhs) noexcept(false) = default;
 
   void create(const Device& device,
               VkFormat format,
@@ -56,12 +56,10 @@ class Texture {
 
   [[nodiscard]] VkImageType type() const { return _image.type(); }
   [[nodiscard]] VkFormat format() const { return _image.format(); }
-  [[nodiscard]] VkExtent2D extent() const { return {width(), height()}; }
-  [[nodiscard]] VkExtent3D extent3D() const { return _image.extent(); }
+  [[nodiscard]] VkExtent2D extent() const { return _image.extent(); }
 
   [[nodiscard]] uint32_t width() const { return _image.extent().width; }
   [[nodiscard]] uint32_t height() const { return _image.extent().height; }
-  [[nodiscard]] uint32_t depth() const { return _image.extent().depth; }
 
   [[nodiscard]] bool isCreated() const { return _image.isCreated(); }
   [[nodiscard]] bool isAllocated() const { return _image.isAllocated(); }
@@ -74,7 +72,7 @@ class Texture {
   }
 
  private:
-  Image _image;
+  Image2D _image;
   ImageView _view;
   Sampler _sampler;
 };

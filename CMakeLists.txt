@@ -31,6 +31,8 @@ set(SRC_FILES
     src/Device.cpp
     src/Swapchain.cpp
     src/Image.cpp
+    src/Image2D.cpp
+    src/DepthImage.cpp
     src/ImageView.cpp
     src/Sampler.cpp
     src/RenderPass.cpp
@@ -55,7 +57,7 @@ set(SRC_FILES
     # Engine classes
     src/Context.cpp
     src/Toolbox.cpp
-    src/Texture.cpp
+    src/Texture2D.cpp
     src/TypeTraits.cpp
 )
 
@@ -70,6 +72,8 @@ set(HEADER_FILES
     include/Vulk/Device.h
     include/Vulk/Swapchain.h
     include/Vulk/Image.h
+    include/Vulk/Image2D.h
+    include/Vulk/DepthImage.h
     include/Vulk/ImageView.h
     include/Vulk/Sampler.h
     include/Vulk/RenderPass.h
@@ -95,7 +99,7 @@ set(HEADER_FILES
     include/Vulk/Context.h
     include/Vulk/Drawable.h
     include/Vulk/Toolbox.h
-    include/Vulk/Texture.h
+    include/Vulk/Texture2D.h
     include/Vulk/TypeTraits.h
 )
 

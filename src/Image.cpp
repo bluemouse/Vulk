@@ -6,30 +6,10 @@
 
 NAMESPACE_Vulk_BEGIN
 
-Image::Image(const Device& device,
-             VkFormat format,
-             VkExtent2D extent,
-             const ImageCreateInfoOverride& override) {
-  create(device, format, extent, override);
-}
-
-Image::Image(const Device& device,
-             VkFormat format,
-             VkExtent2D extent,
-             VkMemoryPropertyFlags properties,
-             const ImageCreateInfoOverride& override)
-    : Image(device, format, extent, override) {
-  allocate(properties);
-}
-
-Image::~Image() noexcept(false) {
+    Image::~Image() noexcept(false) {
   if (isAllocated()) {
     free();
   }
-}
-
-Image::Image(VkImage image, VkFormat format, VkExtent2D extent)
-    : _image(image), _format(format), _extent{extent.width, extent.height, 1}, _external(true) {
 }
 
 Image::Image(Image&& rhs) noexcept {
@@ -51,7 +31,6 @@ void Image::moveFrom(Image& rhs) {
   _extent = rhs._extent;
   _layout = rhs._layout;
   _device = rhs._device;
-  _external = rhs._external;
 
   rhs._image = VK_NULL_HANDLE;
   rhs._memory = VK_NULL_HANDLE;
@@ -59,37 +38,11 @@ void Image::moveFrom(Image& rhs) {
   rhs._extent = {0, 0, 0};
   rhs._layout = VK_IMAGE_LAYOUT_UNDEFINED;
   rhs._device = nullptr;
-  rhs._external = false;
 }
 
-void Image::create(const Device& device,
-                   VkFormat format,
-                   VkExtent2D extent,
-                   const ImageCreateInfoOverride& override) {
-  MI_VERIFY(!isExternal());
+void Image::create(const Device& device, const VkImageCreateInfo& imageInfo) {
   MI_VERIFY(!isCreated());
   _device = &device;
-
-  VkImageCreateInfo imageInfo{};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D; // Implied by extent
-  imageInfo.extent.width = extent.width;
-  imageInfo.extent.height = extent.height;
-  imageInfo.extent.depth = 1;
-  imageInfo.mipLevels = 1;
-  imageInfo.arrayLayers = 1;
-  imageInfo.format = format;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  // The Vulkan spec states: initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED or
-  // VK_IMAGE_LAYOUT_PREINITIALIZED
-  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  if (override) {
-    override(&imageInfo);
-  }
 
   MI_VERIFY_VKCMD(vkCreateImage(device, &imageInfo, nullptr, &_image));
 
@@ -100,7 +53,6 @@ void Image::create(const Device& device,
 }
 
 void Image::destroy() {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isCreated());
 
   if (isAllocated()) {
@@ -116,7 +68,6 @@ void Image::destroy() {
 }
 
 void Image::allocate(VkMemoryPropertyFlags properties) {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(!isAllocated());
   _memory = DeviceMemory::make();
 
@@ -128,13 +79,11 @@ void Image::allocate(VkMemoryPropertyFlags properties) {
 }
 
 void Image::free() {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isAllocated());
   _memory = nullptr;
 }
 
 void Image::bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset) {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isCreated());
   MI_VERIFY(memory != _memory);
   if (isAllocated()) {
@@ -145,19 +94,16 @@ void Image::bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset) {
 }
 
 void* Image::map() {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isAllocated());
   return _memory->map();
 }
 
 void* Image::map(VkDeviceSize offset, VkDeviceSize size) {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isAllocated());
   return _memory->map(offset, size);
 }
 
 void Image::unmap() {
-  MI_VERIFY(!isExternal());
   MI_VERIFY(isAllocated());
   _memory->unmap();
 }
@@ -173,13 +119,14 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
                                bool waitForFinish) const {
   commandBuffer.executeSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
     VkImageMemoryBarrier barrier{};
+
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = _layout;
     barrier.newLayout = newLayout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = *this;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_NONE_KHR;
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
@@ -188,8 +135,40 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
     VkPipelineStageFlags srcStage = 0;
     VkPipelineStageFlags dstStage = 0;
 
+    const VkImageLayout depthLayouts[] = {VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                          VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL};
+    // VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
+    for (auto layout : depthLayouts) {
+      if (layout == newLayout) {
+        barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        break;
+      }
+    }
+    const VkImageLayout stencilLayouts[] = {VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                            VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL};
+    // VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL
+    for (auto layout : stencilLayouts) {
+      if (layout == newLayout) {
+        barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        break;
+      }
+    }
+
+    const bool isNewLayoutDepthStencil =
+        barrier.subresourceRange.aspectMask != VK_IMAGE_ASPECT_NONE_KHR;
+
+    if (!isNewLayoutDepthStencil) {
+      barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
     if (_layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-      barrier.srcAccessMask = 0;
+      barrier.srcAccessMask = VK_ACCESS_NONE;
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
       srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -201,6 +180,14 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
 
       srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
       dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else if (_layout == VK_IMAGE_LAYOUT_UNDEFINED && isNewLayoutDepthStencil) {
+      barrier.srcAccessMask = VK_ACCESS_NONE;
+      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      // TODO This is probably not correct for ready-only depth and stencil layout
+
+      srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     } else {
       throw std::invalid_argument("Unsupported layout transition!");
     }
