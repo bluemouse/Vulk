@@ -9,19 +9,21 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class Device;
+    class Device;
 
 class RenderPass {
  public:
-  using AttachmentDescriptionOverride = std::function<void(std::vector<VkAttachmentDescription>&)>;
-  using SubpassDescriptionOverride = std::function<void(std::vector<VkSubpassDescription>&)>;
-  using SubpassDependencyOverride = std::function<void(std::vector<VkSubpassDependency>&)>;
+  using AttachmentDescriptionOverride = std::function<void(VkAttachmentDescription&)>;
+  using SubpassDescriptionOverride = std::function<void(VkSubpassDescription&)>;
+  using SubpassDependencyOverride = std::function<void(VkSubpassDependency&)>;
 
  public:
   RenderPass() = default;
   RenderPass(const Device& device,
-             VkFormat coloFormat,
-             const AttachmentDescriptionOverride& attachmentOverride = {},
+             VkFormat colorFormat,
+             VkFormat depthStencilFormat = VK_FORMAT_UNDEFINED,
+             const AttachmentDescriptionOverride& colorAttachmentOverride = {},
+             const AttachmentDescriptionOverride& depthStencilAttachmentOverride = {},
              const SubpassDescriptionOverride& subpassOverride = {},
              const SubpassDependencyOverride& dependencyOverride = {});
   ~RenderPass();
@@ -32,7 +34,9 @@ class RenderPass {
 
   void create(const Device& device,
               VkFormat colorFormat,
-              const AttachmentDescriptionOverride& attachmentOverride = {},
+              VkFormat depthStencilFormat = VK_FORMAT_UNDEFINED,
+              const AttachmentDescriptionOverride& colorAttachmentOverride = {},
+              const AttachmentDescriptionOverride& depthStencilAttachmentOverride = {},
               const SubpassDescriptionOverride& subpassOverride = {},
               const SubpassDependencyOverride& dependencyOverride = {});
 
@@ -42,11 +46,18 @@ class RenderPass {
 
   [[nodiscard]] bool isCreated() const { return _renderPass != VK_NULL_HANDLE; }
 
+  [[nodiscard]] bool hasDepthStencilAttachment() const {
+    return _depthStencilFormat != VK_FORMAT_UNDEFINED;
+   }
+
  private:
   void moveFrom(RenderPass& rhs);
 
  private:
   VkRenderPass _renderPass = VK_NULL_HANDLE;
+
+  VkFormat _colorFormat = VK_FORMAT_UNDEFINED;
+  VkFormat _depthStencilFormat = VK_FORMAT_UNDEFINED;
 
   const Device* _device = nullptr;
 };

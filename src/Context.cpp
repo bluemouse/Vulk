@@ -131,14 +131,16 @@ void Context::createLogicalDevice() {
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat) {
   const auto [_, formats, __] = _surface.querySupports();
 
-  VkFormat format;
+  VkFormat colorFormat;
   if (chooseSurfaceFormat) {
-    format = chooseSurfaceFormat(formats).format;
+    colorFormat = chooseSurfaceFormat(formats).format;
   } else {
-    format = chooseDefaultSurfaceFormat(formats).format;
+    colorFormat = chooseDefaultSurfaceFormat(formats).format;
   }
 
-  _renderPass.create(_device, format);
+  VkFormat depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+
+  _renderPass.create(_device, colorFormat, depthStencilFormat);
 }
 
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,

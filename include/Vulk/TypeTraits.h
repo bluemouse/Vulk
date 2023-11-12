@@ -4,6 +4,7 @@
 
 #include <Vulk/helpers_vulkan.h>
 
+// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 NAMESPACE_Vulk_BEGIN

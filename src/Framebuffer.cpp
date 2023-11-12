@@ -9,8 +9,15 @@ NAMESPACE_Vulk_BEGIN
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& imageView) {
-  create(device, renderPass, imageView);
+                         const ImageView& colorAttachment) {
+  create(device, renderPass, colorAttachment);
+}
+
+Framebuffer::Framebuffer(const Device& device,
+                         const RenderPass& renderPass,
+                         const ImageView& colorAttachment,
+                         const ImageView& depthStencilAttachment) {
+  create(device, renderPass, colorAttachment, depthStencilAttachment);
 }
 
 Framebuffer::~Framebuffer() {
@@ -25,24 +32,45 @@ Framebuffer::Framebuffer(Framebuffer&& rhs) noexcept {
 
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& imageView) {
-  MI_VERIFY(!isCreated());
+                         const ImageView& colorAttachment) {
   _device = &device;
   _renderPass = &renderPass;
-  _imageView = &imageView;
+  _colorAttachment = &colorAttachment;
+  _depthStencilAttachment = nullptr;
 
-  VkImageView attachments[] = {imageView};
+  create();
+}
+
+void Framebuffer::create(const Device& device,
+                         const RenderPass& renderPass,
+                         const ImageView& colorAttachment,
+                         const ImageView& depthStencilAttachment) {
+  _device = &device;
+  _renderPass = &renderPass;
+  _colorAttachment = &colorAttachment;
+  _depthStencilAttachment = &depthStencilAttachment;
+
+  create();
+}
+
+void Framebuffer::create() {
+  MI_VERIFY(!isCreated());
+
+  std::vector<VkImageView> attachments = {*_colorAttachment};
+  if (_depthStencilAttachment != nullptr) {
+    attachments.push_back(*_depthStencilAttachment);
+  }
 
   VkFramebufferCreateInfo framebufferInfo{};
   framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  framebufferInfo.renderPass = renderPass;
-  framebufferInfo.attachmentCount = 1;
-  framebufferInfo.pAttachments = attachments;
-  framebufferInfo.width = imageView.image().width();
-  framebufferInfo.height = imageView.image().height();
+  framebufferInfo.renderPass = *_renderPass;
+  framebufferInfo.attachmentCount = attachments.size();
+  framebufferInfo.pAttachments = attachments.data();
+  framebufferInfo.width = _colorAttachment->image().width();
+  framebufferInfo.height = _colorAttachment->image().height();
   framebufferInfo.layers = 1;
 
-  MI_VERIFY_VKCMD(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &_buffer));
+  MI_VERIFY_VKCMD(vkCreateFramebuffer(*_device, &framebufferInfo, nullptr, &_buffer));
 }
 
 void Framebuffer::destroy() {
@@ -52,7 +80,8 @@ void Framebuffer::destroy() {
   _buffer = VK_NULL_HANDLE;
   _device = nullptr;
   _renderPass = nullptr;
-  _imageView = nullptr;
+  _colorAttachment = nullptr;
+  _depthStencilAttachment = nullptr;
 }
 
 Framebuffer& Framebuffer::operator=(Framebuffer&& rhs) noexcept(false) {
@@ -63,7 +92,7 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& rhs) noexcept(false) {
 }
 
 VkExtent2D Framebuffer::extent() const {
-  auto imageExtent = _imageView->image().extent();
+  auto imageExtent = _colorAttachment->image().extent();
   return {imageExtent.width, imageExtent.height};
 }
 
@@ -72,12 +101,14 @@ void Framebuffer::moveFrom(Framebuffer& rhs) {
   _buffer = rhs._buffer;
   _device = rhs._device;
   _renderPass = rhs._renderPass;
-  _imageView = rhs._imageView;
+  _colorAttachment = rhs._colorAttachment;
+  _depthStencilAttachment = rhs._depthStencilAttachment;
 
   rhs._buffer = VK_NULL_HANDLE;
   rhs._device = nullptr;
   rhs._renderPass = nullptr;
-  rhs._imageView = nullptr;
+  rhs._colorAttachment = nullptr;
+  rhs._depthStencilAttachment = nullptr;
 }
 
 NAMESPACE_Vulk_END

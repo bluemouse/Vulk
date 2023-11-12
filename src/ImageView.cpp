@@ -2,11 +2,18 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/Image.h>
+#include <Vulk/Image2D.h>
+#include <Vulk/DepthImage.h>
 
 NAMESPACE_Vulk_BEGIN
 
 ImageView::ImageView(const Device& device,
-                     const Image& image,
+                     const Image2D& image,
+                     ImageViewCreateInfoOverride createInfoOverride) {
+  create(device, image, createInfoOverride);
+}
+ImageView::ImageView(const Device& device,
+                     const DepthImage& image,
                      ImageViewCreateInfoOverride createInfoOverride) {
   create(device, image, createInfoOverride);
 }
@@ -40,7 +47,22 @@ void ImageView::moveFrom(ImageView& rhs) {
 }
 
 void ImageView::create(const Device& device,
+                       const Image2D& image,
+                       ImageViewCreateInfoOverride createInfoOverride) {
+  auto aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  create(device, image, aspect, createInfoOverride);
+}
+
+void ImageView::create(const Device& device,
+                       const DepthImage& image,
+                       ImageViewCreateInfoOverride createInfoOverride) {
+  auto aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  create(device, image, aspect, createInfoOverride);
+}
+
+void ImageView::create(const Device& device,
                        const Image& image,
+                       VkImageAspectFlags aspectMask,
                        ImageViewCreateInfoOverride createInfoOverride) {
   MI_VERIFY(!isCreated());
   _device = &device;
@@ -51,7 +73,7 @@ void ImageView::create(const Device& device,
   viewInfo.image = image;
   viewInfo.viewType = image.imageViewType();
   viewInfo.format = image.format();
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewInfo.subresourceRange.aspectMask = aspectMask;
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.levelCount = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;

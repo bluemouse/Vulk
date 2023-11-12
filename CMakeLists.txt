@@ -119,6 +119,12 @@ set(glm_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/glm)
 set(stb_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
 set(tinyobjloader_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/tinyobjloader)
 
+target_compile_definitions(${PROJECT_NAME}
+  PUBLIC
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_RADIANS
+)
+
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     include

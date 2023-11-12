@@ -139,19 +139,26 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
 void CommandBuffer::beginRenderPass(const RenderPass& renderPass,
                                     const Framebuffer& framebuffer,
                                     const glm::vec4& clearColor,
-                                    float /*clearDepth*/,
-                                    uint32_t /*clearStencil*/) const {
-  VkClearValue clearValue{};
-  clearValue.color = {{clearColor.r, clearColor.g, clearColor.b, clearColor.a}};
-
+                                    float clearDepth,
+                                    uint32_t clearStencil) const {
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = renderPass;
   renderPassInfo.framebuffer = framebuffer;
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = framebuffer.extent();
-  renderPassInfo.clearValueCount = 1;
-  renderPassInfo.pClearValues = &clearValue;
+
+  // Note that the order of the clear values should match the order of the attachments in the
+  // framebuffer.
+  std::vector<VkClearValue> clearValues{1};
+  clearValues[0].color ={{clearColor.r, clearColor.g, clearColor.b, clearColor.a}};
+  if (renderPass.hasDepthStencilAttachment()) {
+    clearValues.push_back(VkClearValue{});
+    clearValues[1].depthStencil = {clearDepth, clearStencil};
+  }
+
+  renderPassInfo.clearValueCount = clearValues.size();
+  renderPassInfo.pClearValues = clearValues.data();
 
   vkCmdBeginRenderPass(_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
@@ -196,14 +203,8 @@ void CommandBuffer::bindIndexBuffer(const IndexBuffer& buffer, uint64_t offset) 
 
 void CommandBuffer::bindDescriptorSet(const Pipeline& pipeline,
                                       const DescriptorSet& descriptorSet) const {
-  vkCmdBindDescriptorSets(_buffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          pipeline.layout(),
-                          0,
-                          1,
-                          descriptorSet,
-                          0,
-                          nullptr);
+  vkCmdBindDescriptorSets(
+      _buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout(), 0, 1, descriptorSet, 0, nullptr);
 }
 
 void CommandBuffer::drawIndexed(uint32_t indexCount) const {

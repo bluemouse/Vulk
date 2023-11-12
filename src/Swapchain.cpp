@@ -98,6 +98,12 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   std::vector<VkImage> imgs(imageCount);
   vkGetSwapchainImagesKHR(*_device, _swapchain, &imageCount, imgs.data());
 
+  _depthImage.create(*_device,
+                     VK_FORMAT_D24_UNORM_S8_UINT, // findDepthFormat(),
+                     _surfaceExtent);
+  _depthImage.allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  _depthImageView.create(*_device, _depthImage);
+
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
   _images.reserve(imageCount);
   _imageViews.reserve(imageCount);
@@ -105,15 +111,8 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   for (auto& img : imgs) {
     _images.emplace_back(img, _surfaceFormat.format, _surfaceExtent);
     _imageViews.emplace_back(*_device, _images.back());
-    _framebuffers.emplace_back(*_device, renderPass, _imageViews.back());
+    _framebuffers.emplace_back(*_device, renderPass, _imageViews.back(), _depthImageView);
   }
-
-  // _depthImage.create(*_device,
-  //                    findDepthFormat(),
-  //                    _surfaceExtent,
-  //                    [](VkImageCreateInfo* info) {
-  //                      info->usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  //                    });
 
   deactivateActiveImage();
 }
@@ -127,6 +126,8 @@ void Swapchain::destroy() {
   _framebuffers.clear();
   _imageViews.clear();
   _images.clear();
+  _depthImageView.destroy();
+  _depthImage.destroy();
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
 
@@ -204,12 +205,10 @@ VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
 }
 
 VkFormat Swapchain::findDepthFormat() const {
-    return _device->physicalDevice().findSupportedFormat(
-        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
+  return _device->physicalDevice().findSupportedFormat(
+      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+      VK_IMAGE_TILING_OPTIMAL,
+      VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
-
 
 NAMESPACE_Vulk_END

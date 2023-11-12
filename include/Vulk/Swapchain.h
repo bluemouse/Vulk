@@ -7,6 +7,7 @@
 #include <limits>
 
 #include <Vulk/Image2D.h>
+#include <Vulk/DepthImage.h>
 #include <Vulk/ImageView.h>
 #include <Vulk/Framebuffer.h>
 
@@ -104,7 +105,7 @@ class Swapchain {
   std::vector<ImageView> _imageViews;
   std::vector<Framebuffer> _framebuffers;
 
-  Image _depthImage;
+  DepthImage _depthImage;
   ImageView _depthImageView;
 
   mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();

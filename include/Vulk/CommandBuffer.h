@@ -5,7 +5,7 @@
 #include <functional>
 #include <vector>
 
-#define GLM_FORCE_RADIANS
+// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 #include <Vulk/Fence.h>
@@ -58,7 +58,7 @@ class CommandBuffer {
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,
                        const glm::vec4& clearColor = {0.0F, 0.0F, 0.0F, 1.0F},
-                       float clearDepth = 0.0F,
+                       float clearDepth = 1.0F,
                        uint32_t clearStencil = 0) const;
   void endRenderpass() const;
 

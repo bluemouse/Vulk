@@ -9,7 +9,7 @@ NAMESPACE_Vulk_BEGIN
 
     class Device;
 
-class DepthImage : protected Image {
+class DepthImage : public Image {
  public:
   using ImageCreateInfoOverride = std::function<void(VkImageCreateInfo*)>;
 

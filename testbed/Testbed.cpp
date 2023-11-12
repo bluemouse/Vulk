@@ -4,9 +4,8 @@
 #include <Vulk/TypeTraits.h>
 #include <Vulk/ShaderModule.h>
 
+// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-//#define GLM_FORCE_LEFT_HANDED
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
@@ -144,15 +143,15 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
-  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{-1.0F, 1.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                        {{1.0F, 1.0F, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                        {{1.0F, -1.0F, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}},
+  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F, 0.5F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{-1.0F, 1.0F, 0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                        {{1.0F, 1.0F, 0.5F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                        {{1.0F, -1.0F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}},
 
-                                        {{-0.5F, -0.5F, -0.5F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{-0.5F, 0.5F, -0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                        {{0.5F, 0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                        {{0.5F, -0.5F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+                                        {{-0.5F, -0.5F, 0.25F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                        {{-0.5F, 0.5F, 0.25F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                        {{0.5F, 0.5F, 0.75F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                        {{0.5F, -0.5F, 0.75F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
 
   const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
@@ -239,7 +238,6 @@ void Testbed::updateUniformBuffer() {
   vec3 cameraPos{0.0F, 0.0F, -1.0F};
   vec3 cameraLookAt{0.0F, 0.0F, 0.0F};
   vec3 cameraUp{0.0F, -1.0F, 0.0F};
-  auto cameraDist = glm::distance(cameraPos, cameraLookAt);
 
   xform.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
 
@@ -249,14 +247,15 @@ void Testbed::updateUniformBuffer() {
   vec4 roi = surfaceAspect > 1.0F ? vec4{-surfaceAspect, surfaceAspect, 1.0F, -1.0F}
                                   : vec4{-1.0F, 1.0F, 1.0F / surfaceAspect, -1.0F / surfaceAspect};
 
+  auto dist = glm::distance(cameraPos, cameraLookAt);
+  auto zNear = dist;
+  auto zFar = zNear + dist*10.0F;
 // #define USE_PERSPECTIVE_PROJECTION
 #if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
-  ubo.proj = glm::perspective(fovy, surfaceAspect, 0.0F, cameraDist * 2);
-  ubo.proj[1][1] *= -1;
+  xform.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
+  xform.proj[1][1] *= -1;
 #else
-  auto zNear = cameraLookAt.z - cameraDist;
-  auto zFar = cameraLookAt.z + cameraDist;
   xform.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
 #endif
 
