@@ -91,8 +91,6 @@ class Swapchain {
   void deactivateActiveImage() const { _activeImageIndex = std::numeric_limits<uint32_t>::max(); }
   bool hasActiveImage() const { return _activeImageIndex != std::numeric_limits<uint32_t>::max(); }
 
-  VkFormat findDepthFormat() const;
-
  private:
   VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
 

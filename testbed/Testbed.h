@@ -47,6 +47,8 @@ class Testbed : public MainWindow {
   [[nodiscard]] static VkPresentModeKHR chooseSwapchainPresentMode(
       const std::vector<VkPresentModeKHR>& availablePresentModes);
 
+  [[nodiscard]] static VkFormat chooseDepthFormat();
+
  private:
   void createContext();
 

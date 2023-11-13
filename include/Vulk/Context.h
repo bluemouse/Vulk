@@ -30,9 +30,10 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class Context {
+    class Context {
  public:
   using ValidationLevel = Instance::ValidationLevel;
+  using ChooseDepthFormatFunc = std::function<VkFormat()>;
 
  public:
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
@@ -51,6 +52,8 @@ class Context {
     Swapchain::ChooseSurfaceExtentFunc chooseSurfaceExtent;
     Swapchain::ChooseSurfaceFormatFunc chooseSurfaceFormat;
     Swapchain::ChoosePresentModeFunc choosePresentMode;
+
+    ChooseDepthFormatFunc chooseDepthFormat;
 
     uint32_t maxDescriptorSets = 2;
 
@@ -99,7 +102,8 @@ class Context {
   virtual void createSurface(const CreateWindowSurfaceFunc& createWindowSurface);
   virtual void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
   virtual void createLogicalDevice();
-  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat);
+  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                                const ChooseDepthFormatFunc& chooseDepthFormat = {});
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                                const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);

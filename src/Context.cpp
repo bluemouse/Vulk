@@ -44,7 +44,7 @@ void Context::create(const CreateInfo& createInfo) {
   pickPhysicalDevice(createInfo.isDeviceSuitable);
   createLogicalDevice();
 
-  createRenderPass(createInfo.chooseSurfaceFormat);
+  createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
   createSwapchain(
       createInfo.chooseSurfaceExtent, createInfo.chooseSurfaceFormat, createInfo.choosePresentMode);
 
@@ -128,7 +128,8 @@ void Context::createLogicalDevice() {
   _device.initQueue("present", queueFamilies.presentIndex());
 }
 
-void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat) {
+void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                               const ChooseDepthFormatFunc& chooseDepthFormat) {
   const auto [_, formats, __] = _surface.querySupports();
 
   VkFormat colorFormat;
@@ -138,7 +139,11 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
     colorFormat = chooseDefaultSurfaceFormat(formats).format;
   }
 
-  VkFormat depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+  VkFormat depthStencilFormat = VK_FORMAT_UNDEFINED;
+  if (chooseDepthFormat) {
+    depthStencilFormat = chooseDepthFormat();
+    MI_VERIFY(depthStencilFormat != VK_FORMAT_UNDEFINED);
+  }
 
   _renderPass.create(_device, colorFormat, depthStencilFormat);
 }
@@ -155,6 +160,8 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
     extent = chooseDefaultSurfaceExtent(capabilities);
   }
 
+  // TODO should use RenderPass.colorFormat() instead of choosing a format. RenderPass also call
+  // chooseSurfaceFormat() to find the format which should be the same one to use.
   VkSurfaceFormatKHR format;
   if (chooseSurfaceFormat) {
     format = chooseSurfaceFormat(formats);

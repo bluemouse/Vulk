@@ -3,6 +3,7 @@
 #include <Vulk/Toolbox.h>
 #include <Vulk/TypeTraits.h>
 #include <Vulk/ShaderModule.h>
+#include <Vulk/DepthImage.h>
 
 // Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -131,6 +132,8 @@ void Testbed::createContext() {
   };
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
   createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
+
+  createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
 
   createInfo.maxDescriptorSets = _maxFrameInFlight;
   createInfo.createVertShader = &Testbed::createVertexShader;
@@ -315,6 +318,12 @@ VkPresentModeKHR Testbed::chooseSwapchainPresentMode(
     }
   }
   return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkFormat Testbed::chooseDepthFormat() {
+  constexpr uint32_t depthBits = 24U;
+  constexpr uint32_t stencilBits = 8U;
+  return Vulk::DepthImage::findFormat(depthBits, stencilBits);
 }
 
 void Testbed::nextFrame() {

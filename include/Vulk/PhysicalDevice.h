@@ -58,6 +58,10 @@ class PhysicalDevice {
                                VkImageTiling tiling,
                                VkFormatFeatureFlags features) const;
 
+  bool isFormatSupported(VkFormat format,
+                         VkImageTiling tiling,
+                         VkFormatFeatureFlags features) const;
+
  private:
   [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device);
 

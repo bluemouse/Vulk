@@ -16,13 +16,9 @@ class DepthImage : public Image {
  public:
   DepthImage() = default;
   DepthImage(const Device& device,
-             VkFormat format,
              VkExtent2D extent,
-             const ImageCreateInfoOverride& override = {});
-  DepthImage(const Device& device,
-             VkFormat format,
-             VkExtent2D extent,
-             VkMemoryPropertyFlags properties,
+             uint32_t depthBits,
+             uint32_t stencilBits = 0,
              const ImageCreateInfoOverride& override = {});
 
   // Transfer the ownership from `rhs` to `this`
@@ -30,8 +26,13 @@ class DepthImage : public Image {
   DepthImage& operator=(DepthImage&& rhs) noexcept(false);
 
   void create(const Device& device,
-              VkFormat format,
               VkExtent2D extent,
+              uint32_t depthBits,
+              uint32_t stencilBits = 0,
+              const ImageCreateInfoOverride& override = {});
+  void create(const Device& device,
+              VkExtent2D extent,
+              VkFormat format,
               const ImageCreateInfoOverride& override = {});
 
   using Image::destroy;
@@ -46,6 +47,14 @@ class DepthImage : public Image {
   using Image::isAllocated;
 
   operator VkImage() const { return Image::operator VkImage(); }
+
+  [[nodiscard]] bool hasDepthBits() const;
+  [[nodiscard]] bool hasStencilBits() const;
+
+  [[nodiscard]] static VkFormat findFormat(uint32_t depthBits, uint32_t stencilBits);
+
+ private:
+  VkFormat _format = VK_FORMAT_UNDEFINED;
 };
 
 NAMESPACE_Vulk_END

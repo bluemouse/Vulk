@@ -50,6 +50,9 @@ class RenderPass {
     return _depthStencilFormat != VK_FORMAT_UNDEFINED;
    }
 
+  VkFormat colorFormat() const { return _colorFormat; }
+  VkFormat depthStencilFormat() const { return _depthStencilFormat; }
+
  private:
   void moveFrom(RenderPass& rhs);
 
