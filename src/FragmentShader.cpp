@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 FragmentShader::FragmentShader(FragmentShader&& rhs) noexcept {
   moveFrom(rhs);
@@ -28,4 +28,4 @@ void FragmentShader::addDescriptorSetLayoutBinding(const std::string& name,
       name, type, binding, descriptorType, VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

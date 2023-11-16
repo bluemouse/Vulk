@@ -4,7 +4,7 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -33,9 +33,9 @@ class CommandPool {
 
  private:
   VkCommandPool _pool = VK_NULL_HANDLE;
-  VkQueue _queue = VK_NULL_HANDLE;
+  VkQueue _queue      = VK_NULL_HANDLE;
 
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

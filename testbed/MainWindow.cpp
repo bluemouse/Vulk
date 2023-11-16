@@ -17,9 +17,9 @@ void MainWindow::init(int width, int height) {
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-  _width = width;
-  _height = height;
-  _window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
+  _width              = width;
+  _height             = height;
+  _window             = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
   _framebufferResized = false;
 
   glfwSetWindowUserPointer(_window, this);
@@ -39,8 +39,8 @@ void MainWindow::keyCallback(GLFWwindow* window, int key, int /*scancode*/, int 
 void MainWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
   auto win = reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(window));
 
-  win->_width = width;
-  win->_height = height;
+  win->_width              = width;
+  win->_height             = height;
   win->_framebufferResized = true;
 }
 
@@ -68,7 +68,7 @@ void MainWindow::mainLoop() {
 }
 
 MainWindow::Extensions MainWindow::getRequiredInstanceExtensions() {
-  uint32_t count = 0;
+  uint32_t count          = 0;
   const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 
   return {count, extensions};

@@ -6,7 +6,7 @@
 
 #include <Vulk/Surface.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Instance::Instance(
     const ApplicationInfoOverride& appInfoOverride,
@@ -41,23 +41,23 @@ void Instance::create(
   initDefaultValidationCallback();
 
   VkApplicationInfo appInfo{};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = nullptr;
+  appInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pApplicationName   = nullptr;
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.pEngineName = nullptr;
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+  appInfo.pEngineName        = nullptr;
+  appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.apiVersion         = VK_MAKE_API_VERSION(0, 1, 0, 0);
 
   if (appInfoOverride) {
     appInfoOverride(&appInfo);
   }
 
   VkInstanceCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  createInfo.pNext = nullptr;
-  createInfo.pApplicationInfo = &appInfo;
-  createInfo.enabledLayerCount = 0;
-  createInfo.enabledExtensionCount = 0;
+  createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  createInfo.pNext                   = nullptr;
+  createInfo.pApplicationInfo        = &appInfo;
+  createInfo.enabledLayerCount       = 0;
+  createInfo.enabledExtensionCount   = 0;
   createInfo.ppEnabledExtensionNames = nullptr;
 
   if (instanceCreateInfoOverride) {
@@ -92,7 +92,7 @@ void Instance::create(int versionMajor,
   DebugUtilsMessengerCreateInfoOverride debugUtilsMessengerCreateInfoOverride;
   if (validation != kNone) {
     debugUtilsMessengerCreateInfoOverride = [&](VkDebugUtilsMessengerCreateInfoEXT* createInfo) {
-      createInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+      createInfo->sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
       createInfo->messageSeverity = 0x00;
       if (validation >= kError) {
         createInfo->messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -110,18 +110,18 @@ void Instance::create(int versionMajor,
                                 VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                                 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
       createInfo->pfnUserCallback = Instance::VkDebugCallback;
-      createInfo->pUserData = this;
+      createInfo->pUserData       = this;
     };
   }
 
   auto instanceCreateInfoOverride = [&](VkInstanceCreateInfo* createInfo) {
     if (validation != kNone) {
-      createInfo->enabledLayerCount = static_cast<uint32_t>(_layers.size());
+      createInfo->enabledLayerCount   = static_cast<uint32_t>(_layers.size());
       createInfo->ppEnabledLayerNames = _layers.data();
 
       extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
-    createInfo->enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo->enabledExtensionCount   = static_cast<uint32_t>(extensions.size());
     createInfo->ppEnabledExtensionNames = extensions.data();
   };
 
@@ -140,7 +140,7 @@ void Instance::destroy() {
 
   vkDestroyInstance(_instance, nullptr);
 
-  _instance = VK_NULL_HANDLE;
+  _instance       = VK_NULL_HANDLE;
   _debugMessenger = VK_NULL_HANDLE;
 }
 
@@ -179,36 +179,26 @@ void Instance::initDefaultValidationCallback() {
                            const VkDebugUtilsMessengerCallbackDataEXT* data) -> VkBool32 {
     std::string severity;
     switch (messageSeverity) {
-      case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        severity = "VERBOSE";
-        break;
-      case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        severity = "INFO";
-        break;
+      case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: severity = "VERBOSE"; break;
+      case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: severity = "INFO"; break;
       case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
         severity = "\033[36mWARNING\033[0m"; // cyan
         break;
       case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
         severity = "\033[1;31mERROR\033[0m"; // bold red
         break;
-      default:
-        severity = "UNKNOWN";
-        break;
+      default: severity = "UNKNOWN"; break;
     }
     std::string type;
     switch (messageType) {
-      case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
-        type = "GENERAL";
-        break;
+      case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT: type = "GENERAL"; break;
       case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
         type = "\033[33mVALIDATION\033[0m"; // yellow
         break;
       case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
         type = "\033[1;32mPERFORMANCE\033[0m"; // bold gree
         break;
-      default:
-        type = "UNKNOWN";
-        break;
+      default: type = "UNKNOWN"; break;
     }
 
     std::string message = std::string{"Vulkan ["} + type + " " + severity + "]: " + data->pMessage;
@@ -238,4 +228,4 @@ Instance::VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
   return instance->_validationCallback(messageSeverity, messageType, pCallbackData);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

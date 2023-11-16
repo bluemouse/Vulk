@@ -9,7 +9,7 @@
 
 #include <limits>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class RenderPass;
@@ -60,7 +60,7 @@ class Pipeline {
   void moveFrom(Pipeline& rhs);
 
  private:
-  VkPipeline _pipeline = VK_NULL_HANDLE;
+  VkPipeline _pipeline     = VK_NULL_HANDLE;
   VkPipelineLayout _layout = VK_NULL_HANDLE;
 
   DescriptorSetLayout _descriptorSetLayout;
@@ -70,4 +70,4 @@ class Pipeline {
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Semaphore::Semaphore(const Device& device) {
   create(device);
@@ -28,10 +28,10 @@ Semaphore& Semaphore::operator=(Semaphore&& rhs) noexcept(false) {
 void Semaphore::moveFrom(Semaphore& rhs) {
   MI_VERIFY(!isCreated());
   _semaphore = rhs._semaphore;
-  _device = rhs._device;
+  _device    = rhs._device;
 
   rhs._semaphore = VK_NULL_HANDLE;
-  rhs._device = nullptr;
+  rhs._device    = nullptr;
 }
 
 void Semaphore::create(const Device& device) {
@@ -49,7 +49,7 @@ void Semaphore::destroy() {
   vkDestroySemaphore(*_device, _semaphore, nullptr);
 
   _semaphore = VK_NULL_HANDLE;
-  _device = nullptr;
+  _device    = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

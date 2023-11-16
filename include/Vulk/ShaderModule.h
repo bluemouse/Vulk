@@ -9,9 +9,9 @@
 struct SpvReflectShaderModule;
 struct SpvReflectShaderModule;
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 
 class ShaderModule {
  public:
@@ -94,4 +94,4 @@ class ShaderModule {
   const Device* _device;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

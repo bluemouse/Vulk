@@ -43,7 +43,7 @@ void Testbed::init(int width, int height) {
   createRenderable();
 
   auto textureFile = executablePath() / "textures/texture.jpg";
-  _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
+  _texture         = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
 
   createFrames();
 }
@@ -120,7 +120,7 @@ void Testbed::createContext() {
   auto [extensionCount, extensions] = getRequiredInstanceExtensions();
 
   Vulk::Context::CreateInfo createInfo;
-  createInfo.extensions = {extensions, extensions + extensionCount};
+  createInfo.extensions      = {extensions, extensions + extensionCount};
   createInfo.validationLevel = _validationLevel;
 
   createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
@@ -133,13 +133,13 @@ void Testbed::createContext() {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
-  createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
+  createInfo.choosePresentMode   = &Testbed::chooseSwapchainPresentMode;
 
   createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
 
   createInfo.maxDescriptorSets = _maxFrameInFlight;
-  createInfo.createVertShader = &Testbed::createVertexShader;
-  createInfo.createFragShader = &Testbed::createFragmentShader;
+  createInfo.createVertShader  = &Testbed::createVertexShader;
+  createInfo.createFragShader  = &Testbed::createFragmentShader;
 
   _context.create(createInfo);
 
@@ -169,12 +169,12 @@ void Testbed::createFrames() {
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  textureImageInfo.imageView = _texture;
-  textureImageInfo.sampler = _texture;
+  textureImageInfo.imageView   = _texture;
+  textureImageInfo.sampler     = _texture;
 
   VkDescriptorBufferInfo transformationBufferInfo{};
   transformationBufferInfo.offset = 0;
-  transformationBufferInfo.range = VK_WHOLE_SIZE;
+  transformationBufferInfo.range  = VK_WHOLE_SIZE;
 
   for (auto& frame : _frames) {
     frame.commandBuffer.allocate(_context.commandPool());
@@ -228,7 +228,7 @@ void Testbed::updateUniformBuffer() {
   using glm::mat4;
 
   auto [textureW, textureH] = _texture.extent();
-  float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
+  float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
 
   Transformation xform{};
 
@@ -247,14 +247,14 @@ void Testbed::updateUniformBuffer() {
   xform.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
 
   auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
-  float surfaceAspect = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
+  float surfaceAspect       = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
 
   vec4 roi = surfaceAspect > 1.0F ? vec4{-surfaceAspect, surfaceAspect, 1.0F, -1.0F}
                                   : vec4{-1.0F, 1.0F, 1.0F / surfaceAspect, -1.0F / surfaceAspect};
 
-  auto dist = glm::distance(cameraPos, cameraLookAt);
+  auto dist  = glm::distance(cameraPos, cameraLookAt);
   auto zNear = dist;
-  auto zFar = zNear + dist*10.0F;
+  auto zFar  = zNear + dist * 10.0F;
 // #define USE_PERSPECTIVE_PROJECTION
 #if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
@@ -268,7 +268,7 @@ void Testbed::updateUniformBuffer() {
 }
 
 bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface& surface) {
-  auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
+  auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
   bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
 
   uint32_t extensionCount = 0;
@@ -295,7 +295,7 @@ VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR&
   if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return caps.currentExtent;
   } else {
-    auto width = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
+    auto width  = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
     auto height = std::clamp(windowHeight, caps.minImageExtent.height, caps.maxImageExtent.height);
     return {width, height};
   }
@@ -323,12 +323,12 @@ VkPresentModeKHR Testbed::chooseSwapchainPresentMode(
 }
 
 VkFormat Testbed::chooseDepthFormat() {
-  constexpr uint32_t depthBits = 24U;
+  constexpr uint32_t depthBits   = 24U;
   constexpr uint32_t stencilBits = 8U;
   return Vulk::DepthImage::findFormat(depthBits, stencilBits);
 }
 
 void Testbed::nextFrame() {
   _currentFrameIdx = (_currentFrameIdx + 1) % _maxFrameInFlight;
-  _currentFrame = &_frames[_currentFrameIdx];
+  _currentFrame    = &_frames[_currentFrameIdx];
 }

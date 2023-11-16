@@ -28,17 +28,17 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Context {
+class Context {
  public:
-  using ValidationLevel = Instance::ValidationLevel;
+  using ValidationLevel       = Instance::ValidationLevel;
   using ChooseDepthFormatFunc = std::function<VkFormat()>;
 
  public:
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
-  using CreateVertShaderFunc = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
-  using CreateFragShaderFunc = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
+  using CreateVertShaderFunc    = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
+  using CreateFragShaderFunc    = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
   struct CreateInfo {
     int versionMajor = 1;
     int versionMinor = 0;
@@ -66,7 +66,7 @@ NAMESPACE_Vulk_BEGIN
 
   virtual ~Context() = default;
 
-  Context(const Context& rhs) = delete;
+  Context(const Context& rhs)            = delete;
   Context& operator=(const Context& rhs) = delete;
 
   virtual void create(const CreateInfo& createInfo);
@@ -128,4 +128,4 @@ NAMESPACE_Vulk_BEGIN
   Vulk::CommandPool _commandPool;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Texture2D::Texture2D(const Device& device,
                      VkFormat format,
@@ -33,4 +33,4 @@ void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& st
   _image.copyFrom(cmdBuffer, stagingBuffer);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

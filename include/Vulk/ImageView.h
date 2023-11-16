@@ -6,9 +6,9 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 class Image;
 class Image2D;
 class DepthImage;
@@ -57,7 +57,7 @@ class ImageView {
   VkImageView _view = VK_NULL_HANDLE;
 
   const Device* _device = nullptr;
-  const Image* _image = nullptr;
+  const Image* _image   = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

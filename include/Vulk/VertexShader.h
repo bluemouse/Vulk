@@ -7,9 +7,9 @@
 
 #include <vector>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 
 class VertexShader : public ShaderModule {
  public:
@@ -51,4 +51,4 @@ class VertexShader : public ShaderModule {
   void moveFrom(VertexShader& rhs);
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -7,13 +7,13 @@
 #include <Vulk/Sampler.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
 class Texture2D {
  public:
-  using Filter = Sampler::Filter;
+  using Filter      = Sampler::Filter;
   using AddressMode = Sampler::AddressMode;
 
  public:
@@ -21,18 +21,18 @@ class Texture2D {
   Texture2D(const Device& device,
             VkFormat format,
             VkExtent2D extent,
-            Filter filter = {VK_FILTER_LINEAR},
+            Filter filter           = {VK_FILTER_LINEAR},
             AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   ~Texture2D() = default;
 
   // Transfer the ownership from `rhs` to `this`
-  Texture2D(Texture2D&& rhs) noexcept = default;
+  Texture2D(Texture2D&& rhs) noexcept                   = default;
   Texture2D& operator=(Texture2D&& rhs) noexcept(false) = default;
 
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
-              Filter filter = {VK_FILTER_LINEAR},
+              Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();
 
@@ -77,4 +77,4 @@ class Texture2D {
   Sampler _sampler;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

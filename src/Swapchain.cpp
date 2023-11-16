@@ -9,7 +9,7 @@
 
 #include <limits>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Swapchain::Swapchain(const Device& device,
                      const Surface& surface,
@@ -31,15 +31,15 @@ void Swapchain::create(const Device& device,
                        const VkSurfaceFormatKHR& surfaceFormat,
                        VkPresentModeKHR presentMode) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device  = &device;
   _surface = &surface;
 
   const auto& physicalDevice = device.physicalDevice();
-  const auto capabilities = surface.querySupports().capabilities;
+  const auto capabilities    = surface.querySupports().capabilities;
 
   _surfaceExtent = surfaceExtent;
   _surfaceFormat = surfaceFormat;
-  _presentMode = presentMode;
+  _presentMode   = presentMode;
 
   uint32_t minImageCount = capabilities.minImageCount + 1;
   if (capabilities.maxImageCount > 0 && minImageCount > capabilities.maxImageCount) {
@@ -47,36 +47,36 @@ void Swapchain::create(const Device& device,
   }
 
   VkSwapchainCreateInfoKHR createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   createInfo.surface = surface;
 
-  createInfo.minImageCount = minImageCount;
-  createInfo.imageFormat = surfaceFormat.format;
-  createInfo.imageColorSpace = surfaceFormat.colorSpace;
+  createInfo.minImageCount    = minImageCount;
+  createInfo.imageFormat      = surfaceFormat.format;
+  createInfo.imageColorSpace  = surfaceFormat.colorSpace;
   createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   uint32_t queueFamilyIndices[] = {physicalDevice.queueFamilies().graphicsIndex(),
                                    physicalDevice.queueFamilies().presentIndex()};
 
   if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
-    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
     createInfo.queueFamilyIndexCount = 2;
-    createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    createInfo.pQueueFamilyIndices   = queueFamilyIndices;
   } else {
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    createInfo.queueFamilyIndexCount = 0;     // Optional
-    createInfo.pQueueFamilyIndices = nullptr; // Optional
+    createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.queueFamilyIndexCount = 0;       // Optional
+    createInfo.pQueueFamilyIndices   = nullptr; // Optional
   }
 
-  createInfo.preTransform = capabilities.currentTransform;
+  createInfo.preTransform   = capabilities.currentTransform;
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  createInfo.presentMode = _presentMode;
-  createInfo.clipped = VK_TRUE;
+  createInfo.presentMode    = _presentMode;
+  createInfo.clipped        = VK_TRUE;
 
   // To assure we use the latest surface extent to create the swapchain, we choose the extent as
   // close to the creation as possible.
-  _surfaceExtent = chooseSurfaceExtent(_surfaceExtent.width, _surfaceExtent.height);
+  _surfaceExtent         = chooseSurfaceExtent(_surfaceExtent.width, _surfaceExtent.height);
   createInfo.imageExtent = _surfaceExtent;
 
   MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
@@ -88,9 +88,9 @@ void Swapchain::create(const Device& device,
                        const ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                        const ChoosePresentModeFunc& choosePresentMode) {
   const auto [capabilities, formats, presentModes] = surface.querySupports();
-  const auto extent = chooseSurfaceExtent(capabilities);
-  const auto format = chooseSurfaceFormat(formats);
-  const auto presentMode = choosePresentMode(presentModes);
+  const auto extent                                = chooseSurfaceExtent(capabilities);
+  const auto format                                = chooseSurfaceFormat(formats);
+  const auto presentMode                           = choosePresentMode(presentModes);
 
   create(device, surface, extent, format, presentMode);
 }
@@ -136,11 +136,11 @@ void Swapchain::destroy() {
 
   _surfaceExtent = {};
   _surfaceFormat = {};
-  _presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+  _presentMode   = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
   _swapchain = VK_NULL_HANDLE;
-  _device = nullptr;
-  _surface = nullptr;
+  _device    = nullptr;
+  _surface   = nullptr;
 }
 
 void Swapchain::resize(uint32_t width, uint32_t height) {
@@ -200,10 +200,10 @@ VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = renderFinished;
+  presentInfo.pWaitSemaphores    = renderFinished;
 
   presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &_swapchain;
+  presentInfo.pSwapchains    = &_swapchain;
 
   presentInfo.pImageIndices = &_activeImageIndex;
 
@@ -216,10 +216,10 @@ VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowH
   if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return caps.currentExtent;
   } else {
-    auto width = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
+    auto width  = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
     auto height = std::clamp(windowHeight, caps.minImageExtent.height, caps.maxImageExtent.height);
     return {width, height};
   }
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

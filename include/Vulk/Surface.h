@@ -6,12 +6,12 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 
 class Surface {
-public:
+ public:
   struct Supports {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
@@ -40,7 +40,7 @@ public:
   [[nodiscard]] bool isAdequate(VkPhysicalDevice physicalDevice) const;
 
   // Disable copy and assignment operators
-  Surface(const Surface&) = delete;
+  Surface(const Surface&)            = delete;
   Surface& operator=(const Surface&) = delete;
 
  private:
@@ -49,4 +49,4 @@ public:
   const Instance* _instance = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

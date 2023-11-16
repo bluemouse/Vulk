@@ -4,7 +4,7 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 DepthImage::DepthImage(const Device& device,
                        VkExtent2D extent,
@@ -19,7 +19,7 @@ DepthImage::DepthImage(DepthImage&& rhs) noexcept {
 }
 
 DepthImage& DepthImage::operator=(DepthImage&& rhs) noexcept(false) {
-  _format = rhs._format;
+  _format     = rhs._format;
   rhs._format = VK_FORMAT_UNDEFINED;
   Image::operator=(std::move(rhs));
   return *this;
@@ -39,23 +39,23 @@ void DepthImage::create(const Device& device,
                         const ImageCreateInfoOverride& override) {
   _format = format;
 
-  constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
+  constexpr auto tiling  = VK_IMAGE_TILING_OPTIMAL;
   constexpr auto feature = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  constexpr auto usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  constexpr auto usage   = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   MI_VERIFY(_format != VK_FORMAT_UNDEFINED);
   MI_VERIFY(device.physicalDevice().isFormatSupported(_format, tiling, feature));
 
   VkImageCreateInfo imageInfo{};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageInfo.extent = {extent.width, extent.height, 1};
-  imageInfo.mipLevels = 1;
+  imageInfo.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageInfo.imageType   = VK_IMAGE_TYPE_2D;
+  imageInfo.extent      = {extent.width, extent.height, 1};
+  imageInfo.mipLevels   = 1;
   imageInfo.arrayLayers = 1;
-  imageInfo.format = _format;
-  imageInfo.tiling = tiling;
-  imageInfo.usage = usage;
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageInfo.format      = _format;
+  imageInfo.tiling      = tiling;
+  imageInfo.usage       = usage;
+  imageInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // The Vulkan spec states: initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED or
   // VK_IMAGE_LAYOUT_PREINITIALIZED
@@ -102,4 +102,4 @@ bool DepthImage::hasStencilBits() const {
          _format == VK_FORMAT_D24_UNORM_S8_UINT || _format == VK_FORMAT_D32_SFLOAT_S8_UINT;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

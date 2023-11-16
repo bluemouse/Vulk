@@ -6,7 +6,7 @@
 
 #include <functional>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -37,8 +37,8 @@ class Sampler {
  public:
   Sampler() = default;
   Sampler(const Device& device,
-          Filter filter = {VK_FILTER_LINEAR},
-          AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT},
+          Filter filter                                       = {VK_FILTER_LINEAR},
+          AddressMode addressMode                             = {VK_SAMPLER_ADDRESS_MODE_REPEAT},
           const SamplerCreateInfoOverride& createInfoOverride = {});
   ~Sampler();
 
@@ -47,7 +47,7 @@ class Sampler {
   Sampler& operator=(Sampler&& rhs) noexcept(false);
 
   void create(const Device& device,
-              Filter filter = {VK_FILTER_LINEAR},
+              Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT},
               const SamplerCreateInfoOverride& createInfoOverride = {});
 
@@ -66,4 +66,4 @@ class Sampler {
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

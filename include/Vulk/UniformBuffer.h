@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -14,10 +14,10 @@ class UniformBuffer : public Buffer {
   UniformBuffer(const Device& device, VkDeviceSize size);
 
   // Transfer the ownership from `rhs` to `this`
-  UniformBuffer(UniformBuffer&& rhs) = default;
+  UniformBuffer(UniformBuffer&& rhs)                            = default;
   UniformBuffer& operator=(UniformBuffer&& rhs) noexcept(false) = default;
 
   void create(const Device& device, VkDeviceSize size);
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -8,22 +8,22 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Surface;
 
 class Instance {
  public:
   enum ValidationLevel {
-    kNone = 0,
-    kError = 1,
+    kNone    = 0,
+    kError   = 1,
     kWarning = 2,
-    kInfo = 3,
+    kInfo    = 3,
     kVerbose = 4,
   };
 
  public:
-  using ApplicationInfoOverride = std::function<void(VkApplicationInfo*)>;
+  using ApplicationInfoOverride    = std::function<void(VkApplicationInfo*)>;
   using InstanceCreateInfoOverride = std::function<void(VkInstanceCreateInfo*)>;
   using DebugUtilsMessengerCreateInfoOverride =
       std::function<void(VkDebugUtilsMessengerCreateInfoEXT*)>;
@@ -38,8 +38,8 @@ class Instance {
            ValidationLevel validation = kNone);
   ~Instance();
 
-  void create(const ApplicationInfoOverride& appInfoOverride = {},
-              const InstanceCreateInfoOverride& instanceCreateInfoOverride = {},
+  void create(const ApplicationInfoOverride& appInfoOverride                           = {},
+              const InstanceCreateInfoOverride& instanceCreateInfoOverride             = {},
               const DebugUtilsMessengerCreateInfoOverride& messengerCreateInfoOverride = {});
   void create(int versionMajor,
               int versionMinor,
@@ -65,7 +65,7 @@ class Instance {
   [[nodiscard]] bool isCreated() const { return _instance != VK_NULL_HANDLE; }
 
   // Disable copy and assignment operators
-  Instance(const Instance&) = delete;
+  Instance(const Instance&)            = delete;
   Instance& operator=(const Instance&) = delete;
 
  private:
@@ -89,4 +89,4 @@ class Instance {
   ValidationCallback _validationCallback;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

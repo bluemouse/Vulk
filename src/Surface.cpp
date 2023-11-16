@@ -2,7 +2,7 @@
 
 #include <Vulk/Instance.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Surface::Surface(const Instance& instance, VkSurfaceKHR surface) {
   create(instance, surface);
@@ -26,7 +26,7 @@ void Surface::destroy() {
 
   vkDestroySurfaceKHR(*_instance, _surface, nullptr);
 
-  _surface = VK_NULL_HANDLE;
+  _surface  = VK_NULL_HANDLE;
   _instance = nullptr;
 }
 
@@ -62,4 +62,4 @@ bool Surface::isAdequate(VkPhysicalDevice physicalDevice) const {
   return !supports.formats.empty() && !supports.presentModes.empty();
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

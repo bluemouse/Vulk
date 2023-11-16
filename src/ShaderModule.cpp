@@ -21,20 +21,13 @@ bool gEnablePrintReflection = false;
   } else {
     if (binding.type_description->op == SpvOpTypeSampledImage) {
       switch (binding.image.dim) {
-        case SpvDim1D:
-          return "sampler1D";
-        case SpvDim2D:
-          return "sampler2D";
-        case SpvDim3D:
-          return "sampler3D";
-        case SpvDimCube:
-          return "samplerCube";
-        case SpvDimRect:
-          return "sampler2DRect";
-        case SpvDimBuffer:
-          return "samplerBuffer";
-        default:
-          return {};
+        case SpvDim1D: return "sampler1D";
+        case SpvDim2D: return "sampler2D";
+        case SpvDim3D: return "sampler3D";
+        case SpvDimCube: return "samplerCube";
+        case SpvDimRect: return "sampler2DRect";
+        case SpvDimBuffer: return "samplerBuffer";
+        default: return {};
       }
     }
   }
@@ -47,68 +40,46 @@ bool gEnablePrintReflection = false;
       switch (type.traits.numeric.scalar.width) {
         case 32:
           switch (type.traits.numeric.vector.component_count) {
-            case 2:
-              return "vec2";
-            case 3:
-              return "vec3";
-            case 4:
-              return "vec4";
+            case 2: return "vec2";
+            case 3: return "vec3";
+            case 4: return "vec4";
           }
           break;
         case 64:
           switch (type.traits.numeric.vector.component_count) {
-            case 2:
-              return "dvec2";
-            case 3:
-              return "dvec3";
-            case 4:
-              return "dvec4";
+            case 2: return "dvec2";
+            case 3: return "dvec3";
+            case 4: return "dvec4";
           }
           break;
       }
       break;
-    case SpvOpTypeVoid:
-      return "void";
-    case SpvOpTypeBool:
-      return "bool";
-    case SpvOpTypeInt:
-      return type.traits.numeric.scalar.signedness ? "int" : "uint";
+    case SpvOpTypeVoid: return "void";
+    case SpvOpTypeBool: return "bool";
+    case SpvOpTypeInt: return type.traits.numeric.scalar.signedness ? "int" : "uint";
     case SpvOpTypeFloat:
       switch (type.traits.numeric.scalar.width) {
-        case 32:
-          return "float";
-        case 64:
-          return "double";
-        default:
-          break;
+        case 32: return "float";
+        case 64: return "double";
+        default: break;
       }
       break;
-    case SpvOpTypeStruct:
-      return "struct";
-    case SpvOpTypePointer:
-      return "ptr";
-    default:
-      return "undefined";
+    case SpvOpTypeStruct: return "struct";
+    case SpvOpTypePointer: return "ptr";
+    default: return "undefined";
   }
   return "undefined";
 }
 
 std::string ToStringSpvReflectShaderStage(SpvReflectShaderStageFlagBits stage) {
   switch (stage) {
-    default:
-      return "Unknown";
-    case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
-      return "Vertex";
-    case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-      return "Tessellation Control";
-    case SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-      return "Tessellation Evaluation";
-    case SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT:
-      return "Geometry";
-    case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
-      return "Fragment";
-    case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
-      return "Compute";
+    default: return "Unknown";
+    case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT: return "Vertex";
+    case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT: return "Tessellation Control";
+    case SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return "Tessellation Evaluation";
+    case SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT: return "Geometry";
+    case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT: return "Fragment";
+    case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT: return "Compute";
   }
 }
 
@@ -230,7 +201,7 @@ std::vector<char> readFile(const std::string& filename) {
 }
 } // namespace
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 ShaderModule::ShaderModule(const Device& device, const std::vector<char>& codes, bool reflection) {
   create(device, codes, reflection);
@@ -249,16 +220,16 @@ ShaderModule::~ShaderModule() {
 void ShaderModule::create(const Device& device, const std::vector<char>& codes, bool reflection) {
   MI_VERIFY(!isCreated());
   _device = &device;
-  _entry = "main";
+  _entry  = "main";
 
   if (reflection) {
     reflectShader(codes);
   }
 
   VkShaderModuleCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = codes.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t*>(codes.data());
+  createInfo.pCode    = reinterpret_cast<const uint32_t*>(codes.data());
 
   MI_VERIFY_VKCMD(vkCreateShaderModule(device, &createInfo, nullptr, &_shader));
 }
@@ -288,13 +259,13 @@ ShaderModule& ShaderModule::operator=(ShaderModule&& rhs) noexcept(false) {
 
 void ShaderModule::moveFrom(ShaderModule& rhs) {
   MI_VERIFY(!isCreated());
-  _shader = rhs._shader;
-  _entry = rhs._entry;
+  _shader                      = rhs._shader;
+  _entry                       = rhs._entry;
   _descriptorSetLayoutBindings = std::move(rhs._descriptorSetLayoutBindings);
-  _device = rhs._device;
+  _device                      = rhs._device;
 
   rhs._shader = VK_NULL_HANDLE;
-  rhs._entry = nullptr;
+  rhs._entry  = nullptr;
   rhs._descriptorSetLayoutBindings.clear();
   rhs._device = nullptr;
 }
@@ -365,12 +336,12 @@ void ShaderModule::reflectDescriptorSets(const SpvReflectShaderModule& module) {
     DescriptorSetLayoutBinding layoutBinding;
     for (uint32_t bindingIdx = 0; bindingIdx < descriptorSet->binding_count; ++bindingIdx) {
       const auto& descriptorBinding = *(descriptorSet->bindings[bindingIdx]);
-      layoutBinding.name = descriptorBinding.name;
-      layoutBinding.type = typenameof(descriptorBinding);
+      layoutBinding.name            = descriptorBinding.name;
+      layoutBinding.type            = typenameof(descriptorBinding);
 
-      auto& vkBinding = layoutBinding.vkBinding;
-      vkBinding.binding = descriptorBinding.binding;
-      vkBinding.descriptorType = static_cast<VkDescriptorType>(descriptorBinding.descriptor_type);
+      auto& vkBinding           = layoutBinding.vkBinding;
+      vkBinding.binding         = descriptorBinding.binding;
+      vkBinding.descriptorType  = static_cast<VkDescriptorType>(descriptorBinding.descriptor_type);
       vkBinding.descriptorCount = 1;
       for (uint32_t dimIdx = 0; dimIdx < descriptorBinding.array.dims_count; ++dimIdx) {
         vkBinding.descriptorCount *= descriptorBinding.array.dims[dimIdx];
@@ -413,13 +384,13 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
         continue;
       }
       VertexInputAttribute attr{};
-      attr.name = var->name;
-      attr.type = glsltypeof(*var->type_description);
-      auto& vkAttr = attr.vkDescription;
+      attr.name       = var->name;
+      attr.type       = glsltypeof(*var->type_description);
+      auto& vkAttr    = attr.vkDescription;
       vkAttr.location = var->location;
-      vkAttr.binding = bindingIdx;
-      vkAttr.format = static_cast<VkFormat>(var->format);
-      vkAttr.offset = 0; // final offset computed below after sorting.
+      vkAttr.binding  = bindingIdx;
+      vkAttr.format   = static_cast<VkFormat>(var->format);
+      vkAttr.offset   = 0; // final offset computed below after sorting.
       _vertexInputAttributes.push_back(attr);
     }
 
@@ -448,4 +419,4 @@ void ShaderModule::disablePrintReflection() {
   gEnablePrintReflection = false;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

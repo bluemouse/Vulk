@@ -6,7 +6,7 @@
 
 #include <tuple>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Context;
 
@@ -18,11 +18,11 @@ class Toolbox {
   Image2D createImage2D(const char* imageFile) const;
   Texture2D createTexture(const char* textureFile) const;
 
-  Toolbox(const Toolbox& rhs) = delete;
+  Toolbox(const Toolbox& rhs)            = delete;
   Toolbox& operator=(const Toolbox& rhs) = delete;
 
  private:
-  using width_t = uint32_t;
+  using width_t  = uint32_t;
   using height_t = uint32_t;
   std::tuple<StagingBuffer, width_t, height_t> createStagingBuffer(const char* imageFile) const;
 
@@ -30,4 +30,4 @@ class Toolbox {
   const Vulk::Context& _context;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

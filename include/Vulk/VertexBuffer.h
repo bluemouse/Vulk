@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -15,7 +15,7 @@ class VertexBuffer : public Buffer {
   VertexBuffer(const Device& device, VkDeviceSize size, bool hostVisible = false);
 
   // Transfer the ownership from `rhs` to `this`
-  VertexBuffer(VertexBuffer&& rhs) = default;
+  VertexBuffer(VertexBuffer&& rhs)                            = default;
   VertexBuffer& operator=(VertexBuffer&& rhs) noexcept(false) = default;
 
   // Buffer will be device local and can only be loaded using a staging buffer
@@ -47,4 +47,4 @@ inline void VertexBuffer::create(const Device& device,
   load(stagingCommandBuffer, vertices.data(), size);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

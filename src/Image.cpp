@@ -4,9 +4,9 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    Image::~Image() noexcept(false) {
+Image::~Image() noexcept(false) {
   if (isAllocated()) {
     free();
   }
@@ -25,14 +25,14 @@ Image& Image::operator=(Image&& rhs) noexcept(false) {
 
 void Image::moveFrom(Image& rhs) {
   MI_VERIFY(!isCreated());
-  _image = rhs._image;
+  _image  = rhs._image;
   _memory = rhs._memory;
   _format = rhs._format;
   _extent = rhs._extent;
   _layout = rhs._layout;
   _device = rhs._device;
 
-  rhs._image = VK_NULL_HANDLE;
+  rhs._image  = VK_NULL_HANDLE;
   rhs._memory = VK_NULL_HANDLE;
   rhs._format = VK_FORMAT_UNDEFINED;
   rhs._extent = {0, 0, 0};
@@ -46,7 +46,7 @@ void Image::create(const Device& device, const VkImageCreateInfo& imageInfo) {
 
   MI_VERIFY_VKCMD(vkCreateImage(device, &imageInfo, nullptr, &_image));
 
-  _type = imageInfo.imageType;
+  _type   = imageInfo.imageType;
   _format = imageInfo.format;
   _extent = imageInfo.extent;
   _layout = imageInfo.initialLayout;
@@ -60,7 +60,7 @@ void Image::destroy() {
   }
   vkDestroyImage(*_device, _image, nullptr);
 
-  _image = VK_NULL_HANDLE;
+  _image  = VK_NULL_HANDLE;
   _format = VK_FORMAT_UNDEFINED;
   _extent = {0, 0, 0};
   _layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -120,17 +120,17 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
   commandBuffer.executeSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
     VkImageMemoryBarrier barrier{};
 
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = _layout;
-    barrier.newLayout = newLayout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = *this;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_NONE_KHR;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout                       = _layout;
+    barrier.newLayout                       = newLayout;
+    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image                           = *this;
+    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_NONE_KHR;
+    barrier.subresourceRange.baseMipLevel   = 0;
+    barrier.subresourceRange.levelCount     = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.layerCount     = 1;
 
     VkPipelineStageFlags srcStage = 0;
     VkPipelineStageFlags dstStage = 0;
@@ -206,16 +206,11 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
 
 VkImageViewType Image::imageViewType() const {
   switch (_type) {
-    case VK_IMAGE_TYPE_1D:
-      return VK_IMAGE_VIEW_TYPE_1D;
-    case VK_IMAGE_TYPE_2D:
-      return VK_IMAGE_VIEW_TYPE_2D;
-    case VK_IMAGE_TYPE_3D:
-      return VK_IMAGE_VIEW_TYPE_3D;
-    default:
-      MI_ASSERT(!"Invalid image type (VkImageType)");
-      return VK_IMAGE_VIEW_TYPE_2D;
+    case VK_IMAGE_TYPE_1D: return VK_IMAGE_VIEW_TYPE_1D;
+    case VK_IMAGE_TYPE_2D: return VK_IMAGE_VIEW_TYPE_2D;
+    case VK_IMAGE_TYPE_3D: return VK_IMAGE_VIEW_TYPE_3D;
+    default: MI_ASSERT(!"Invalid image type (VkImageType)"); return VK_IMAGE_VIEW_TYPE_2D;
   }
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

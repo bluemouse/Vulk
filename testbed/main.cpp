@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
   cxxopts::Options options("Testbed", "Testbed for Vulk");
 
 #if defined(_NDEBUG)
-// None
+  // None
   constexpr const char* kDefaultValidation = "0";
 #else
   // Warning
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
   Testbed testbed;
 
-  constexpr int width = 800;
+  constexpr int width  = 800;
   constexpr int height = 800;
   testbed.init(width, height);
   try {

@@ -8,7 +8,7 @@
 #include <vector>
 #include <algorithm>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 DescriptorSetLayout::DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders) {
   create(device, std::move(shaders));
@@ -33,10 +33,10 @@ DescriptorSetLayout& DescriptorSetLayout::operator=(DescriptorSetLayout&& rhs) n
 
 void DescriptorSetLayout::moveFrom(DescriptorSetLayout& rhs) {
   MI_VERIFY(!isCreated());
-  _layout = rhs._layout;
-  _bindings = std::move(rhs._bindings);
+  _layout    = rhs._layout;
+  _bindings  = std::move(rhs._bindings);
   _poolSizes = std::move(rhs._poolSizes);
-  _device = rhs._device;
+  _device    = rhs._device;
 
   rhs._layout = VK_NULL_HANDLE;
   rhs._bindings.clear();
@@ -88,9 +88,9 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
   }
 
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
-  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   layoutInfo.bindingCount = static_cast<uint32_t>(vkBindings.size());
-  layoutInfo.pBindings = vkBindings.data();
+  layoutInfo.pBindings    = vkBindings.data();
 
   MI_VERIFY_VKCMD(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &_layout));
 }
@@ -105,4 +105,4 @@ void DescriptorSetLayout::destroy() {
   _device = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

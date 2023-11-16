@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -16,7 +16,7 @@ class StagingBuffer : public Buffer {
   StagingBuffer(const Device& device, VkDeviceSize size);
 
   // Transfer the ownership from `rhs` to `this`
-  StagingBuffer(StagingBuffer&& rhs) = default;
+  StagingBuffer(StagingBuffer&& rhs)                            = default;
   StagingBuffer& operator=(StagingBuffer&& rhs) noexcept(false) = default;
 
   void create(const Device& device, VkDeviceSize size);
@@ -44,4 +44,4 @@ class StagingBuffer : public Buffer {
                    bool waitForFinish = true) const;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -97,7 +97,7 @@ void log_backtraces() {
   const int maxBacktraceDepth = 10;
   std::array<void*, maxBacktraceDepth> array{};
   auto numTraces = static_cast<size_t>(backtrace(array.data(), maxBacktraceDepth));
-  char** traces = backtrace_symbols(array.data(), numTraces);
+  char** traces  = backtrace_symbols(array.data(), numTraces);
   for (size_t i = 0; i < numTraces; ++i) {
     cerr << traces[i] << endl;
   }

@@ -11,9 +11,9 @@
 #include <Vulk/ImageView.h>
 #include <Vulk/Framebuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 class PhysicalDevice;
 class Surface;
 class RenderPass;
@@ -21,7 +21,7 @@ class Semaphore;
 class Swapchain {
  public:
   using SwapchainCreateInfoOverride = std::function<void(VkSwapchainCreateInfoKHR*)>;
-  using ChooseSurfaceExtentFunc = std::function<VkExtent2D(const VkSurfaceCapabilitiesKHR&)>;
+  using ChooseSurfaceExtentFunc     = std::function<VkExtent2D(const VkSurfaceCapabilitiesKHR&)>;
   using ChooseSurfaceFormatFunc =
       std::function<VkSurfaceFormatKHR(const std::vector<VkSurfaceFormatKHR>&)>;
   using ChoosePresentModeFunc =
@@ -37,7 +37,7 @@ class Swapchain {
   ~Swapchain();
 
   // Disable copy and assignment operators
-  Swapchain(const Swapchain&) = delete;
+  Swapchain(const Swapchain&)            = delete;
   Swapchain& operator=(const Swapchain&) = delete;
 
   void create(const Device& device,
@@ -110,8 +110,8 @@ class Swapchain {
 
   mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();
 
-  const Device* _device = nullptr;
+  const Device* _device   = nullptr;
   const Surface* _surface = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

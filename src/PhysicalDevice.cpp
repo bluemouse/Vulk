@@ -5,7 +5,7 @@
 #include <Vulk/Instance.h>
 #include <Vulk/Surface.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 PhysicalDevice::PhysicalDevice(const Instance& instance,
                                const IsDeviceSuitableFunc& isDeviceSuitable) {
@@ -41,9 +41,9 @@ void PhysicalDevice::instantiate(const Instance& instance,
 }
 
 void PhysicalDevice::reset() {
-  _device = VK_NULL_HANDLE;
+  _device        = VK_NULL_HANDLE;
   _queueFamilies = {};
-  _instance = nullptr;
+  _instance      = nullptr;
 }
 
 void PhysicalDevice::initQueueFamilies(const Surface& surface) {
@@ -116,4 +116,4 @@ bool PhysicalDevice::isFormatSupported(VkFormat format,
   return format == findSupportedFormat({format}, tiling, features);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -9,10 +9,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-Toolbox::Toolbox(const Context& context)
-    : _context(context) {
+Toolbox::Toolbox(const Context& context) : _context(context) {
 }
 
 Image2D Toolbox::createImage2D(const char* imageFile) const {
@@ -36,8 +35,8 @@ Texture2D Toolbox::createTexture(const char* textureFile) const {
 
 auto Toolbox::createStagingBuffer(const char* imageFile) const
     -> std::tuple<StagingBuffer, width_t, height_t> {
-  int texWidth = 0;
-  int texHeight = 0;
+  int texWidth    = 0;
+  int texHeight   = 0;
   int texChannels = 0;
 
   stbi_uc* pixels = stbi_load(imageFile, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -53,4 +52,4 @@ auto Toolbox::createStagingBuffer(const char* imageFile) const
   return {std::move(stagingBuffer), texWidth, texHeight};
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

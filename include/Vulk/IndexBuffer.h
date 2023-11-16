@@ -4,7 +4,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -15,7 +15,7 @@ class IndexBuffer : public Buffer {
   IndexBuffer(const Device& device, VkDeviceSize size, bool hostVisible = false);
 
   // Transfer the ownership from `rhs` to `this`
-  IndexBuffer(IndexBuffer&& rhs) = default;
+  IndexBuffer(IndexBuffer&& rhs)                            = default;
   IndexBuffer& operator=(IndexBuffer&& rhs) noexcept(false) = default;
 
   // Buffer will be device local and can only be loaded using a staging buffer
@@ -47,4 +47,4 @@ inline void IndexBuffer::create(const Device& device,
   load(stagingCommandBuffer, indices.data(), size);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -6,7 +6,7 @@
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 DescriptorPool::DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets) {
   create(layout, maxSets);
@@ -37,10 +37,10 @@ DescriptorPool& DescriptorPool::operator=(DescriptorPool&& rhs) noexcept(false) 
 
 void DescriptorPool::moveFrom(DescriptorPool& rhs) {
   MI_VERIFY(!isCreated());
-  _pool = rhs._pool;
+  _pool   = rhs._pool;
   _device = rhs._device;
 
-  rhs._pool = VK_NULL_HANDLE;
+  rhs._pool   = VK_NULL_HANDLE;
   rhs._device = nullptr;
 }
 
@@ -55,10 +55,10 @@ void DescriptorPool::create(const Device& device,
   }
 
   VkDescriptorPoolCreateInfo poolInfo{};
-  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-  poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = maxSets;
+  poolInfo.pPoolSizes    = poolSizes.data();
+  poolInfo.maxSets       = maxSets;
 
   MI_VERIFY_VKCMD(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_pool));
 }
@@ -71,8 +71,8 @@ void DescriptorPool::destroy() {
   MI_VERIFY(isCreated());
 
   vkDestroyDescriptorPool(*_device, _pool, nullptr);
-  _pool = VK_NULL_HANDLE;
+  _pool   = VK_NULL_HANDLE;
   _device = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

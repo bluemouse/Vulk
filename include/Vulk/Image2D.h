@@ -5,7 +5,7 @@
 #include <Vulk/Image.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -44,11 +44,11 @@ class Image2D : public Image {
 
   operator VkImage() const { return Image::operator VkImage(); }
 
-protected:
+ protected:
   bool isExternal() const { return _external; }
 
  private:
-   bool _external = false;
+  bool _external = false;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 VertexShader::VertexShader(VertexShader&& rhs) noexcept {
   moveFrom(rhs);
@@ -19,7 +19,7 @@ void VertexShader::moveFrom(VertexShader& rhs) {
   MI_VERIFY(!isCreated());
   ShaderModule::moveFrom(rhs);
 
-  _vertexInputBindings = std::move(rhs._vertexInputBindings);
+  _vertexInputBindings   = std::move(rhs._vertexInputBindings);
   _vertexInputAttributes = std::move(rhs._vertexInputAttributes);
 
   rhs._vertexInputBindings.clear();
@@ -57,4 +57,4 @@ void VertexShader::addDescriptorSetLayoutBinding(const std::string& name,
       name, type, binding, descriptorType, VK_SHADER_STAGE_VERTEX_BIT);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

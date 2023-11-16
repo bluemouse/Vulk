@@ -5,9 +5,9 @@
 #include <Vulk/Image.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 
 class DepthImage : public Image {
  public:
@@ -18,7 +18,7 @@ class DepthImage : public Image {
   DepthImage(const Device& device,
              VkExtent2D extent,
              uint32_t depthBits,
-             uint32_t stencilBits = 0,
+             uint32_t stencilBits                    = 0,
              const ImageCreateInfoOverride& override = {});
 
   // Transfer the ownership from `rhs` to `this`
@@ -28,7 +28,7 @@ class DepthImage : public Image {
   void create(const Device& device,
               VkExtent2D extent,
               uint32_t depthBits,
-              uint32_t stencilBits = 0,
+              uint32_t stencilBits                    = 0,
               const ImageCreateInfoOverride& override = {});
   void create(const Device& device,
               VkExtent2D extent,
@@ -57,4 +57,4 @@ class DepthImage : public Image {
   VkFormat _format = VK_FORMAT_UNDEFINED;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

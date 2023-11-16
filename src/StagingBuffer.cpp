@@ -6,7 +6,7 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/Image.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 StagingBuffer::StagingBuffer(const Device& device, VkDeviceSize size) {
   create(device, size);
@@ -69,4 +69,4 @@ void StagingBuffer::copyToImage(const CommandBuffer& commandBuffer,
               waitForFinish);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

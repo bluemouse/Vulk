@@ -12,7 +12,7 @@
 #include <Vulk/Semaphore.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandPool;
@@ -40,26 +40,26 @@ class CommandBuffer {
   // Record the commands played by `recorder` into this command buffer
   void recordCommands(const Recorder& recorder) const { recordCommands(recorder, false); }
   // Execute the commands currently recorded in this command buffer
-  void executeCommands(const std::vector<Semaphore*>& waits = {},
+  void executeCommands(const std::vector<Semaphore*>& waits   = {},
                        const std::vector<Semaphore*>& signals = {},
-                       const Fence& fence = {}) const;
+                       const Fence& fence                     = {}) const;
   // Record the commands played by `recorder` into this command buffer and then execute them
   void executeCommands(const Recorder& recorder,
-                       const std::vector<Semaphore*>& waits = {},
+                       const std::vector<Semaphore*>& waits   = {},
                        const std::vector<Semaphore*>& signals = {},
-                       const Fence& fence = {}) const;
+                       const Fence& fence                     = {}) const;
 
   void recordSingleTimeCommand(const Recorder& recorder) const { recordCommands(recorder, true); }
   void executeSingleTimeCommand(const Recorder& recorder,
-                                const std::vector<Semaphore*>& waits = {},
+                                const std::vector<Semaphore*>& waits   = {},
                                 const std::vector<Semaphore*>& signals = {},
-                                const Fence& fence = {}) const;
+                                const Fence& fence                     = {}) const;
 
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,
                        const glm::vec4& clearColor = {0.0F, 0.0F, 0.0F, 1.0F},
-                       float clearDepth = 1.0F,
-                       uint32_t clearStencil = 0) const;
+                       float clearDepth            = 1.0F,
+                       uint32_t clearStencil       = 0) const;
   void endRenderpass() const;
 
   void setViewport(const glm::vec2& upperLeft,
@@ -93,4 +93,4 @@ class CommandBuffer {
   const CommandPool* _pool = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

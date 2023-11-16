@@ -5,7 +5,7 @@
 #include <Vulk/Image2D.h>
 #include <Vulk/DepthImage.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 ImageView::ImageView(const Device& device,
                      const Image2D& image,
@@ -37,13 +37,13 @@ ImageView& ImageView::operator=(ImageView&& rhs) noexcept(false) {
 
 void ImageView::moveFrom(ImageView& rhs) {
   MI_VERIFY(!isCreated());
-  _view = rhs._view;
+  _view   = rhs._view;
   _device = rhs._device;
-  _image = rhs._image;
+  _image  = rhs._image;
 
-  rhs._view = VK_NULL_HANDLE;
+  rhs._view   = VK_NULL_HANDLE;
   rhs._device = nullptr;
-  rhs._image = nullptr;
+  rhs._image  = nullptr;
 }
 
 void ImageView::create(const Device& device,
@@ -66,18 +66,18 @@ void ImageView::create(const Device& device,
                        ImageViewCreateInfoOverride createInfoOverride) {
   MI_VERIFY(!isCreated());
   _device = &device;
-  _image = &image;
+  _image  = &image;
 
   VkImageViewCreateInfo viewInfo{};
-  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.image = image;
-  viewInfo.viewType = image.imageViewType();
-  viewInfo.format = image.format();
-  viewInfo.subresourceRange.aspectMask = aspectMask;
-  viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.levelCount = 1;
+  viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewInfo.image                           = image;
+  viewInfo.viewType                        = image.imageViewType();
+  viewInfo.format                          = image.format();
+  viewInfo.subresourceRange.aspectMask     = aspectMask;
+  viewInfo.subresourceRange.baseMipLevel   = 0;
+  viewInfo.subresourceRange.levelCount     = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;
-  viewInfo.subresourceRange.layerCount = 1;
+  viewInfo.subresourceRange.layerCount     = 1;
 
   if (createInfoOverride) {
     createInfoOverride(viewInfo);
@@ -90,9 +90,9 @@ void ImageView::destroy() {
   MI_VERIFY(isCreated());
   vkDestroyImageView(*_device, _view, nullptr);
 
-  _view = VK_NULL_HANDLE;
+  _view   = VK_NULL_HANDLE;
   _device = nullptr;
-  _image = nullptr;
+  _image  = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

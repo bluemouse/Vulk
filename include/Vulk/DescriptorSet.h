@@ -6,9 +6,9 @@
 
 #include <vector>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class DescriptorPool;
+class DescriptorPool;
 class DescriptorSetLayout;
 
 class DescriptorSet {
@@ -18,7 +18,7 @@ class DescriptorSet {
     std::string type;
 
     VkDescriptorBufferInfo* bufferInfo = nullptr;
-    VkDescriptorImageInfo* imageInfo = nullptr;
+    VkDescriptorImageInfo* imageInfo   = nullptr;
 
     Binding(const std::string& name, const std::string& type, VkDescriptorBufferInfo* bufferInfo)
         : name(name), type(type), bufferInfo(bufferInfo) {}
@@ -56,4 +56,4 @@ class DescriptorSet {
   const DescriptorPool* _pool = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

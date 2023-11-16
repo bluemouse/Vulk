@@ -8,7 +8,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device {
  public:
@@ -20,7 +20,7 @@ class Device {
   Device(const PhysicalDevice& physicalDevice,
          const std::vector<uint32_t>& queueFamilies,
          const std::vector<const char*>& extensions = {},
-         const DeviceCreateInfoOverride& override = {});
+         const DeviceCreateInfoOverride& override   = {});
   ~Device();
 
   // Transfer the ownership from `rhs` to `this`
@@ -30,7 +30,7 @@ class Device {
   void create(const PhysicalDevice& physicalDevice,
               const std::vector<uint32_t>& queueFamilies,
               const std::vector<const char*>& extensions = {},
-              const DeviceCreateInfoOverride& override = {});
+              const DeviceCreateInfoOverride& override   = {});
   void destroy();
 
   void waitIdle() const;
@@ -56,4 +56,4 @@ class Device {
   const PhysicalDevice* _physicalDevice = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

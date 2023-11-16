@@ -7,7 +7,7 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -53,10 +53,10 @@ class DeviceMemory {
 
   VkDeviceSize _size = 0; // in bytes
 
-  bool _hostVisible = false;
+  bool _hostVisible   = false;
   void* _mappedMemory = nullptr;
 
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

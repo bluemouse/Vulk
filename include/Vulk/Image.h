@@ -5,7 +5,7 @@
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -51,7 +51,7 @@ class Image {
 
   [[nodiscard]] VkImageViewType imageViewType() const;
 
-protected:
+ protected:
   void create(const Device& device, const VkImageCreateInfo& imageInfo);
 
   void transitToNewLayout(const CommandBuffer& commandBuffer,
@@ -64,9 +64,9 @@ protected:
  protected:
   VkImage _image = VK_NULL_HANDLE;
 
-  VkImageType _type = VK_IMAGE_TYPE_2D;
-  VkFormat _format = VK_FORMAT_UNDEFINED;
-  VkExtent3D _extent = {0, 0, 0};
+  VkImageType _type             = VK_IMAGE_TYPE_2D;
+  VkFormat _format              = VK_FORMAT_UNDEFINED;
+  VkExtent3D _extent            = {0, 0, 0};
   mutable VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   DeviceMemory::Ptr _memory;
@@ -74,4 +74,4 @@ protected:
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

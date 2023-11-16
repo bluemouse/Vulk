@@ -8,7 +8,7 @@
 
 #include <cstring>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Buffer::Buffer(const Device& device,
                VkDeviceSize size,
@@ -46,12 +46,12 @@ Buffer& Buffer::operator=(Buffer&& rhs) noexcept(false) {
 void Buffer::moveFrom(Buffer& rhs) {
   MI_VERIFY(!isCreated());
   _buffer = rhs._buffer;
-  _size = rhs._size;
+  _size   = rhs._size;
   _memory = rhs._memory;
   _device = rhs._device;
 
   rhs._buffer = VK_NULL_HANDLE;
-  rhs._size = 0;
+  rhs._size   = 0;
   rhs._memory = nullptr;
   rhs._device = nullptr;
 }
@@ -62,14 +62,14 @@ void Buffer::create(const Device& device,
                     const BufferCreateInfoOverride& override) {
   MI_VERIFY(!isCreated());
   _device = &device;
-  _size = size;
+  _size   = size;
 
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   // bufferInfo.pNext =
   // bufferInfo.flags =
-  bufferInfo.size = size;
-  bufferInfo.usage = usage;
+  bufferInfo.size        = size;
+  bufferInfo.usage       = usage;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // bufferInfo.queueFamilyIndexCount =
   // bufferInfo.pQueueFamilyIndices =
@@ -91,7 +91,7 @@ void Buffer::destroy() {
 
   _device = nullptr;
   _buffer = VK_NULL_HANDLE;
-  _size = 0;
+  _size   = 0;
 }
 
 void Buffer::allocate(VkMemoryPropertyFlags properties) {
@@ -107,7 +107,7 @@ void Buffer::allocate(VkMemoryPropertyFlags properties) {
 
 void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
   MI_VERIFY(isAllocated());
-  MI_VERIFY(offset+size <= _size);
+  MI_VERIFY(offset + size <= _size);
   void* buffer = map(offset, size);
   std::memcpy(buffer, data, size);
   unmap();
@@ -118,7 +118,7 @@ void Buffer::load(const CommandBuffer& stagingCommandBuffer,
                   VkDeviceSize size,
                   VkDeviceSize offset) {
   MI_VERIFY(isAllocated());
-  MI_VERIFY(offset+size <= _size);
+  MI_VERIFY(offset + size <= _size);
   StagingBuffer stagingBuffer(*_device, size);
   stagingBuffer.copyFromHost(data, size);
   stagingBuffer.copyToBuffer(stagingCommandBuffer, *this, {0, offset, size});
@@ -153,4 +153,4 @@ void Buffer::unmap() {
   _memory->unmap();
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

@@ -4,15 +4,17 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
+
 class Instance;
-NAMESPACE_Vulk_END
+
+NAMESPACE_END(Vulk)
 
 class GLFWwindow;
 
 class MainWindow {
  public:
-  MainWindow() = default;
+  MainWindow()                          = default;
   virtual ~MainWindow() noexcept(false) = default;
 
   virtual void init(int width, int height);
@@ -45,14 +47,14 @@ class MainWindow {
     unsigned int count;
     const char** extensions;
   };
-  [[nodiscard]] static Extensions getRequiredInstanceExtensions() ;
+  [[nodiscard]] static Extensions getRequiredInstanceExtensions();
 
   [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance);
 
  private:
   GLFWwindow* _window = nullptr;
 
-  int _width = 0;
+  int _width  = 0;
   int _height = 0;
 
   bool _framebufferResized = false;

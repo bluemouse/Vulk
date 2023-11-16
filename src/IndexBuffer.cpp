@@ -1,13 +1,13 @@
 #include <Vulk/IndexBuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 IndexBuffer::IndexBuffer(const Device& device, VkDeviceSize size, bool hostVisible) {
   create(device, size, hostVisible);
 }
 
 void IndexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisible) {
-  VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+  VkBufferUsageFlags usage         = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
   VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   if (hostVisible) {
@@ -20,4 +20,4 @@ void IndexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisib
   Buffer::allocate(properties);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

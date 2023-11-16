@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Sampler::Sampler(const Device& device,
                  Filter filter,
@@ -31,10 +31,10 @@ Sampler& Sampler::operator=(Sampler&& rhs) noexcept(false) {
 void Sampler::moveFrom(Sampler& rhs) {
   MI_VERIFY(!isCreated());
   _sampler = rhs._sampler;
-  _device = rhs._device;
+  _device  = rhs._device;
 
   rhs._sampler = VK_NULL_HANDLE;
-  rhs._device = nullptr;
+  rhs._device  = nullptr;
 }
 
 void Sampler::create(const Device& device,
@@ -48,19 +48,19 @@ void Sampler::create(const Device& device,
   vkGetPhysicalDeviceProperties(device.physicalDevice(), &properties);
 
   VkSamplerCreateInfo samplerInfo{};
-  samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerInfo.magFilter = filter.mag;
-  samplerInfo.minFilter = filter.min;
-  samplerInfo.addressModeU = addressMode.u;
-  samplerInfo.addressModeV = addressMode.v;
-  samplerInfo.addressModeW = addressMode.w;
-  samplerInfo.anisotropyEnable = VK_TRUE;
-  samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-  samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  samplerInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerInfo.magFilter               = filter.mag;
+  samplerInfo.minFilter               = filter.min;
+  samplerInfo.addressModeU            = addressMode.u;
+  samplerInfo.addressModeV            = addressMode.v;
+  samplerInfo.addressModeW            = addressMode.w;
+  samplerInfo.anisotropyEnable        = VK_TRUE;
+  samplerInfo.maxAnisotropy           = properties.limits.maxSamplerAnisotropy;
+  samplerInfo.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   samplerInfo.unnormalizedCoordinates = VK_FALSE;
-  samplerInfo.compareEnable = VK_FALSE;
-  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerInfo.compareEnable           = VK_FALSE;
+  samplerInfo.compareOp               = VK_COMPARE_OP_ALWAYS;
+  samplerInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
   if (createInfoOverride) {
     createInfoOverride(&samplerInfo);
@@ -74,7 +74,7 @@ void Sampler::destroy() {
   vkDestroySampler(*_device, _sampler, nullptr);
 
   _sampler = VK_NULL_HANDLE;
-  _device = nullptr;
+  _device  = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

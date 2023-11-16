@@ -5,7 +5,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 DescriptorSet::DescriptorSet(const DescriptorPool& pool,
                              const DescriptorSetLayout& layout,
@@ -32,10 +32,10 @@ DescriptorSet& DescriptorSet::operator=(DescriptorSet&& rhs) noexcept(false) {
 
 void DescriptorSet::moveFrom(DescriptorSet& rhs) {
   MI_VERIFY(!isAllocated());
-  _set = rhs._set;
+  _set  = rhs._set;
   _pool = rhs._pool;
 
-  rhs._set = VK_NULL_HANDLE;
+  rhs._set  = VK_NULL_HANDLE;
   rhs._pool = nullptr;
 }
 
@@ -46,10 +46,10 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
   _pool = &pool;
 
   VkDescriptorSetAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocInfo.descriptorPool = pool;
+  allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool     = pool;
   allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = layout;
+  allocInfo.pSetLayouts        = layout;
 
   MI_VERIFY_VKCMD(vkAllocateDescriptorSets(pool.device(), &allocInfo, &_set));
 
@@ -60,11 +60,11 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
 
   for (size_t i = 0; i < writes.size(); ++i) {
     const auto& layoutBinding = layoutBindings[i].vkBinding;
-    writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[i].dstSet = *this;
-    writes[i].dstBinding = layoutBinding.binding;
+    writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[i].dstSet          = *this;
+    writes[i].dstBinding      = layoutBinding.binding;
     writes[i].dstArrayElement = 0;
-    writes[i].descriptorType = layoutBinding.descriptorType;
+    writes[i].descriptorType  = layoutBinding.descriptorType;
     writes[i].descriptorCount = 1;
 
     MI_VERIFY(bindings[i].name == layoutBindings[i].name &&
@@ -93,8 +93,8 @@ void DescriptorSet::free() {
   // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
   //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
 
-  _set = VK_NULL_HANDLE;
+  _set  = VK_NULL_HANDLE;
   _pool = nullptr;
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

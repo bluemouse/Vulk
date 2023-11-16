@@ -4,7 +4,7 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 Image2D::Image2D(const Device& device,
                  VkFormat format,
@@ -23,7 +23,7 @@ Image2D::Image2D(const Device& device,
 }
 
 Image2D::Image2D(VkImage image, VkFormat format, VkExtent2D extent) : _external{true} {
-  _image = image;
+  _image  = image;
   _format = format;
   _extent = {extent.width, extent.height, 1};
 }
@@ -33,7 +33,7 @@ Image2D::Image2D(Image2D&& rhs) noexcept {
 }
 
 Image2D& Image2D::operator=(Image2D&& rhs) noexcept(false) {
-  _external = rhs._external;
+  _external     = rhs._external;
   rhs._external = false;
   Image::operator=(std::move(rhs));
   return *this;
@@ -44,19 +44,19 @@ void Image2D::create(const Device& device,
                      VkExtent2D extent,
                      const ImageCreateInfoOverride& override) {
   VkImageCreateInfo imageInfo{};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageInfo.extent = {extent.width, extent.height, 1};
-  imageInfo.mipLevels = 1;
+  imageInfo.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageInfo.imageType   = VK_IMAGE_TYPE_2D;
+  imageInfo.extent      = {extent.width, extent.height, 1};
+  imageInfo.mipLevels   = 1;
   imageInfo.arrayLayers = 1;
-  imageInfo.format = format;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageInfo.format      = format;
+  imageInfo.tiling      = VK_IMAGE_TILING_OPTIMAL;
   // The Vulkan spec states: initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED or
   // VK_IMAGE_LAYOUT_PREINITIALIZED
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+  imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 
   if (override) {
     override(&imageInfo);
@@ -80,4 +80,4 @@ void Image2D::free() {
   Image::free();
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

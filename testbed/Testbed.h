@@ -90,11 +90,7 @@ class Testbed : public MainWindow {
     alignas(sizeof(glm::vec4)) glm::mat4 proj;
 
     static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
-      return {binding,
-              VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-              1,
-              VK_SHADER_STAGE_VERTEX_BIT,
-              nullptr};
+      return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
     }
   };
 
@@ -117,7 +113,7 @@ class Testbed : public MainWindow {
   std::vector<Frame> _frames;
   Frame* _currentFrame = nullptr;
 
-  uint32_t _currentFrameIdx = 0;
+  uint32_t _currentFrameIdx  = 0;
   uint32_t _maxFrameInFlight = 2;
 
   // Settings of the Testbed execution

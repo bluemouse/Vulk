@@ -8,9 +8,9 @@
 
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Instance;
+class Instance;
 class Surface;
 
 class PhysicalDevice {
@@ -49,7 +49,7 @@ class PhysicalDevice {
                                                        VkSurfaceKHR surface);
 
   // Disable copy and assignment operators
-  PhysicalDevice(const PhysicalDevice&) = delete;
+  PhysicalDevice(const PhysicalDevice&)            = delete;
   PhysicalDevice& operator=(const PhysicalDevice&) = delete;
 
   [[nodiscard]] bool isInstantiated() const { return _device != VK_NULL_HANDLE; }
@@ -72,4 +72,4 @@ class PhysicalDevice {
   const Instance* _instance = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

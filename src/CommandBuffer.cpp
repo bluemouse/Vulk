@@ -10,7 +10,7 @@
 #include <Vulk/DescriptorSet.h>
 #include <Vulk/helpers_vulkan.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 CommandBuffer::CommandBuffer(const CommandPool& commandPool) {
   allocate(commandPool);
@@ -36,10 +36,10 @@ CommandBuffer& CommandBuffer::operator=(CommandBuffer&& rhs) noexcept(false) {
 void CommandBuffer::moveFrom(CommandBuffer& rhs) {
   MI_VERIFY(!isAllocated());
   _buffer = rhs._buffer;
-  _pool = rhs._pool;
+  _pool   = rhs._pool;
 
   rhs._buffer = VK_NULL_HANDLE;
-  rhs._pool = nullptr;
+  rhs._pool   = nullptr;
 }
 
 void CommandBuffer::allocate(const CommandPool& commandPool) {
@@ -47,9 +47,9 @@ void CommandBuffer::allocate(const CommandPool& commandPool) {
   _pool = &commandPool;
 
   VkCommandBufferAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.commandPool = commandPool;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool        = commandPool;
+  allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = 1;
 
   MI_VERIFY_VKCMD(vkAllocateCommandBuffers(commandPool.device(), &allocInfo, &_buffer));
@@ -65,7 +65,7 @@ void CommandBuffer::free() {
   vkFreeCommandBuffers(_pool->device(), *_pool, 1, &_buffer);
 
   _buffer = VK_NULL_HANDLE;
-  _pool = nullptr;
+  _pool   = nullptr;
 }
 
 void CommandBuffer::executeCommands(const Recorder& recorder,
@@ -106,9 +106,9 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
                                     const std::vector<Semaphore*>& signals,
                                     const Fence& fence) const {
   VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &_buffer;
+  submitInfo.pCommandBuffers    = &_buffer;
 
   std::vector<VkSemaphore> waitSemaphores;
   if (!waits.empty()) {
@@ -118,9 +118,9 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
     }
 
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
-    submitInfo.pWaitSemaphores = waitSemaphores.data();
-    submitInfo.pWaitDstStageMask = static_cast<VkPipelineStageFlags*>(waitStages);
+    submitInfo.waitSemaphoreCount     = static_cast<uint32_t>(waitSemaphores.size());
+    submitInfo.pWaitSemaphores        = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask      = static_cast<VkPipelineStageFlags*>(waitStages);
   }
   std::vector<VkSemaphore> signalSemaphores;
   if (!signals.empty()) {
@@ -130,7 +130,7 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
     }
 
     submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
-    submitInfo.pSignalSemaphores = signalSemaphores.data();
+    submitInfo.pSignalSemaphores    = signalSemaphores.data();
   }
   VkQueue queue = _pool->queue();
   MI_VERIFY_VKCMD(vkQueueSubmit(queue, 1, &submitInfo, fence));
@@ -142,23 +142,23 @@ void CommandBuffer::beginRenderPass(const RenderPass& renderPass,
                                     float clearDepth,
                                     uint32_t clearStencil) const {
   VkRenderPassBeginInfo renderPassInfo{};
-  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = renderPass;
-  renderPassInfo.framebuffer = framebuffer;
+  renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass        = renderPass;
+  renderPassInfo.framebuffer       = framebuffer;
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = framebuffer.extent();
 
   // Note that the order of the clear values should match the order of the attachments in the
   // framebuffer.
   std::vector<VkClearValue> clearValues{1};
-  clearValues[0].color ={{clearColor.r, clearColor.g, clearColor.b, clearColor.a}};
+  clearValues[0].color = {{clearColor.r, clearColor.g, clearColor.b, clearColor.a}};
   if (renderPass.hasDepthStencilAttachment()) {
     clearValues.push_back(VkClearValue{});
     clearValues[1].depthStencil = {clearDepth, clearStencil};
   }
 
   renderPassInfo.clearValueCount = clearValues.size();
-  renderPassInfo.pClearValues = clearValues.data();
+  renderPassInfo.pClearValues    = clearValues.data();
 
   vkCmdBeginRenderPass(_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
@@ -175,10 +175,10 @@ void CommandBuffer::setViewport(const glm::vec2& upperLeft,
                                 const glm::vec2& extent,
                                 const glm::vec2& depthRange) const {
   VkViewport viewport{};
-  viewport.x = upperLeft.x;
-  viewport.y = upperLeft.y;
-  viewport.width = extent[0];
-  viewport.height = extent[1];
+  viewport.x        = upperLeft.x;
+  viewport.y        = upperLeft.y;
+  viewport.width    = extent[0];
+  viewport.height   = extent[1];
   viewport.minDepth = depthRange.x;
   viewport.maxDepth = depthRange.y;
   vkCmdSetViewport(_buffer, 0, 1, &viewport);
@@ -193,7 +193,7 @@ void CommandBuffer::bindVertexBuffer(const VertexBuffer& buffer,
                                      uint32_t binding,
                                      uint64_t offset) const {
   VkBuffer vertexBuffers[] = {buffer};
-  VkDeviceSize offsets[] = {offset};
+  VkDeviceSize offsets[]   = {offset};
   vkCmdBindVertexBuffers(_buffer, binding, 1, vertexBuffers, offsets);
 }
 
@@ -211,4 +211,4 @@ void CommandBuffer::drawIndexed(uint32_t indexCount) const {
   vkCmdDrawIndexed(_buffer, indexCount, 1, 0, 0, 0);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

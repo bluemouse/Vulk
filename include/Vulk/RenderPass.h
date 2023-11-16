@@ -7,25 +7,25 @@
 #include <vector>
 #include <functional>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
-    class Device;
+class Device;
 
 class RenderPass {
  public:
   using AttachmentDescriptionOverride = std::function<void(VkAttachmentDescription&)>;
-  using SubpassDescriptionOverride = std::function<void(VkSubpassDescription&)>;
-  using SubpassDependencyOverride = std::function<void(VkSubpassDependency&)>;
+  using SubpassDescriptionOverride    = std::function<void(VkSubpassDescription&)>;
+  using SubpassDependencyOverride     = std::function<void(VkSubpassDependency&)>;
 
  public:
   RenderPass() = default;
   RenderPass(const Device& device,
              VkFormat colorFormat,
-             VkFormat depthStencilFormat = VK_FORMAT_UNDEFINED,
+             VkFormat depthStencilFormat                                  = VK_FORMAT_UNDEFINED,
              const AttachmentDescriptionOverride& colorAttachmentOverride = {},
              const AttachmentDescriptionOverride& depthStencilAttachmentOverride = {},
-             const SubpassDescriptionOverride& subpassOverride = {},
-             const SubpassDependencyOverride& dependencyOverride = {});
+             const SubpassDescriptionOverride& subpassOverride                   = {},
+             const SubpassDependencyOverride& dependencyOverride                 = {});
   ~RenderPass();
 
   // Transfer the ownership from `rhs` to `this`
@@ -34,11 +34,11 @@ class RenderPass {
 
   void create(const Device& device,
               VkFormat colorFormat,
-              VkFormat depthStencilFormat = VK_FORMAT_UNDEFINED,
+              VkFormat depthStencilFormat                                  = VK_FORMAT_UNDEFINED,
               const AttachmentDescriptionOverride& colorAttachmentOverride = {},
               const AttachmentDescriptionOverride& depthStencilAttachmentOverride = {},
-              const SubpassDescriptionOverride& subpassOverride = {},
-              const SubpassDependencyOverride& dependencyOverride = {});
+              const SubpassDescriptionOverride& subpassOverride                   = {},
+              const SubpassDependencyOverride& dependencyOverride                 = {});
 
   void destroy();
 
@@ -48,7 +48,7 @@ class RenderPass {
 
   [[nodiscard]] bool hasDepthStencilAttachment() const {
     return _depthStencilFormat != VK_FORMAT_UNDEFINED;
-   }
+  }
 
   VkFormat colorFormat() const { return _colorFormat; }
   VkFormat depthStencilFormat() const { return _depthStencilFormat; }
@@ -59,10 +59,10 @@ class RenderPass {
  private:
   VkRenderPass _renderPass = VK_NULL_HANDLE;
 
-  VkFormat _colorFormat = VK_FORMAT_UNDEFINED;
+  VkFormat _colorFormat        = VK_FORMAT_UNDEFINED;
   VkFormat _depthStencilFormat = VK_FORMAT_UNDEFINED;
 
   const Device* _device = nullptr;
 };
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)

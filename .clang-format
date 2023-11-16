@@ -1,13 +1,24 @@
 ---
 Language: Cpp
+Standard: Cpp11
 BasedOnStyle: Google
 ColumnLimit: 100
 AllowShortFunctionsOnASingleLine: InlineOnly
-IndentPPDirectives: AfterHash
-SpacesBeforeTrailingComments: 1
+AllowShortCaseLabelsOnASingleLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignConsecutiveAssignments: true
+AlignTrailingComments: true
+AlwaysBreakTemplateDeclarations: true
 BinPackArguments: false
 BinPackParameters: false
+Cpp11BracedListStyle: true
 ExperimentalAutoDetectBinPacking: false
-AllowAllParametersOfDeclarationOnNextLine: false
+FixNamespaceComments: true
+IndentPPDirectives: AfterHash
+IndentWrappedFunctionNames: false
+NamespaceIndentation: None
+NamespaceMacros: ['NAMESPACE_BEGIN', 'NAMESPACE_END']
+PointerAlignment: Left
+SpacesBeforeTrailingComments: 1
 SortIncludes: false
 SortUsingDeclarations: false

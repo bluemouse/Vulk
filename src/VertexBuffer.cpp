@@ -1,13 +1,13 @@
 #include <Vulk/VertexBuffer.h>
 
-NAMESPACE_Vulk_BEGIN
+NAMESPACE_BEGIN(Vulk)
 
 VertexBuffer::VertexBuffer(const Device& device, VkDeviceSize size, bool hostVisible) {
   create(device, size, hostVisible);
 }
 
 void VertexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisible) {
-  VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  VkBufferUsageFlags usage         = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   if (hostVisible) {
@@ -20,4 +20,4 @@ void VertexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisi
   Buffer::allocate(properties);
 }
 
-NAMESPACE_Vulk_END
+NAMESPACE_END(Vulk)
