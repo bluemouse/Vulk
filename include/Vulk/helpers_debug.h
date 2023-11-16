@@ -39,6 +39,8 @@
 #  define MI_LOG_WARNING(...) __helpers_debug__::log("WARNING", __VA_ARGS__)
 #  define MI_LOG_INFO(...) __helpers_debug__::log("INFO", __VA_ARGS__)
 #  define MI_LOG_DEBUG(...) __helpers_debug__::log(__FILE__, __LINE__, "DEBUG", __VA_ARGS__)
+#  define MI_LOG_FUNCTION() __helpers_debug__::log(__FILE__, __LINE__, "", __PRETTY_FUNCTION__)
+#  define MI_LOG_LINE() __helpers_debug__::log(__FILE__, __LINE__, "", "")
 #endif
 
 #if defined(_NO_ASSERTIONS) || defined(_NDEBUG) || defined(NDEBUG)

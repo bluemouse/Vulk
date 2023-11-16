@@ -13,7 +13,7 @@
 
 NAMESPACE_Vulk_BEGIN
 
-class Device;
+    class Device;
 class PhysicalDevice;
 class Surface;
 class RenderPass;
@@ -52,7 +52,7 @@ class Swapchain {
               const ChoosePresentModeFunc& choosePresentMode);
   void destroy();
 
-  void resize(const VkExtent2D& surfaceExtent);
+  void resize(uint32_t width, uint32_t height);
 
   void createFramebuffers(const RenderPass& renderPass);
   void resizeFramebuffers(const RenderPass& renderPass);
@@ -86,6 +86,8 @@ class Swapchain {
   [[nodiscard]] const Framebuffer& activeFramebuffer() const {
     return framebuffer(activeImageIndex());
   }
+
+  [[nodiscard]] VkExtent2D chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight);
 
  private:
   void deactivateActiveImage() const { _activeImageIndex = std::numeric_limits<uint32_t>::max(); }

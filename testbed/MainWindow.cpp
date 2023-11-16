@@ -81,3 +81,7 @@ VkSurfaceKHR MainWindow::createWindowSurface(const Vulk::Instance& instance) {
   }
   return surface;
 }
+
+void MainWindow::postEmptyEvent() const {
+  glfwPostEmptyEvent();
+}

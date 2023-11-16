@@ -31,6 +31,8 @@ class MainWindow {
   virtual void mainLoop();
   virtual void drawFrame() = 0;
 
+  void postEmptyEvent() const;
+
   [[nodiscard]] bool isMinimized() const { return _width == 0 || _height == 0; }
 
   static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

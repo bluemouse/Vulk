@@ -72,13 +72,15 @@ void Testbed::drawFrame() {
   nextFrame();
 
   _currentFrame->fence.wait();
-  _currentFrame->fence.reset();
 
   if (_context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore) ==
       VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
     return;
   }
+  // Need to reset the fence after the potential swapchain resize. Otherwise, there will be no
+  // fence signal command submitted and we could have a dead lock.
+  _currentFrame->fence.reset();
 
   updateUniformBuffer();
 
@@ -212,12 +214,12 @@ void Testbed::resizeSwapchain() {
     return;
   }
   _context.waitIdle();
-
-  const auto caps = _context.surface().querySupports().capabilities;
-  const auto extent = chooseSwapchainSurfaceExtent(caps, width(), height());
-  _context.swapchain().resize(extent);
+  _context.swapchain().resize(width(), height());
 
   setFramebufferResized(false);
+
+  // To force a drawFrame()
+  MainWindow::postEmptyEvent();
 }
 
 void Testbed::updateUniformBuffer() {

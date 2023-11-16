@@ -53,7 +53,6 @@ void Swapchain::create(const Device& device,
   createInfo.minImageCount = minImageCount;
   createInfo.imageFormat = surfaceFormat.format;
   createInfo.imageColorSpace = surfaceFormat.colorSpace;
-  createInfo.imageExtent = _surfaceExtent;
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -74,6 +73,11 @@ void Swapchain::create(const Device& device,
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   createInfo.presentMode = _presentMode;
   createInfo.clipped = VK_TRUE;
+
+  // To assure we use the latest surface extent to create the swapchain, we choose the extent as
+  // close to the creation as possible.
+  _surfaceExtent = chooseSurfaceExtent(_surfaceExtent.width, _surfaceExtent.height);
+  createInfo.imageExtent = _surfaceExtent;
 
   MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
 }
@@ -139,14 +143,12 @@ void Swapchain::destroy() {
   _surface = nullptr;
 }
 
-void Swapchain::resize(const VkExtent2D& surfaceExtent) {
+void Swapchain::resize(uint32_t width, uint32_t height) {
   MI_VERIFY(isCreated());
 
-  if (surfaceExtent.width == _surfaceExtent.width &&
-      surfaceExtent.height == _surfaceExtent.height) {
+  if (width == _surfaceExtent.width && height == _surfaceExtent.height) {
     return;
   }
-
   const RenderPass* renderPass = nullptr;
   if (!_framebuffers.empty()) {
     renderPass = _framebuffers[0].renderPass();
@@ -162,6 +164,8 @@ void Swapchain::resize(const VkExtent2D& surfaceExtent) {
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
   _swapchain = VK_NULL_HANDLE;
+
+  const auto surfaceExtent = chooseSurfaceExtent(width, height);
 
   create(*_device, *_surface, surfaceExtent, _surfaceFormat, _presentMode);
 
@@ -204,6 +208,18 @@ VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
   presentInfo.pImageIndices = &_activeImageIndex;
 
   return vkQueuePresentKHR(_device->queue("present"), &presentInfo);
+}
+
+VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight) {
+  const auto caps = _surface->querySupports().capabilities;
+
+  if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+    return caps.currentExtent;
+  } else {
+    auto width = std::clamp(windowWidth, caps.minImageExtent.width, caps.maxImageExtent.width);
+    auto height = std::clamp(windowHeight, caps.minImageExtent.height, caps.maxImageExtent.height);
+    return {width, height};
+  }
 }
 
 NAMESPACE_Vulk_END
