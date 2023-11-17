@@ -198,7 +198,7 @@ void CommandBuffer::bindVertexBuffer(const VertexBuffer& buffer,
 }
 
 void CommandBuffer::bindIndexBuffer(const IndexBuffer& buffer, uint64_t offset) const {
-  vkCmdBindIndexBuffer(_buffer, buffer, offset, VK_INDEX_TYPE_UINT16); // TODO choose index type
+  vkCmdBindIndexBuffer(_buffer, buffer, offset, buffer.indexType());
 }
 
 void CommandBuffer::bindDescriptorSet(const Pipeline& pipeline,

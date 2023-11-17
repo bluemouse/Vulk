@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Vulk/Buffer.h>
+#include <Vulk/TypeTraits.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -29,10 +30,16 @@ class IndexBuffer : public Buffer {
   void create(const Device& device,
               const CommandBuffer& stagingCommandBuffer,
               const std::vector<Index>& indices);
+
+  VkIndexType indexType() const { return _indexType; }
+
+private:
+  VkIndexType _indexType = VK_INDEX_TYPE_NONE_KHR;
 };
 
 template <typename Index>
 inline void IndexBuffer::create(const Device& device, const std::vector<Index>& indices) {
+  _indexType = IndexTrait<Index>::type;
   VkDeviceSize size = sizeof(Index) * indices.size();
   create(device, size, true);
   load(indices.data(), size);
@@ -42,6 +49,7 @@ template <typename Index>
 inline void IndexBuffer::create(const Device& device,
                                 const CommandBuffer& stagingCommandBuffer,
                                 const std::vector<Index>& indices) {
+  _indexType = IndexTrait<Index>::type;
   VkDeviceSize size = sizeof(Index) * indices.size();
   create(device, size);
   load(stagingCommandBuffer, indices.data(), size);

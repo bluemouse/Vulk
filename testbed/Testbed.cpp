@@ -1,18 +1,34 @@
 #include "Testbed.h"
 
 #include <Vulk/Toolbox.h>
-#include <Vulk/TypeTraits.h>
 #include <Vulk/ShaderModule.h>
 #include <Vulk/DepthImage.h>
 
-// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
+// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS, GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/hash.hpp>
+
+#include <tiny_obj_loader.h>
 
 #include <set>
-#include <cstring>
+#include <vector>
+#include <string>
 #include <filesystem>
+#include <functional>
+#include <unordered_map>
+#include <stdexcept>
+#include <cstdint>
+#include <cstring>
+
+namespace std {
+template <>
+struct hash<Testbed::Vertex> {
+  size_t operator()(const Testbed::Vertex& vertex) const {
+    return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+           (hash<glm::vec2>()(vertex.texCoord) << 1);
+  }
+};
+} // namespace std
 
 Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::kError;
 
@@ -41,10 +57,6 @@ void Testbed::init(int width, int height) {
 
   createContext();
   createRenderable();
-
-  auto textureFile = executablePath() / "textures/texture.jpg";
-  _texture         = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
-
   createFrames();
 }
 
@@ -148,6 +160,53 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
+#define DRAW_MODEL
+#ifdef DRAW_MODEL
+  const std::string MODEL_FILE   = "models/viking_room.obj";
+  const std::string TEXTURE_FILE = "textures/viking_room.png";
+
+  auto modelFile   = executablePath() / MODEL_FILE;
+  auto textureFile = executablePath() / TEXTURE_FILE;
+
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+  std::string warn, err;
+
+  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelFile.string().c_str())) {
+    throw std::runtime_error(warn + err);
+  }
+
+  std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+  for (const auto& shape : shapes) {
+    for (const auto& index : shape.mesh.indices) {
+      Vertex vertex{};
+
+      vertex.pos = {attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]};
+
+      vertex.texCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
+                         attrib.texcoords[2 * index.texcoord_index + 1]};
+
+      vertex.color = {1.0F, 1.0F, 1.0F};
+
+      if (uniqueVertices.count(vertex) == 0) {
+        uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+        vertices.push_back(vertex);
+      }
+      indices.push_back(uniqueVertices[vertex]);
+    }
+  }
+
+  _drawable.create(
+      _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
+
+  _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
+#else
   const std::vector<Vertex> vertices = {{{-1.0F, -1.0F, 0.5F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
                                         {{-1.0F, 1.0F, 0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
                                         {{1.0F, 1.0F, 0.5F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
@@ -158,10 +217,14 @@ void Testbed::createRenderable() {
                                         {{0.5F, 0.5F, 0.75F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
                                         {{0.5F, -0.5F, 0.75F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
 
-  const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
+  const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
   _drawable.create(
       _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
+
+  auto textureFile = executablePath() / "textures/texture.jpg";
+  _texture         = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
+#endif // DRAW_MODEL
 }
 
 void Testbed::createFrames() {
@@ -261,7 +324,7 @@ void Testbed::updateUniformBuffer() {
   xform.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
   xform.proj[1][1] *= -1;
 #else
-  xform.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
+  xform.proj       = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
 #endif
 
   memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));

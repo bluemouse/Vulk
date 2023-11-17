@@ -14,7 +14,7 @@ struct ImageTrait {
   static constexpr VkFormat format    = VK_FORMAT_UNDEFINED;
   static constexpr uint32_t size      = 0;
   static constexpr uint32_t dimension = 0;
-};
+}; // NAMESPACE_BEGIN(Vulk)
 template <>
 struct ImageTrait<float> {
   [[maybe_unused]] static constexpr VkFormat format    = VK_FORMAT_R32_SFLOAT;
@@ -38,6 +38,23 @@ struct ImageTrait<glm::vec4> {
   [[maybe_unused]] static constexpr VkFormat format    = VK_FORMAT_R32G32B32A32_SFLOAT;
   [[maybe_unused]] static constexpr uint32_t size      = sizeof(glm::vec4);
   [[maybe_unused]] static constexpr uint32_t dimension = 4;
+};
+
+template <typename I>
+struct IndexTrait {
+  static constexpr VkIndexType type = VK_INDEX_TYPE_NONE_KHR;
+};
+template <>
+struct IndexTrait<uint8_t> {
+  static constexpr VkIndexType type = VK_INDEX_TYPE_UINT8_EXT;
+};
+template <>
+struct IndexTrait<uint16_t> {
+  static constexpr VkIndexType type = VK_INDEX_TYPE_UINT16;
+};
+template <>
+struct IndexTrait<uint32_t> {
+  static constexpr VkIndexType type = VK_INDEX_TYPE_UINT32;
 };
 
 struct FormatInfo {

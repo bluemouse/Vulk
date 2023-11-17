@@ -9,6 +9,31 @@
 
 class Testbed : public MainWindow {
  public:
+  struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+
+    bool operator==(const Vertex& rhs) const {
+      return pos == rhs.pos && color == rhs.color && texCoord == rhs.texCoord;
+    }
+
+    static VkVertexInputBindingDescription bindingDescription(uint32_t binding) {
+      return {binding, Vertex::size(), VK_VERTEX_INPUT_RATE_VERTEX};
+    }
+    static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
+      // In shader.vert, we have:
+      // layout(location = 0) in vec3 inPos;
+      // layout(location = 1) in vec3 inColor;
+      // layout(location = 2) in vec2 inTexCoord;
+      return {{0, binding, formatof(Vertex::pos), offsetof(Vertex, pos)},
+              {1, binding, formatof(Vertex::color), offsetof(Vertex, color)},
+              {2, binding, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}};
+    }
+    static constexpr uint32_t size() { return sizeof(Vertex); }
+  };
+
+ public:
   void init(int width, int height) override;
   void cleanup() override;
   void run() override;
@@ -63,25 +88,6 @@ class Testbed : public MainWindow {
  private:
   Vulk::Context _context;
 
-  struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 texCoord;
-
-    static VkVertexInputBindingDescription bindingDescription(uint32_t binding) {
-      return {binding, Vertex::size(), VK_VERTEX_INPUT_RATE_VERTEX};
-    }
-    static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
-      // In shader.vert, we have:
-      // layout(location = 0) in vec3 inPos;
-      // layout(location = 1) in vec3 inColor;
-      // layout(location = 2) in vec2 inTexCoord;
-      return {{0, binding, formatof(Vertex::pos), offsetof(Vertex, pos)},
-              {1, binding, formatof(Vertex::color), offsetof(Vertex, color)},
-              {2, binding, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}};
-    }
-    static constexpr uint32_t size() { return sizeof(Vertex); }
-  };
   uint32_t _vertexBufferBinding = 0U;
 
   struct Transformation {
@@ -94,7 +100,7 @@ class Testbed : public MainWindow {
     }
   };
 
-  Vulk::Drawable<Vertex, uint16_t> _drawable;
+  Vulk::Drawable<Vertex, uint32_t> _drawable;
   Vulk::Texture2D _texture;
 
   struct Frame {

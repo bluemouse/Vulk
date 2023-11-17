@@ -9,6 +9,8 @@ add_library(glfw::glfw ALIAS glfw)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/cxxopts external/cxxopts)
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/tinyobjloader external/tinyobjloader)
+add_library(tinyobjloader::tinyobjloader ALIAS tinyobjloader)
 
 set(SRC_FILES
   main.cpp
@@ -29,6 +31,11 @@ set(SHADER_FILES
 set(TEXTURE_FILES
   resources/texture.jpg
   resources/ScreenTestPattern.png
+  resources/viking_room.png
+)
+
+set(MODEL_FILES
+  resources/viking_room.obj
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
@@ -45,6 +52,7 @@ target_link_libraries(${PROJECT_NAME}
     Vulk::Vulk
     glfw::glfw
     cxxopts::cxxopts
+    tinyobjloader::tinyobjloader
 )
 
 if(MSVC)
@@ -68,3 +76,4 @@ add_shaders_target(SPIR-V
 add_dependencies(${PROJECT_NAME} SPIR-V)
 
 file(COPY ${TEXTURE_FILES} DESTINATION ${RUNTIME_OUTPUT_DIRECTORY}/textures)
+file(COPY ${MODEL_FILES} DESTINATION ${RUNTIME_OUTPUT_DIRECTORY}/models)

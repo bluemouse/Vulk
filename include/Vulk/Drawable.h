@@ -21,8 +21,8 @@ class Drawable {
 
   void create(const Vulk::Device& device,
               const Vulk::CommandBuffer& commandBuffer,
-              std::vector<vertex_type> vertices,
-              std::vector<index_type> indices);
+              const std::vector<vertex_type>& vertices,
+              const std::vector<index_type>& indices);
   void destroy();
 
   [[nodiscard]] const Vulk::VertexBuffer& vertexBuffer() const { return _vertexBuffer; }
@@ -40,8 +40,8 @@ class Drawable {
 template <typename V, typename I>
 inline void Drawable<V, I>::create(const Vulk::Device& device,
                                    const Vulk::CommandBuffer& commandBuffer,
-                                   std::vector<vertex_type> vertices,
-                                   std::vector<index_type> indices) {
+                                   const std::vector<vertex_type>& vertices,
+                                   const std::vector<index_type>& indices) {
   _vertexBuffer.create(device, commandBuffer, vertices);
   _indexBuffer.create(device, commandBuffer, indices);
   _numIndices = indices.size();
