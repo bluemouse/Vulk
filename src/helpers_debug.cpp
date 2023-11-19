@@ -28,17 +28,17 @@ void not_tested(const char* func, const char* file, int line) {
 }
 
 void not_implemented(const char* func, const char* file, int line) {
-  cerr << "Error: " << func << " is not implemented!" << endl
-       << "  File(Line): " << file << " (" << line << ")" << endl;
+  cerr << "Error: " << func << " is not implemented!" << '\n'
+       << "  File(Line): " << file << " (" << line << ")" << '\n';
 #ifndef _NDEBUG
   abort();
 #endif
 }
 
 void assertion_fail(const char* expr, const char* file, int line, const char* msg, ...) {
-  cerr << "Error: assertion violation!" << endl
-       << "  Condition: " << expr << endl
-       << "  File(Line): " << file << " (" << line << ")" << endl;
+  cerr << "Error: assertion violation!" << '\n'
+       << "  Condition: " << expr << '\n'
+       << "  File(Line): " << file << " (" << line << ")" << '\n';
 
   if (msg != nullptr) {
     size_t msgLen = strlen(msg) + 160;
@@ -47,16 +47,16 @@ void assertion_fail(const char* expr, const char* file, int line, const char* ms
     va_start(args, msg);
     vsnprintf(buffer.data(), msgLen, msg, args);
     va_end(args);
-    cerr << "Message:" << buffer.data() << endl;
+    cerr << "Message:" << buffer.data() << '\n';
   }
   log_backtraces();
   abort();
 }
 
 void warning_fail(const char* expr, const char* file, int line, const char* msg, ...) {
-  cerr << "Warning: check violation!" << endl
-       << "  Condition: " << expr << endl
-       << "  File(Line): " << file << " (" << line << ")" << endl;
+  cerr << "Warning: check violation!" << '\n'
+       << "  Condition: " << expr << '\n'
+       << "  File(Line): " << file << " (" << line << ")" << '\n';
 
   if (msg != 0) {
     size_t msgLen = strlen(msg) + 160;
@@ -65,7 +65,7 @@ void warning_fail(const char* expr, const char* file, int line, const char* msg,
     va_start(args, msg);
     vsnprintf(buffer.data(), msgLen, msg, args);
     va_end(args);
-    cerr << "Message:" << buffer.data() << endl;
+    cerr << "Message:" << buffer.data() << '\n';
   }
 }
 
@@ -79,7 +79,7 @@ void log(const char* tag, const char* msg, ...) {
   if (tag != nullptr) {
     cerr << tag << ": ";
   }
-  cerr << buffer.data() << endl;
+  cerr << buffer.data() << '\n';
 }
 
 void log(const char* file, int line, const char* tag, const char* msg, ...) {
@@ -90,7 +90,7 @@ void log(const char* file, int line, const char* tag, const char* msg, ...) {
   vsnprintf(buffer.data(), msgLen, msg, args);
   va_end(args);
 
-  cerr << tag << "[" << file << ":" << line << "]: " << buffer.data() << endl;
+  cerr << tag << "[" << file << ":" << line << "]: " << buffer.data() << '\n';
 }
 
 void log_backtraces() {
@@ -99,7 +99,7 @@ void log_backtraces() {
   auto numTraces = static_cast<size_t>(backtrace(array.data(), maxBacktraceDepth));
   char** traces  = backtrace_symbols(array.data(), numTraces);
   for (size_t i = 0; i < numTraces; ++i) {
-    cerr << traces[i] << endl;
+    cerr << traces[i] << '\n';
   }
   free(traces);
 }

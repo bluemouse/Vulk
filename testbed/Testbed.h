@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MainWindow.h"
+#include "ArcCamera.h"
 
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
@@ -74,6 +75,12 @@ class Testbed : public MainWindow {
 
   [[nodiscard]] static VkFormat chooseDepthFormat();
 
+  void onKeyInput(int key, int action, int mods) override;
+  void onMouseMove(double xpos, double ypos) override;
+  void onMouseButton(int button, int action, int mods) override;
+  void onScroll(double xoffset, double yoffset) override;
+  void onFramebufferResize(int width, int height) override;
+
  private:
   void createContext();
 
@@ -99,6 +106,7 @@ class Testbed : public MainWindow {
       return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
     }
   };
+  ArcCamera _camera;
 
   Vulk::Drawable<Vertex, uint32_t> _drawable;
   Vulk::Texture2D _texture;
@@ -124,4 +132,7 @@ class Testbed : public MainWindow {
 
   // Settings of the Testbed execution
   static ValidationLevel _validationLevel;
+
+  // UI control variables
+  float _zoomFactor = 1.0F;
 };

@@ -38,7 +38,16 @@ class MainWindow {
   [[nodiscard]] bool isMinimized() const { return _width == 0 || _height == 0; }
 
   static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+  static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+  static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+  static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
   static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+
+  virtual void onKeyInput(int key, int action, int mods);
+  virtual void onMouseMove(double xpos, double ypos);
+  virtual void onMouseButton(int button, int action, int mods);
+  virtual void onScroll(double xoffset, double yoffset);
+  virtual void onFramebufferResize(int width, int height);
 
   void setFramebufferResized(bool resized) { _framebufferResized = resized; }
   [[nodiscard]] bool isFramebufferResized() const { return _framebufferResized; }
@@ -50,6 +59,8 @@ class MainWindow {
   [[nodiscard]] static Extensions getRequiredInstanceExtensions();
 
   [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance);
+
+  int getKeyModifier() const;
 
  private:
   GLFWwindow* _window = nullptr;

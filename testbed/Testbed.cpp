@@ -4,9 +4,12 @@
 #include <Vulk/ShaderModule.h>
 #include <Vulk/DepthImage.h>
 
+#include <GLFW/glfw3.h>
+
 // Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS, GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <tiny_obj_loader.h>
 
@@ -19,6 +22,7 @@
 #include <stdexcept>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 
 namespace std {
 template <>
@@ -58,6 +62,8 @@ void Testbed::init(int width, int height) {
   createContext();
   createRenderable();
   createFrames();
+
+  _zoomFactor = 1.0F;
 }
 
 void Testbed::cleanup() {
@@ -160,8 +166,9 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
-#define DRAW_MODEL
+// #define DRAW_MODEL
 #ifdef DRAW_MODEL
+
   const std::string MODEL_FILE   = "models/viking_room.obj";
   const std::string TEXTURE_FILE = "textures/viking_room.png";
 
@@ -178,6 +185,8 @@ void Testbed::createRenderable() {
   }
 
   std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
+  auto bbox = ArcCamera::BBox::null();
 
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
@@ -197,10 +206,14 @@ void Testbed::createRenderable() {
       if (uniqueVertices.count(vertex) == 0) {
         uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
         vertices.push_back(vertex);
+
+        bbox += vertex.pos;
       }
       indices.push_back(uniqueVertices[vertex]);
     }
   }
+  auto extent = _context.swapchain().surfaceExtent();
+  _camera.init(bbox, glm::vec2{extent.width, extent.height});
 
   _drawable.create(
       _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
@@ -218,6 +231,13 @@ void Testbed::createRenderable() {
                                         {{0.5F, -0.5F, 0.75F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
 
   const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
+
+  auto bbox = ArcCamera::BBox::null();
+  for (const auto& vertex : vertices) {
+    bbox += vertex.pos;
+  }
+  auto extent = _context.swapchain().surfaceExtent();
+  _camera.init(bbox, glm::vec2{extent.width, extent.height});
 
   _drawable.create(
       _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
@@ -279,6 +299,11 @@ void Testbed::resizeSwapchain() {
   _context.waitIdle();
   _context.swapchain().resize(width(), height());
 
+  // We need to get the updated size from the surface directly. It is not guaranteed that the extent
+  // is the same as the {width(), height()}.
+  auto extent = _context.swapchain().surfaceExtent();
+  _camera.update(glm::vec2{extent.width, extent.height});
+
   setFramebufferResized(false);
 
   // To force a drawFrame()
@@ -286,6 +311,18 @@ void Testbed::resizeSwapchain() {
 }
 
 void Testbed::updateUniformBuffer() {
+#define USE_ARC_CAMERA
+#if defined(USE_ARC_CAMERA)
+  _camera.update();
+
+  Transformation xform{};
+
+  xform.model = glm::mat4{1.0F};
+  xform.view  = _camera.viewMatrix();
+  xform.proj  = _camera.projectionMatrix();
+
+  memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));
+#else
   using glm::vec3;
   using glm::vec4;
   using glm::mat4;
@@ -308,6 +345,7 @@ void Testbed::updateUniformBuffer() {
   vec3 cameraUp{0.0F, -1.0F, 0.0F};
 
   xform.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
+  std::cout << "view: " << glm::to_string(xform.view) << std::endl;
 
   auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
   float surfaceAspect       = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
@@ -319,15 +357,17 @@ void Testbed::updateUniformBuffer() {
   auto zNear = dist;
   auto zFar  = zNear + dist * 10.0F;
 // #define USE_PERSPECTIVE_PROJECTION
-#if defined(USE_PERSPECTIVE_PROJECTION)
+#  if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
   xform.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
   xform.proj[1][1] *= -1;
-#else
-  xform.proj       = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
-#endif
+#  else
+  xform.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
+  std::cout << "projection: " << glm::to_string(xform.proj) << std::endl;
+#  endif
 
   memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));
+#endif // USE_ARC_CAMERA
 }
 
 bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface& surface) {
@@ -394,4 +434,63 @@ VkFormat Testbed::chooseDepthFormat() {
 void Testbed::nextFrame() {
   _currentFrameIdx = (_currentFrameIdx + 1) % _maxFrameInFlight;
   _currentFrame    = &_frames[_currentFrameIdx];
+}
+
+void Testbed::onKeyInput(int key, int action, int mods) {
+  MainWindow::onKeyInput(key, action, mods);
+
+  if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL && action == GLFW_RELEASE) {
+    _camera.zoom(_zoomFactor = 1.0F);
+  }
+}
+
+namespace {
+  glm::vec2 lastMousePos{};
+}
+
+void Testbed::onMouseMove(double xpos, double ypos) {
+  MainWindow::onMouseMove(xpos, ypos);
+
+  int left = glfwGetMouseButton(window(), GLFW_MOUSE_BUTTON_LEFT);
+  if (left == GLFW_PRESS) {
+    _camera.move(glm::vec2{lastMousePos.x, lastMousePos.y}, glm::vec2{xpos, ypos});
+    // _camera.move(glm::vec2{lastMousePos.x, ypos}, glm::vec2{xpos, ypos});
+    lastMousePos = {xpos, ypos};
+  }
+}
+
+void Testbed::onMouseButton(int button, int action, int mods) {
+  MainWindow::onMouseButton(button, action, mods);
+
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (action == GLFW_PRESS) {
+      double xpos{0}, ypos{0};
+      glfwGetCursorPos(window(), &xpos, &ypos);
+      lastMousePos = glm::vec2{xpos, ypos};
+    } else if (action == GLFW_RELEASE) {
+      lastMousePos = glm::vec2{};
+    }
+  }
+}
+
+void Testbed::onScroll(double xoffset, double yoffset) {
+  MainWindow::onScroll(xoffset, yoffset);
+
+  int mods = getKeyModifier();
+
+  float delta = 0.05;
+  // Get the current key modifier state.
+  if (mods == GLFW_MOD_SHIFT) {
+    delta *= 2; // Accelerates the zoom speed
+  }
+
+  if (yoffset > 0.0F) {
+    _camera.zoom(_zoomFactor*=(1.0F + delta));
+  } else {
+    _camera.zoom(_zoomFactor*=(1.0F-delta));
+  }
+}
+
+void Testbed::onFramebufferResize(int width, int height) {
+  MainWindow::onFramebufferResize(width, height);
 }

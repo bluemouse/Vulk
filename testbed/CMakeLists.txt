@@ -16,11 +16,14 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
+  ArcCamera.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
+  ArcCamera.h
+  Bound.h
 )
 
 set(SHADER_FILES
