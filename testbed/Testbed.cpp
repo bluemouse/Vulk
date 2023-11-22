@@ -186,7 +186,7 @@ void Testbed::createRenderable() {
 
   std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
-  auto bbox = ArcCamera::BBox::null();
+  auto bbox = Camera::BBox::null();
 
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
@@ -232,7 +232,7 @@ void Testbed::createRenderable() {
 
   const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
-  auto bbox = ArcCamera::BBox::null();
+  auto bbox = Camera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
   }

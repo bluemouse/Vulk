@@ -6,12 +6,12 @@
 
 #include <limits>
 
-class ArcCamera {
+class Camera {
  public:
   using BBox = Bound<glm::vec3>;
 
  public:
-  ArcCamera() { init(); }
+  Camera() { init(); }
 
   // Camera is located at `position` and looking at center of the front face of`bbox` with the up
   // vector of `bbox`

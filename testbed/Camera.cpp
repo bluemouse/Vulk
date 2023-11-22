@@ -1,4 +1,4 @@
-#include "ArcCamera.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -6,10 +6,10 @@
 
 #include <iostream>
 
-#define DEFINE_OSTREAM_GLM_TYPE(type)                              \
-  std::ostream& operator<<(std::ostream& os, const glm::type& v) { \
-    os << glm::to_string(v);                                       \
-    return os;                                                     \
+#define DEFINE_OSTREAM_GLM_TYPE(type)                                   \
+  std::ostream& operator<<(std::ostream& ostream, const glm::type& v) { \
+    ostream << glm::to_string(v);                                       \
+    return ostream;                                                     \
   }
 
 DEFINE_OSTREAM_GLM_TYPE(vec2);
@@ -17,7 +17,7 @@ DEFINE_OSTREAM_GLM_TYPE(vec3);
 DEFINE_OSTREAM_GLM_TYPE(vec4);
 DEFINE_OSTREAM_GLM_TYPE(mat4);
 
-void ArcCamera::init(const BBox& bbox, const glm::vec2& frameSize) {
+void Camera::init(const BBox& bbox, const glm::vec2& frameSize) {
   _bbox      = bbox;
   _frameSize = frameSize;
 
@@ -36,7 +36,7 @@ void ArcCamera::init(const BBox& bbox, const glm::vec2& frameSize) {
   _panOffset = {0.0F, 0.0F};
 }
 
-void ArcCamera::update() {
+void Camera::update() {
   // std::cout << "---------" << '\n';
   // std::cout << "eye = " << _eye << '\n';
   // std::cout << "lookAt = " << _lookAt << '\n';
@@ -78,47 +78,47 @@ void ArcCamera::update() {
   // updateMVP();
 }
 
-void ArcCamera::update(const glm::vec2& frameSize) {
+void Camera::update(const glm::vec2& frameSize) {
   _frameSize = frameSize;
   update();
 }
 
-glm::vec3 ArcCamera::screen2view(glm::vec2 p) const {
+glm::vec3 Camera::screen2view(glm::vec2 p) const {
   return ndc2view(glm::vec3(screen2ndc(p), _viewVolume.near));
 }
 
-glm::vec3 ArcCamera::screen2world(glm::vec2 p) const {
+glm::vec3 Camera::screen2world(glm::vec2 p) const {
   return ndc2world(glm::vec3(screen2ndc(p), _viewVolume.near));
 }
 
-glm::vec3 ArcCamera::screen2model(glm::vec2 p) const {
+glm::vec3 Camera::screen2model(glm::vec2 p) const {
   return world2model(screen2world(p));
 }
 
-glm::vec2 ArcCamera::screen2ndc(glm::vec2 p) const {
+glm::vec2 Camera::screen2ndc(glm::vec2 p) const {
   const float w2 = frameWidth() / 2.0F;
   const float h2 = frameHeight() / 2.0F;
   return {(p.x - w2) / w2, (p.y - h2) / h2};
 }
 
-glm::vec3 ArcCamera::ndc2view(glm::vec3 p) const {
+glm::vec3 Camera::ndc2view(glm::vec3 p) const {
   auto viewPos = _invProjection * glm::vec4{p, 1.0f};
   return viewPos / viewPos.w;
 }
 
-glm::vec3 ArcCamera::ndc2world(glm::vec3 p) const {
+glm::vec3 Camera::ndc2world(glm::vec3 p) const {
   return view2world(ndc2view(p));
 }
 
-glm::vec3 ArcCamera::view2world(glm::vec3 p) const {
+glm::vec3 Camera::view2world(glm::vec3 p) const {
   return _view2World * glm::vec4{p, 1.0f};
 }
 
-glm::vec3 ArcCamera::world2model(glm::vec3 p) const {
+glm::vec3 Camera::world2model(glm::vec3 p) const {
   return _world2Model * glm::vec4{p, 1.0f};
 }
 
-void ArcCamera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
+void Camera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
   auto from = screen2world(fromScreenPosition);
   auto to   = screen2world(toScreenPosition);
   glm::vec2 distance{from.x - to.x, from.y - to.y};
@@ -137,7 +137,7 @@ void ArcCamera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScr
   update();
 }
 
-void ArcCamera::rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
+void Camera::rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
   using namespace glm;
 
   auto from = fromScreenPosition;
@@ -161,12 +161,12 @@ void ArcCamera::rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toS
   }
 }
 
-void ArcCamera::zoom(float scale) {
+void Camera::zoom(float scale) {
   _zoomScale = scale;
   update();
 }
 
-glm::vec3 ArcCamera::trackballPoint(const glm::vec2& screenPos) const {
+glm::vec3 Camera::trackballPoint(const glm::vec2& screenPos) const {
   glm::vec3 p = {screen2ndc(screenPos), 0};
   float d2    = p.x * p.x + p.y * p.y;
   if (d2 <= 1)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MainWindow.h"
-#include "ArcCamera.h"
+#include "Camera.h"
 
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
@@ -106,7 +106,7 @@ class Testbed : public MainWindow {
       return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
     }
   };
-  ArcCamera _camera;
+  Camera _camera;
 
   Vulk::Drawable<Vertex, uint32_t> _drawable;
   Vulk::Texture2D _texture;

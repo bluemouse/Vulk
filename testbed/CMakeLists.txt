@@ -16,13 +16,13 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
-  ArcCamera.cpp
+  Camera.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
-  ArcCamera.h
+  Camera.h
   Bound.h
 )
 
