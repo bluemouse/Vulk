@@ -11,9 +11,6 @@ class Bound {
  public:
   using position_type = T;
 
-  static constexpr T max() { return T{std::numeric_limits<typename T::value_type>::max()}; }
-  static constexpr T min() { return T{std::numeric_limits<typename T::value_type>::min()}; }
-
   struct Face {
     std::array<T, 4> v;
 
@@ -41,67 +38,107 @@ class Bound {
   void setLower(const T& lower) { set(lower, _upper); }
   void setUpper(const T& upper) { set(_lower, upper); }
 
-  void set(const T& lower, const T& upper) {
-    MI_ASSERT(glm::all(glm::lessThan(lower, upper)));
-    _lower = lower;
-    _upper = upper;
-  }
+  void set(const T& lower, const T& upper);
 
-  Bound operator+(const T& point) const {
-    return Bound{glm::min(point, _lower), glm::max(point, _upper)};
-  }
-  void operator+=(const T& point) {
-    _lower = glm::min(point, _lower);
-    _upper = glm::max(point, _upper);
-  }
+  Bound operator+(const T& point) const;
+  void operator+=(const T& point);
 
-  Bound operator&(const Bound& rhs) const {
-    return Bound{glm::max(_lower, rhs._lower), glm::min(_upper, rhs._upper)};
-  }
-  void operator&=(const Bound& rhs) {
-    _lower = glm::max(_lower, rhs._lower);
-    _upper = glm::min(_upper, rhs._upper);
-  }
+  Bound operator&(const Bound& rhs) const;
+  void operator&=(const Bound& rhs);
 
   [[nodiscard]] T center() const { return (_lower + _upper) / 2.0f; }
   [[nodiscard]] T extent() const { return _upper - _lower; };
 
-  [[nodiscard]] Face front() const {
-    return Face{_lower,
-                T{_lower.x, _upper.y, _lower.z},
-                T{_upper.x, _upper.y, _lower.z},
-                T{_upper.x, _lower.y, _lower.z}};
-  }
+  [[nodiscard]] Face nearZ() const;
+  [[nodiscard]] Face farZ() const;
 
-  void scale(float multiplier) {
-    MI_ASSERT(multiplier > 0.0F);
-    auto center = this->center();
-    auto extent = this->extent();
-    auto offset = extent * multiplier * 0.5F;
-    _lower      = center - offset;
-    _upper      = center + offset;
-  }
+  void scale(float multiplier);
 
   // aspect = width / height
-  void fit(float aspect) {
-    auto center = this->center();
-    auto extent = this->extent();
-    auto offset = extent * 0.5F;
-    if (aspect > 1.0F) {
-      offset.x *= aspect;
-    } else {
-      offset.y /= aspect;
-    }
-    _lower = center - offset;
-    _upper = center + offset;
-  }
+  void fit(float aspect);
 
-  void move(const T& offset) {
-    _lower += offset;
-    _upper += offset;
-  }
+  void move(const T& offset);
 
  protected:
   T _lower{};
   T _upper{};
+
+ private:
+  static constexpr T max() { return T{std::numeric_limits<typename T::value_type>::max()}; }
+  static constexpr T min() { return T{std::numeric_limits<typename T::value_type>::min()}; }
 };
+
+template <typename T>
+void Bound<T>::set(const T& lower, const T& upper) {
+  MI_ASSERT(glm::all(glm::lessThan(lower, upper)));
+  _lower = lower;
+  _upper = upper;
+}
+
+template <typename T>
+auto Bound<T>::operator+(const T& point) const -> Bound {
+  return Bound{glm::min(point, _lower), glm::max(point, _upper)};
+}
+
+template <typename T>
+void Bound<T>::operator+=(const T& point) {
+  _lower = glm::min(point, _lower);
+  _upper = glm::max(point, _upper);
+}
+
+template <typename T>
+auto Bound<T>::operator&(const Bound& rhs) const -> Bound {
+  return Bound{glm::max(_lower, rhs._lower), glm::min(_upper, rhs._upper)};
+}
+
+template <typename T>
+void Bound<T>::operator&=(const Bound& rhs) {
+  _lower = glm::max(_lower, rhs._lower);
+  _upper = glm::min(_upper, rhs._upper);
+}
+
+template <typename T>
+auto Bound<T>::nearZ() const -> Face {
+  return Face{_lower,
+              T{_lower.x, _upper.y, _lower.z},
+              T{_upper.x, _upper.y, _lower.z},
+              T{_upper.x, _lower.y, _lower.z}};
+}
+
+template <typename T>
+auto Bound<T>::farZ() const -> Face {
+  return Face{_lower,
+              T{_lower.x, _upper.y, _upper.z},
+              T{_upper.x, _upper.y, _upper.z},
+              T{_upper.x, _lower.y, _upper.z}};
+}
+
+template <typename T>
+void Bound<T>::scale(float multiplier) {
+  MI_ASSERT(multiplier > 0.0F);
+  auto center = this->center();
+  auto extent = this->extent();
+  auto offset = extent * multiplier * 0.5F;
+  _lower      = center - offset;
+  _upper      = center + offset;
+}
+
+template <typename T>
+void Bound<T>::fit(float aspect) {
+  auto center = this->center();
+  auto extent = this->extent();
+  auto offset = extent * 0.5F;
+  if (aspect > 1.0F) {
+    offset.x *= aspect;
+  } else {
+    offset.y /= aspect;
+  }
+  _lower = center - offset;
+  _upper = center + offset;
+}
+
+template <typename T>
+void Bound<T>::move(const T& offset) {
+  _lower += offset;
+  _upper += offset;
+}

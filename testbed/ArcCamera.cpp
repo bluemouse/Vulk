@@ -21,16 +21,15 @@ void ArcCamera::init(const BBox& bbox, const glm::vec2& frameSize) {
   _bbox      = bbox;
   _frameSize = frameSize;
 
-  auto frontFace = _bbox.front();
+  BBox::Face nearZ = _bbox.nearZ();
 
   _lookAt = _bbox.center();
-  _up     = frontFace.up();
+  _up     = nearZ.up();
 
-  auto frontCenter = frontFace.center();
+  auto center = nearZ.center();
   // We use 45 degree diagonal fov to calculate the distance to eye
   auto offsetToEye =
-      (glm::distance(_lookAt, frontCenter) + glm::distance(frontCenter, frontFace.v[0])) *
-      frontFace.normal();
+      (glm::distance(_lookAt, center) + glm::distance(center, nearZ.v[0])) * nearZ.normal();
   _eye = _lookAt + offsetToEye;
 
   _zoomScale = 1.0F;
@@ -61,8 +60,8 @@ void ArcCamera::update() {
   _viewVolume.bottom = activeFrustum.upper().y - _lookAt.y;
 
   constexpr float margin = 1.0F;
-  _viewVolume.near   = (activeFrustum.lower().z - margin) - _eye.z;
-  _viewVolume.far    = (activeFrustum.upper().z + margin) - _eye.z;
+  _viewVolume.near       = (activeFrustum.lower().z - margin) - _eye.z;
+  _viewVolume.far        = (activeFrustum.upper().z + margin) - _eye.z;
 
   _projection = glm::ortho(_viewVolume.left,
                            _viewVolume.right,
