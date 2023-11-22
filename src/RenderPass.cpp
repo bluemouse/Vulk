@@ -86,6 +86,7 @@ void RenderPass::create(const Device& device,
   subpass.pColorAttachments    = &colorAttachmentRef;
 
   VkAttachmentDescription depthStencilAttachment{};
+  VkAttachmentReference depthStencilAttachmentRef{};
   if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
     depthStencilAttachment.format         = depthStencilFormat;
     depthStencilAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -100,7 +101,6 @@ void RenderPass::create(const Device& device,
       depthStencilAttachmentOverride(depthStencilAttachment);
     }
 
-    VkAttachmentReference depthStencilAttachmentRef{};
     depthStencilAttachmentRef.attachment = 1;
     depthStencilAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
@@ -140,14 +140,12 @@ void RenderPass::create(const Device& device,
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies   = &dependency;
 
-  if (depthStencilFormat == VK_FORMAT_UNDEFINED) {
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments    = &colorAttachment;
-  } else {
-    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthStencilAttachment};
-    renderPassInfo.attachmentCount                     = static_cast<uint32_t>(attachments.size());
-    renderPassInfo.pAttachments                        = attachments.data();
+  std::vector<VkAttachmentDescription> attachments{{colorAttachment}};
+  if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
+    attachments.push_back(depthStencilAttachment);
   }
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+  renderPassInfo.pAttachments    = attachments.data();
 
   MI_VERIFY_VKCMD(vkCreateRenderPass(device, &renderPassInfo, nullptr, &_renderPass));
 }

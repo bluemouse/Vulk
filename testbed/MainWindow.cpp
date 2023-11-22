@@ -63,20 +63,20 @@ void MainWindow::onKeyInput(int key, int action, int mods) {
   }
 }
 
-void MainWindow::onMouseMove(double xpos, double ypos) {
-  MI_LOG("onMouseMove: %f, %f", xpos, ypos);
+void MainWindow::onMouseMove(double /* xpos */, double /* ypos */) {
+  // MI_LOG("onMouseMove: %f, %f", xpos, ypos);
 }
 
-void MainWindow::onMouseButton(int button, int action, int mods) {
-  MI_LOG("onMouseButton: %d, %d, %d", button, action, mods);
+void MainWindow::onMouseButton(int /* button */, int /* action */, int /* mods */) {
+  // MI_LOG("onMouseButton: %d, %d, %d", button, action, mods);
 }
 
-void MainWindow::onScroll(double xoffset, double yoffset) {
-  MI_LOG("onScroll: %f, %f", xoffset, yoffset);
+void MainWindow::onScroll(double /* xoffset */, double /* yoffset */) {
+  // MI_LOG("onScroll: %f, %f", xoffset, yoffset);
 }
 
 void MainWindow::onFramebufferResize(int width, int height) {
-  MI_LOG("onFramebufferResize: %d, %d", width, height);
+  // MI_LOG("onFramebufferResize: %d, %d", width, height);
   _width              = width;
   _height             = height;
   _framebufferResized = true;

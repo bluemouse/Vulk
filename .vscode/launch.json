@@ -9,6 +9,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${command:cmake.launchTargetPath}",
+      // "args": ["-v", "0"],
       "args": [],
       "stopAtEntry": false,
       "cwd": "${command:cmake.launchTargetDirectory}",

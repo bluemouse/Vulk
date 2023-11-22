@@ -111,13 +111,13 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
   submitInfo.pCommandBuffers    = &_buffer;
 
   std::vector<VkSemaphore> waitSemaphores;
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   if (!waits.empty()) {
     waitSemaphores.reserve(waits.size());
     for (const auto& wait : waits) {
       waitSemaphores.push_back(*wait);
     }
 
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount     = static_cast<uint32_t>(waitSemaphores.size());
     submitInfo.pWaitSemaphores        = waitSemaphores.data();
     submitInfo.pWaitDstStageMask      = static_cast<VkPipelineStageFlags*>(waitStages);
