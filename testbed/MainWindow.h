@@ -61,6 +61,7 @@ class MainWindow {
   [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance);
 
   int getKeyModifier() const;
+  int getMouseButton() const;
 
  private:
   GLFWwindow* _window = nullptr;

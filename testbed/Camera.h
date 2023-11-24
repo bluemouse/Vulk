@@ -13,12 +13,15 @@ class Camera {
  public:
   Camera() { init(); }
 
-  // Camera is located at `position` and looking at center of the front face of`bbox` with the up
-  // vector of `bbox`
-  void init(const BBox& bbox, const glm::vec2& frameSize);
-  void reset();
+  // Camera, located at 2x radius of `roi`, looks at center of `roi` toward positive z.  Camera up
+  // vector is negative y initially. `frameSize` is the dimension of the frame buffer. It is used
+  // for fitting and other frame-size-dependent calculations.
+  void init(const BBox& roi, const glm::vec2& frameSize);
+  // Update the camera matrices with new frame size.
   void update(const glm::vec2& frameSize);
+  // Update the camera matrices.
   void update();
+  void reset();
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
   void rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
@@ -47,40 +50,22 @@ class Camera {
 
   void setFrameSize(glm::vec2 size) { _frameSize = size; }
 
-  // void updateTransformation() { updateTransformation({frameWidth(), frameHeight()}); }
-  void updateMVP() { _mvp = _projection * _world2View * _model2World; }
-
   [[nodiscard]] glm::vec3 trackballPoint(const glm::vec2& screenPos) const;
 
  private:
+  // Camera parameters in world space
   glm::vec3 _eye;
   glm::vec3 _lookAt;
   glm::vec3 _up;
 
-  BBox _bbox;
+  BBox _roi; // region-of-interest bounding box in world space
+  glm::vec2 _frameSize; // Frame size in pixels
 
-  struct ViewVolume {
-    float left{-1.0F};
-    float right{1.0F};
-    float top{-1.0F};
-    float bottom{1.0F};
-    float near{0.0F};
-    float far{1.0F};
-  };
-  ViewVolume _viewVolume;
-
+  BBox _viewVolume; // view volume in view space
   float _zoomScale{1.0F};
-  glm::vec2 _panOffset = {0.0F, 0.0F};
-
-  glm::vec2 _frameSize;
 
   glm::mat4 _model2World, _world2Model;
   glm::mat4 _world2View, _view2World;
   glm::mat4 _projection, _invProjection;
   glm::mat4 _mvp;
-
-  static constexpr float ZOOM_OUT_STEP = 0.09f;
-  static constexpr float ZOOM_IN_STEP  = 0.25f;
-  static constexpr float MAX_ZOOMSCALE = 16.0f;
-  static constexpr float MIN_ZOOMSCALE = 0.1f;
 };

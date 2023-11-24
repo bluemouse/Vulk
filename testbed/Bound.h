@@ -9,7 +9,8 @@
 template <typename T>
 class Bound {
  public:
-  using position_type = T;
+  using vector_type = T;
+  using value_type  = typename T::value_type;
 
   struct Face {
     std::array<T, 4> v;
@@ -22,11 +23,13 @@ class Bound {
     [[nodiscard]] T center() const { return (v[0] + v[1] + v[2] + v[3]) / 4.0f; }
     // up vector of the face
     [[nodiscard]] T up() const { return glm::normalize(v[0] - v[1]); }
+    value_type diagonal() const { return glm::distance(v[0], v[2]); }
   };
 
  public:
   Bound() = default;
   Bound(const T& lower, const T& upper) : _lower{lower}, _upper{upper} {}
+  Bound(const T& center, value_type radius) : _lower{center - radius}, _upper{center + radius} {}
 
   static Bound infinite() { return Bound{min(), max()}; }
   static Bound null() { return Bound{max(), min()}; }
@@ -48,24 +51,31 @@ class Bound {
 
   [[nodiscard]] T center() const { return (_lower + _upper) / 2.0f; }
   [[nodiscard]] T extent() const { return _upper - _lower; };
+  // The radius of the sphere that encompasses the bound
+  [[nodiscard]] value_type radius() const { return glm::length(extent()) / 2; }
 
   [[nodiscard]] Face nearZ() const;
   [[nodiscard]] Face farZ() const;
 
-  void scale(float multiplier);
-
+  void scale(value_type multiplier);
   // aspect = width / height
-  void fit(float aspect);
-
+  void fit(value_type aspect);
   void move(const T& offset);
+
+  [[nodiscard]] value_type left() const { return _lower.x; }
+  [[nodiscard]] value_type right() const { return _upper.x; }
+  [[nodiscard]] value_type bottom() const { return _lower.y; }
+  [[nodiscard]] value_type top() const { return _upper.y; }
+  [[nodiscard]] value_type near() const { return _lower.z; }
+  [[nodiscard]] value_type far() const { return _upper.z; }
 
  protected:
   T _lower{};
   T _upper{};
 
  private:
-  static constexpr T max() { return T{std::numeric_limits<typename T::value_type>::max()}; }
-  static constexpr T min() { return T{std::numeric_limits<typename T::value_type>::min()}; }
+  static constexpr T max() { return T{std::numeric_limits<value_type>::max()}; }
+  static constexpr T min() { return T{std::numeric_limits<value_type>::min()}; }
 };
 
 template <typename T>
@@ -114,7 +124,7 @@ auto Bound<T>::farZ() const -> Face {
 }
 
 template <typename T>
-void Bound<T>::scale(float multiplier) {
+void Bound<T>::scale(value_type multiplier) {
   MI_ASSERT(multiplier > 0.0F);
   auto center = this->center();
   auto extent = this->extent();
@@ -124,7 +134,7 @@ void Bound<T>::scale(float multiplier) {
 }
 
 template <typename T>
-void Bound<T>::fit(float aspect) {
+void Bound<T>::fit(value_type aspect) {
   auto center = this->center();
   auto extent = this->extent();
   auto offset = extent * 0.5F;
@@ -135,6 +145,11 @@ void Bound<T>::fit(float aspect) {
   }
   _lower = center - offset;
   _upper = center + offset;
+
+  // to extend the bound depth to fit sphere that contains the bound
+  auto r   = radius();
+  _lower.z = center.z - r;
+  _upper.z = center.z + r;
 }
 
 template <typename T>

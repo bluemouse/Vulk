@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <stdexcept>
 
 #include <Vulk/Instance.h>
@@ -143,4 +144,16 @@ int MainWindow::getKeyModifier() const {
     mods |= GLFW_MOD_ALT;
   }
   return mods;
+}
+
+int MainWindow::getMouseButton() const {
+  std::array<int, 3> buttons = {
+      GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_MIDDLE, GLFW_MOUSE_BUTTON_RIGHT};
+
+  for (auto button : buttons) {
+    if (glfwGetMouseButton(_window, button) == GLFW_PRESS) {
+      return button;
+    }
+  }
+  return -1;
 }

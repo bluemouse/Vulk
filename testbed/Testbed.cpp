@@ -166,7 +166,7 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderable() {
-// #define DRAW_MODEL
+#define DRAW_MODEL
 #ifdef DRAW_MODEL
 
   const std::string MODEL_FILE   = "models/viking_room.obj";
@@ -451,10 +451,12 @@ namespace {
 void Testbed::onMouseMove(double xpos, double ypos) {
   MainWindow::onMouseMove(xpos, ypos);
 
-  int left = glfwGetMouseButton(window(), GLFW_MOUSE_BUTTON_LEFT);
-  if (left == GLFW_PRESS) {
+  int button = getMouseButton();
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
     _camera.move(glm::vec2{lastMousePos.x, lastMousePos.y}, glm::vec2{xpos, ypos});
-    // _camera.move(glm::vec2{lastMousePos.x, ypos}, glm::vec2{xpos, ypos});
+    lastMousePos = {xpos, ypos};
+  } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+    _camera.rotate(glm::vec2{lastMousePos.x, lastMousePos.y}, glm::vec2{xpos, ypos});
     lastMousePos = {xpos, ypos};
   }
 }
@@ -462,14 +464,10 @@ void Testbed::onMouseMove(double xpos, double ypos) {
 void Testbed::onMouseButton(int button, int action, int mods) {
   MainWindow::onMouseButton(button, action, mods);
 
-  if (button == GLFW_MOUSE_BUTTON_LEFT) {
-    if (action == GLFW_PRESS) {
-      double xpos{0}, ypos{0};
-      glfwGetCursorPos(window(), &xpos, &ypos);
-      lastMousePos = glm::vec2{xpos, ypos};
-    } else if (action == GLFW_RELEASE) {
-      lastMousePos = glm::vec2{};
-    }
+  if (action == GLFW_PRESS) {
+    double xpos{0}, ypos{0};
+    glfwGetCursorPos(window(), &xpos, &ypos);
+    lastMousePos = glm::vec2{xpos, ypos};
   }
 }
 
