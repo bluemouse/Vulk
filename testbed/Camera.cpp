@@ -33,7 +33,7 @@ void Camera::init(const BBox& roi, const glm::vec2& frameSize) {
 
 void Camera::update() {
   _model2World = glm::mat4{1.0f};
-  _world2View = glm::lookAt(_eye, _lookAt, _up);
+  _world2View  = glm::lookAt(_eye, _lookAt, _up);
 
   // Convert _roi to view-space volume
   glm::vec3 volumeOrigin{_lookAt.x, _lookAt.y, _eye.z};
@@ -44,7 +44,7 @@ void Camera::update() {
   _viewVolume.scale(1.0F / _zoomScale);
 
   auto near = _viewVolume.near() - _viewVolume.radius();
-  auto far  = _viewVolume.far() + _viewVolume.radius()*4;
+  auto far  = _viewVolume.far() + _viewVolume.radius() * 4;
 
   // Since Vulkan has the y-axis from top to bottom, we need to inverse top and bottom here.
   _projection = glm::ortho(
@@ -112,15 +112,15 @@ void Camera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreen
   update();
 }
 
-void Camera::rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
+void Camera::rotate(const glm::vec2& origScreenPosition,
+                    const glm::vec2& fromScreenPosition,
+                    const glm::vec2& toScreenPosition) {
   if (toScreenPosition == fromScreenPosition) {
     return;
   }
 
-  auto va     = trackballPoint(fromScreenPosition);
-  auto vb     = trackballPoint(toScreenPosition);
-  float angle = std::acos(std::min(1.0f, dot(va, vb))) * 2;
-  auto axis   = ndc2world(glm::cross(va, vb)) - ndc2world({0.0F, 0.0F, 0.0F});
+  auto [axis, angle] =
+      computeTrackballRotation(origScreenPosition, fromScreenPosition, toScreenPosition);
 
   auto rotation = glm::rotate(glm::mat4{1}, angle, axis);
   auto up0Pos   = _up + (_eye - _lookAt);
@@ -140,15 +140,24 @@ void Camera::zoom(float scale) {
   update();
 }
 
-glm::vec3 Camera::trackballPoint(const glm::vec2& screenPos) const {
-  glm::vec3 p = {screen2ndc(screenPos), 0};
-  std::cout << "ndc = " << p << '\n';
-  float d2 = p.x * p.x + p.y * p.y;
-  std::cout << "d2 = " << d2 << '\n';
-  if (d2 <= 1) {
-    p.z = sqrtf(1 - d2);
-  } else {
+auto Camera::computeTrackballRotation(const glm::vec2& screenOrigin,
+                                      const glm::vec2& screenFrom,
+                                      const glm::vec2& screenTo) const -> Rotation {
+  const auto orig = screen2ndc(screenOrigin);
+  const auto from = trackballPoint(screen2ndc(screenFrom) - orig);
+  const auto to   = trackballPoint(screen2ndc(screenTo) - orig);
+
+  auto angle = std::acos(std::min(1.0F, glm::dot(from, to)));
+  auto axis  = ndc2world(glm::cross(from, to)) - ndc2world({0.0F, 0.0F, 0.0F});
+
+  return {axis, angle};
+}
+
+glm::vec3 Camera::trackballPoint(const glm::vec2& ndcPos) const {
+  float z  = 0.0F;
+  float d2 = glm::dot(ndcPos, ndcPos);
+  if (d2 <= 1.0F) {
+    z = sqrtf(1.0F - d2);
   }
-  p = glm::normalize(p);
-  return p;
+  return glm::normalize(glm::vec3{ndcPos, z});
 }

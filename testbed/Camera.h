@@ -24,7 +24,9 @@ class Camera {
   void reset();
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
-  void rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
+  void rotate(const glm::vec2& origScreenPosition,
+              const glm::vec2& fromScreenPosition,
+              const glm::vec2& toScreenPosition);
   void zoom(float scale);
 
   [[nodiscard]] glm::mat4 mvpMatrix() const { return _mvp; }
@@ -50,6 +52,13 @@ class Camera {
 
   void setFrameSize(glm::vec2 size) { _frameSize = size; }
 
+  struct Rotation {
+    glm::vec3 axis;
+    float angle;
+  };
+  [[nodiscard]] Rotation computeTrackballRotation(const glm::vec2& screenOrigin,
+                                                  const glm::vec2& screenFrom,
+                                                  const glm::vec2& screenTo) const;
   [[nodiscard]] glm::vec3 trackballPoint(const glm::vec2& screenPos) const;
 
  private:
@@ -58,7 +67,7 @@ class Camera {
   glm::vec3 _lookAt;
   glm::vec3 _up;
 
-  BBox _roi; // region-of-interest bounding box in world space
+  BBox _roi;            // region-of-interest bounding box in world space
   glm::vec2 _frameSize; // Frame size in pixels
 
   BBox _viewVolume; // view volume in view space

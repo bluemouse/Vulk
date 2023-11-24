@@ -445,6 +445,7 @@ void Testbed::onKeyInput(int key, int action, int mods) {
 }
 
 namespace {
+  glm::vec2 startingMousePos{};
   glm::vec2 lastMousePos{};
 }
 
@@ -453,10 +454,10 @@ void Testbed::onMouseMove(double xpos, double ypos) {
 
   int button = getMouseButton();
   if (button == GLFW_MOUSE_BUTTON_LEFT) {
-    _camera.move(glm::vec2{lastMousePos.x, lastMousePos.y}, glm::vec2{xpos, ypos});
+    _camera.move(lastMousePos, {xpos, ypos});
     lastMousePos = {xpos, ypos};
   } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-    _camera.rotate(glm::vec2{lastMousePos.x, lastMousePos.y}, glm::vec2{xpos, ypos});
+    _camera.rotate(startingMousePos, lastMousePos, {xpos, ypos});
     lastMousePos = {xpos, ypos};
   }
 }
@@ -467,7 +468,7 @@ void Testbed::onMouseButton(int button, int action, int mods) {
   if (action == GLFW_PRESS) {
     double xpos{0}, ypos{0};
     glfwGetCursorPos(window(), &xpos, &ypos);
-    lastMousePos = glm::vec2{xpos, ypos};
+    startingMousePos = lastMousePos = {xpos, ypos};
   }
 }
 
