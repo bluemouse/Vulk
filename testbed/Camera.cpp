@@ -17,16 +17,24 @@ DEFINE_OSTREAM_GLM_TYPE(vec3);
 DEFINE_OSTREAM_GLM_TYPE(vec4);
 DEFINE_OSTREAM_GLM_TYPE(mat4);
 
-void Camera::init(const BBox& roi, const glm::vec2& frameSize) {
+void Camera::init(const glm::vec2& frameSize, const BBox& roi) {
+  init(frameSize, roi, {0.0F, -1.0F, 0.0F}, {0.0F, 0.0F, -1.0F}, 1.0F);
+}
+
+void Camera::init(const glm::vec2& frameSize,
+                  const BBox& roi,
+                  const glm::vec3& up,
+                  const glm::vec3& eyeRay,
+                  float zoomScale) {
   _roi       = roi;
   _frameSize = frameSize;
 
   _lookAt = _roi.center();
-  _up     = {0.0F, -1.0F, 0.0F};
+  _up     = up;
   // We want to place the camera at 2x radius of the roi toward the positive z axis.
-  _eye = _lookAt + ((2.0F * _roi.radius()) * glm::vec3{0.0F, 0.0F, -1.0F});
+  _eye = _lookAt + ((2.0F * _roi.radius()) * eyeRay);
 
-  _zoomScale = 1.0F;
+  _zoomScale = zoomScale;
 
   update();
 }
@@ -121,6 +129,13 @@ void Camera::rotate(const glm::vec2& origScreenPosition,
 
   auto [axis, angle] =
       computeTrackballRotation(origScreenPosition, fromScreenPosition, toScreenPosition);
+  orbit(axis, angle);
+}
+
+void Camera::orbit(const glm::vec3& axis, float angle) {
+  if (angle == 0.0F) {
+    return;
+  }
 
   auto rotation = glm::rotate(glm::mat4{1}, angle, axis);
   auto up0Pos   = _up + (_eye - _lookAt);
@@ -133,6 +148,14 @@ void Camera::rotate(const glm::vec2& origScreenPosition,
   _up = glm::normalize(glm::cross(right, ray)); // make sure up is orthogonal to ray direction
 
   update();
+}
+
+void Camera::orbitHorizontal(float angle) {
+  orbit(_up, angle);
+}
+
+void Camera::orbitVertical(float angle) {
+  orbit(glm::cross(_up, _lookAt - _eye), angle);
 }
 
 void Camera::zoom(float scale) {

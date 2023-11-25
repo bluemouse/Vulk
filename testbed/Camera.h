@@ -16,18 +16,29 @@ class Camera {
   // Camera, located at 2x radius of `roi`, looks at center of `roi` toward positive z.  Camera up
   // vector is negative y initially. `frameSize` is the dimension of the frame buffer. It is used
   // for fitting and other frame-size-dependent calculations.
-  void init(const BBox& roi, const glm::vec2& frameSize);
+  void init(const glm::vec2& frameSize, const BBox& roi);
+  void init(const glm::vec2& frameSize,
+            const BBox& roi,
+            const glm::vec3& up,
+            const glm::vec3& eyeRay,
+            float zoomScale = 1.0F);
   // Update the camera matrices with new frame size.
   void update(const glm::vec2& frameSize);
   // Update the camera matrices.
   void update();
-  void reset();
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
   void rotate(const glm::vec2& origScreenPosition,
               const glm::vec2& fromScreenPosition,
               const glm::vec2& toScreenPosition);
   void zoom(float scale);
+
+  // Orbit the camera around `center` by `angle` radians along `axis`. `axis` is in world space.
+  void orbit(const glm::vec3& axis, float angle);
+  // Orbit the camera around `center` by `angle` radians along the view space horizontal axis.
+  void orbitHorizontal(float angle);
+  // Orbit the camera around `center` by `angle` radians along the view space vertical axis.
+  void orbitVertical(float angle);
 
   [[nodiscard]] glm::mat4 mvpMatrix() const { return _mvp; }
   [[nodiscard]] glm::mat4 modelMatrix() const { return _model2World; }
@@ -48,7 +59,7 @@ class Camera {
   [[nodiscard]] glm::vec3 world2model(glm::vec3 p) const;
 
  private:
-  void init() { init(BBox::unit(), glm::vec2{1.0f}); }
+  void init() { init(glm::vec2{1.0f}, BBox::unit()); }
 
   void setFrameSize(glm::vec2 size) { _frameSize = size; }
 

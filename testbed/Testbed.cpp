@@ -16,13 +16,14 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <iostream>
 #include <filesystem>
 #include <functional>
 #include <unordered_map>
 #include <stdexcept>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
+#include <cmath>
 
 namespace std {
 template <>
@@ -213,7 +214,7 @@ void Testbed::createRenderable() {
     }
   }
   auto extent = _context.swapchain().surfaceExtent();
-  _camera.init(bbox, glm::vec2{extent.width, extent.height});
+  _camera.init(glm::vec2{extent.width, extent.height}, bbox);
 
   _drawable.create(
       _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
@@ -439,15 +440,25 @@ void Testbed::nextFrame() {
 void Testbed::onKeyInput(int key, int action, int mods) {
   MainWindow::onKeyInput(key, action, mods);
 
-  if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL && action == GLFW_RELEASE) {
-    _camera.zoom(_zoomFactor = 1.0F);
+  if (action == GLFW_PRESS) {
+    if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL) {
+      _camera.zoom(_zoomFactor = 1.0F);
+    } else if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
+      _camera.orbitVertical(M_PI / 2.0F);
+    } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
+      _camera.orbitVertical(-M_PI / 2.0F);
+    } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
+      _camera.orbitHorizontal(M_PI / 2.0F);
+    } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
+      _camera.orbitHorizontal(-M_PI / 2.0F);
+    }
   }
 }
 
 namespace {
-  glm::vec2 startingMousePos{};
-  glm::vec2 lastMousePos{};
-}
+glm::vec2 startingMousePos{};
+glm::vec2 lastMousePos{};
+} // namespace
 
 void Testbed::onMouseMove(double xpos, double ypos) {
   MainWindow::onMouseMove(xpos, ypos);
@@ -484,9 +495,9 @@ void Testbed::onScroll(double xoffset, double yoffset) {
   }
 
   if (yoffset > 0.0F) {
-    _camera.zoom(_zoomFactor*=(1.0F + delta));
+    _camera.zoom(_zoomFactor *= (1.0F + delta));
   } else {
-    _camera.zoom(_zoomFactor*=(1.0F-delta));
+    _camera.zoom(_zoomFactor *= (1.0F - delta));
   }
 }
 
