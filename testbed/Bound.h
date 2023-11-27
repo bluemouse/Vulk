@@ -62,6 +62,9 @@ class Bound {
   void fit(value_type aspect);
   void move(const T& offset);
 
+  // Expand the planar side of the bound by `padding` if the bound is not a volume.
+  void expandPlanarSide(value_type padding);
+
   [[nodiscard]] value_type left() const { return _lower.x; }
   [[nodiscard]] value_type right() const { return _upper.x; }
   [[nodiscard]] value_type bottom() const { return _lower.y; }
@@ -75,7 +78,7 @@ class Bound {
 
  private:
   static constexpr T max() { return T{std::numeric_limits<value_type>::max()}; }
-  static constexpr T min() { return T{std::numeric_limits<value_type>::min()}; }
+  static constexpr T min() { return T{std::numeric_limits<value_type>::lowest()}; }
 };
 
 template <typename T>
@@ -135,14 +138,21 @@ void Bound<T>::scale(value_type multiplier) {
 
 template <typename T>
 void Bound<T>::fit(value_type aspect) {
-  auto center = this->center();
   auto extent = this->extent();
+  auto center = this->center();
   auto offset = extent * 0.5F;
-  if (aspect > 1.0F) {
-    offset.x *= aspect;
-  } else {
-    offset.y /= aspect;
+
+  value_type boundAspect = extent.x / extent.y;
+
+  auto widthScale = aspect / boundAspect;
+  auto heightScale = 1.0F / widthScale;
+
+  if (widthScale > heightScale) {
+    offset.x *= widthScale;
+  } else if (widthScale < heightScale) {
+    offset.y *= heightScale;
   }
+
   _lower = center - offset;
   _upper = center + offset;
 
@@ -156,4 +166,14 @@ template <typename T>
 void Bound<T>::move(const T& offset) {
   _lower += offset;
   _upper += offset;
+}
+
+template <typename T>
+void Bound<T>::expandPlanarSide(value_type padding) {
+  for (int i = 0; i < 3; ++i) {
+    if (_lower[i] == _upper[i]) {
+      _lower[i] -= padding;
+      _upper[i] += padding;
+    }
+  }
 }

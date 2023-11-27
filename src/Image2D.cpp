@@ -43,6 +43,8 @@ void Image2D::create(const Device& device,
                      VkFormat format,
                      VkExtent2D extent,
                      const ImageCreateInfoOverride& override) {
+  MI_ASSERT(extent.width > 0 && extent.height > 0);
+
   VkImageCreateInfo imageInfo{};
   imageInfo.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType   = VK_IMAGE_TYPE_2D;

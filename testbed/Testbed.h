@@ -41,6 +41,9 @@ class Testbed : public MainWindow {
 
   void drawFrame() override;
 
+  void setModelFile(const std::string& modelFile);
+  void setTextureFile(const std::string& textureFile);
+
   // Settings of the Testbed execution
   using ValidationLevel = Vulk::Context::ValidationLevel;
   static void setValidationLevel(ValidationLevel level);
@@ -83,14 +86,17 @@ class Testbed : public MainWindow {
 
  private:
   void createContext();
-
-  void createRenderable();
-
+  void createDrawable();
   void createFrames();
 
   void updateUniformBuffer();
 
   void nextFrame();
+
+  void loadModel(const std::string& modelFile,
+                 std::vector<Vertex>& vertices,
+                 std::vector<uint32_t>& indices);
+  void initCamera(const std::vector<Vertex>& vertices);
 
  private:
   Vulk::Context _context;
@@ -135,4 +141,8 @@ class Testbed : public MainWindow {
 
   // UI control variables
   float _zoomFactor = 1.0F;
+
+  // Input data
+  std::string _modelFile{};
+  std::string _textureFile{};
 };

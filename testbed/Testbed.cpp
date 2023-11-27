@@ -61,7 +61,7 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createContext();
-  createRenderable();
+  createDrawable();
   createFrames();
 
   _zoomFactor = 1.0F;
@@ -166,31 +166,20 @@ void Testbed::createContext() {
   MI_VERIFY(_vertexBufferBinding != std::numeric_limits<uint32_t>::max());
 }
 
-void Testbed::createRenderable() {
-#define DRAW_MODEL
-#ifdef DRAW_MODEL
-
-  const std::string MODEL_FILE   = "models/viking_room.obj";
-  const std::string TEXTURE_FILE = "textures/viking_room.png";
-
-  auto modelFile   = executablePath() / MODEL_FILE;
-  auto textureFile = executablePath() / TEXTURE_FILE;
-
+void Testbed::loadModel(const std::string& modelFile,
+                        std::vector<Vertex>& vertices,
+                        std::vector<uint32_t>& indices) {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
   std::string warn, err;
 
-  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelFile.string().c_str())) {
+  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelFile.c_str())) {
     throw std::runtime_error(warn + err);
   }
 
   std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
-  auto bbox = Camera::BBox::null();
-
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
   for (const auto& shape : shapes) {
     for (const auto& index : shape.mesh.indices) {
       Vertex vertex{};
@@ -207,45 +196,66 @@ void Testbed::createRenderable() {
       if (uniqueVertices.count(vertex) == 0) {
         uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
         vertices.push_back(vertex);
-
-        bbox += vertex.pos;
       }
       indices.push_back(uniqueVertices[vertex]);
     }
   }
-  auto extent = _context.swapchain().surfaceExtent();
-  _camera.init(glm::vec2{extent.width, extent.height}, bbox);
+}
 
-  _drawable.create(
-      _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
-
-  _texture = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
-#else
-  const std::vector<Vertex> vertices = {{{-1.0F, -1.0F, 0.5F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{-1.0F, 1.0F, 0.5F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                        {{1.0F, 1.0F, 0.5F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                        {{1.0F, -1.0F, 0.5F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}},
-
-                                        {{-0.5F, -0.5F, 0.25F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                        {{-0.5F, 0.5F, 0.25F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                        {{0.5F, 0.5F, 0.75F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                        {{0.5F, -0.5F, 0.75F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
-
-  const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
-
+void Testbed::initCamera(const std::vector<Vertex>& vertices) {
   auto bbox = Camera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
   }
+  bbox.expandPlanarSide(1.0F);
+
   auto extent = _context.swapchain().surfaceExtent();
-  _camera.init(bbox, glm::vec2{extent.width, extent.height});
+  _camera.init(glm::vec2{extent.width, extent.height}, bbox);
+}
 
-  _drawable.create(
-      _context.device(), Vulk::CommandBuffer{_context.commandPool()}, vertices, indices);
+void Testbed::createDrawable() {
+  if (_textureFile.empty()) {
+    auto file = executablePath() / "textures/color-rendition-chart.jpg";
+    _texture  = Vulk::Toolbox(_context).createTexture(file.string().c_str());
+  } else {
+    _texture = Vulk::Toolbox(_context).createTexture(_textureFile.c_str());
+  }
 
-  auto textureFile = executablePath() / "textures/texture.jpg";
-  _texture         = Vulk::Toolbox(_context).createTexture(textureFile.string().c_str());
-#endif // DRAW_MODEL
+  if (_modelFile.empty()) {
+    float left{-1.0F}, right{1.0F}, bottom{-1.0F}, top{1.0F};
+
+    if (_texture.isValid()) {
+      // to make sure the texture and the quad has the same aspect ratio
+      auto [textureW, textureH] = _texture.extent();
+      float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
+
+      if (textureAspect > 1.0F) {
+        left  = -textureAspect;
+        right = textureAspect;
+      } else {
+        bottom = -1.0F / textureAspect;
+        top    = 1.0F / textureAspect;
+      }
+    }
+    const std::vector<Vertex> vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                                          {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                                          {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                                          {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+
+    const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+
+    _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
+
+    initCamera(vertices);
+  } else {
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    loadModel(_modelFile, vertices, indices);
+
+    _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
+
+    initCamera(vertices);
+  }
 }
 
 void Testbed::createFrames() {
@@ -503,4 +513,35 @@ void Testbed::onScroll(double xoffset, double yoffset) {
 
 void Testbed::onFramebufferResize(int width, int height) {
   MainWindow::onFramebufferResize(width, height);
+}
+
+namespace {
+std::string locateFile(const std::string& file) {
+  if (std::filesystem::exists(file)) {
+    return file;
+  } else {
+    auto path = executablePath() / file;
+    if (std::filesystem::exists(path)) {
+      return path;
+    }
+  }
+  return {};
+}
+} // namespace
+
+void Testbed::setModelFile(const std::string& modelFile) {
+  _modelFile = locateFile(modelFile);
+  if (_modelFile.empty()) {
+    throw std::runtime_error("Error: model file [" + modelFile + "] does not exist!");
+  }
+
+  std::cout << "modelFile: " << _modelFile << std::endl;
+}
+void Testbed::setTextureFile(const std::string& textureFile) {
+  _textureFile = locateFile(textureFile);
+  if (_textureFile.empty()) {
+    throw std::runtime_error("Error: texture file [" + textureFile + "] does not exist!");
+  }
+
+  std::cout << "textureFile: " << _textureFile << std::endl;
 }

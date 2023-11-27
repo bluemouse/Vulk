@@ -31,15 +31,8 @@ set(SHADER_FILES
   shaders/shader.frag
 )
 
-set(TEXTURE_FILES
-  resources/texture.jpg
-  resources/ScreenTestPattern.png
-  resources/viking_room.png
-)
-
-set(MODEL_FILES
-  resources/viking_room.obj
-)
+file(GLOB TEXTURE_FILES "resources/*.jpg" "resources/*.png")
+file(GLOB MODEL_FILES "resources/*.obj")
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 

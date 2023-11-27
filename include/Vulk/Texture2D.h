@@ -65,6 +65,8 @@ class Texture2D {
   [[nodiscard]] bool isAllocated() const { return _image.isAllocated(); }
   [[nodiscard]] bool isMapped() const { return _image.isMapped(); }
 
+  [[nodiscard]] bool isValid() const { return _image.isCreated(); }
+
   static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(
       uint32_t binding,
       VkShaderStageFlags stage = VK_SHADER_STAGE_ALL_GRAPHICS) {
