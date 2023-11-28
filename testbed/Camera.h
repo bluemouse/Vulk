@@ -70,7 +70,7 @@ class Camera {
   [[nodiscard]] Rotation computeTrackballRotation(const glm::vec2& screenOrigin,
                                                   const glm::vec2& screenFrom,
                                                   const glm::vec2& screenTo) const;
-  [[nodiscard]] glm::vec3 trackballPoint(const glm::vec2& screenPos) const;
+  [[nodiscard]] glm::vec3 trackballPoint(glm::vec2 screenPos) const;
 
  private:
   // Camera parameters in world space

@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <cmath>
 #include <iostream>
 
 #define DEFINE_OSTREAM_GLM_TYPE(type)                                   \
@@ -133,7 +134,7 @@ void Camera::rotate(const glm::vec2& origScreenPosition,
 }
 
 void Camera::orbit(const glm::vec3& axis, float angle) {
-  if (angle == 0.0F) {
+  if (angle == 0.0F || axis == glm::vec3{0.0F}) {
     return;
   }
 
@@ -170,17 +171,28 @@ auto Camera::computeTrackballRotation(const glm::vec2& screenOrigin,
   const auto from = trackballPoint(screen2ndc(screenFrom) - orig);
   const auto to   = trackballPoint(screen2ndc(screenTo) - orig);
 
+  if (from == to) {
+    return {glm::vec3{0.0F, 0.0F, 0.0F}, 0.0F};
+  }
+
   auto angle = std::acos(std::min(1.0F, glm::dot(from, to)));
   auto axis  = ndc2world(glm::cross(from, to)) - ndc2world({0.0F, 0.0F, 0.0F});
 
   return {axis, angle};
 }
 
-glm::vec3 Camera::trackballPoint(const glm::vec2& ndcPos) const {
+glm::vec3 Camera::trackballPoint(glm::vec2 ndcPos) const {
+  auto aspect = _frameSize.x / _frameSize.y;
+  if (aspect < 1.0F) {
+    ndcPos.y /= aspect;
+  } else if (aspect > 1.0F) {
+    ndcPos.x *= aspect;
+  }
+
   float z  = 0.0F;
   float d2 = glm::dot(ndcPos, ndcPos);
   if (d2 <= 1.0F) {
-    z = sqrtf(1.0F - d2);
+    z = std::sqrt(1.0F - d2);
   }
   return glm::normalize(glm::vec3{ndcPos, z});
 }
