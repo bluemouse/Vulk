@@ -121,16 +121,13 @@ void Camera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreen
   update();
 }
 
-void Camera::rotate(const glm::vec2& origScreenPosition,
-                    const glm::vec2& fromScreenPosition,
-                    const glm::vec2& toScreenPosition) {
+void Camera::rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {
   if (toScreenPosition == fromScreenPosition) {
     return;
   }
 
-  auto [axis, angle] =
-      computeTrackballRotation(origScreenPosition, fromScreenPosition, toScreenPosition);
-  orbit(axis, angle);
+  auto [axis, angle] = computeTrackballRotation(fromScreenPosition, toScreenPosition);
+  orbit(axis, angle * 2.0F);
 }
 
 void Camera::orbit(const glm::vec3& axis, float angle) {
@@ -164,35 +161,31 @@ void Camera::zoom(float scale) {
   update();
 }
 
-auto Camera::computeTrackballRotation(const glm::vec2& screenOrigin,
-                                      const glm::vec2& screenFrom,
-                                      const glm::vec2& screenTo) const -> Rotation {
-  const auto orig = screen2ndc(screenOrigin);
-  const auto from = trackballPoint(screen2ndc(screenFrom) - orig);
-  const auto to   = trackballPoint(screen2ndc(screenTo) - orig);
+auto Camera::computeTrackballRotation(const glm::vec2& screenFrom, const glm::vec2& screenTo) const
+    -> Rotation {
+  const auto from = trackballPoint(screen2ndc(screenFrom));
+  const auto to   = trackballPoint(screen2ndc(screenTo));
 
   if (from == to) {
     return {glm::vec3{0.0F, 0.0F, 0.0F}, 0.0F};
   }
 
   auto angle = std::acos(std::min(1.0F, glm::dot(from, to)));
-  auto axis  = ndc2world(glm::cross(from, to)) - ndc2world({0.0F, 0.0F, 0.0F});
+
+  const auto worldOrig = ndc2world({0.0F, 0.0F, 0.0F});
+  const auto worldFrom = ndc2world(from) - worldOrig;
+  const auto worldTo   = ndc2world(to) - worldOrig;
+  auto axis            = glm::normalize(glm::cross(worldFrom, worldTo));
 
   return {axis, angle};
 }
 
 glm::vec3 Camera::trackballPoint(glm::vec2 ndcPos) const {
-  auto aspect = _frameSize.x / _frameSize.y;
-  if (aspect < 1.0F) {
-    ndcPos.y /= aspect;
-  } else if (aspect > 1.0F) {
-    ndcPos.x *= aspect;
-  }
-
   float z  = 0.0F;
   float d2 = glm::dot(ndcPos, ndcPos);
   if (d2 <= 1.0F) {
     z = std::sqrt(1.0F - d2);
   }
-  return glm::normalize(glm::vec3{ndcPos, z});
+
+  return glm::vec3{ndcPos, z};
 }

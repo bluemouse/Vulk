@@ -28,9 +28,7 @@ class Camera {
   void update();
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
-  void rotate(const glm::vec2& origScreenPosition,
-              const glm::vec2& fromScreenPosition,
-              const glm::vec2& toScreenPosition);
+  void rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition);
   void zoom(float scale);
 
   // Orbit the camera around `center` by `angle` radians along `axis`. `axis` is in world space.
@@ -67,8 +65,7 @@ class Camera {
     glm::vec3 axis;
     float angle;
   };
-  [[nodiscard]] Rotation computeTrackballRotation(const glm::vec2& screenOrigin,
-                                                  const glm::vec2& screenFrom,
+  [[nodiscard]] Rotation computeTrackballRotation(const glm::vec2& screenFrom,
                                                   const glm::vec2& screenTo) const;
   [[nodiscard]] glm::vec3 trackballPoint(glm::vec2 screenPos) const;
 
