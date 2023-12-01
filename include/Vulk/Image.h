@@ -33,6 +33,8 @@ class Image {
 
   virtual void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
 
+  void makeShaderReadable(const CommandBuffer& cmdBuffer) const;
+
   operator VkImage() const { return _image; }
 
   [[nodiscard]] VkImageType type() const { return _type; }

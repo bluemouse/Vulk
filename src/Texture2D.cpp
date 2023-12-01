@@ -31,6 +31,7 @@ void Texture2D::destroy() {
 
 void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
   _image.copyFrom(cmdBuffer, stagingBuffer);
+  _image.makeShaderReadable(cmdBuffer);
 }
 
 NAMESPACE_END(Vulk)

@@ -19,7 +19,9 @@ Image2D Toolbox::createImage2D(const char* imageFile) const {
 
   Image2D image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
   image.allocate();
-  image.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+  CommandBuffer cmdBuffer{_context.commandPool()};
+  image.copyFrom(cmdBuffer, stagingBuffer);
+  image.makeShaderReadable(cmdBuffer);
 
   return image;
 }
