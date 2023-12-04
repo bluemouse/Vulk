@@ -13,7 +13,7 @@ class Image;
 class StagingBuffer : public Buffer {
  public:
   StagingBuffer() = default;
-  StagingBuffer(const Device& device, VkDeviceSize size);
+  StagingBuffer(const Device& device, VkDeviceSize size, const void* data = nullptr);
 
   // Transfer the ownership from `rhs` to `this`
   StagingBuffer(StagingBuffer&& rhs)                            = default;

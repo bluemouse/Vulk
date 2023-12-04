@@ -26,10 +26,25 @@ Image2D Toolbox::createImage2D(const char* imageFile) const {
   return image;
 }
 
-Texture2D Toolbox::createTexture(const char* textureFile) const {
+Texture2D Toolbox::createTexture2D(const char* textureFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
 
   Texture2D texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+
+  return texture;
+}
+
+Texture2D Toolbox::createTexture2D(TextureFormat format,
+                                   const uint8_t* data,
+                                   uint32_t width,
+                                   uint32_t height) const {
+  uint32_t size = width * height * (format == TextureFormat::RGBA ? 4 : 3);
+  auto stagingBuffer = createStagingBuffer(data, size);
+
+  VkFormat vkFormat =
+      format == TextureFormat::RGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8_SRGB;
+  Texture2D texture{_context.device(), vkFormat, {width, height}};
   texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
 
   return texture;
@@ -46,12 +61,15 @@ auto Toolbox::createStagingBuffer(const char* imageFile) const
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
 
-  StagingBuffer stagingBuffer(_context.device(), imageSize);
-  stagingBuffer.copyFromHost(pixels, imageSize);
+  StagingBuffer stagingBuffer{_context.device(), imageSize, pixels};
 
   stbi_image_free(pixels);
 
   return {std::move(stagingBuffer), texWidth, texHeight};
+}
+
+StagingBuffer Toolbox::createStagingBuffer(const uint8_t* data, uint32_t size) const {
+  return StagingBuffer{_context.device(), size, data};
 }
 
 NAMESPACE_END(Vulk)

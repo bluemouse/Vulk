@@ -24,14 +24,32 @@ void Texture2D::create(const Device& device,
 }
 
 void Texture2D::destroy() {
-  _image.destroy();
-  _view.destroy();
   _sampler.destroy();
+  _view.destroy();
+  _image.destroy();
 }
 
 void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
   _image.copyFrom(cmdBuffer, stagingBuffer);
   _image.makeShaderReadable(cmdBuffer);
+}
+
+void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
+  _image.copyFrom(cmdBuffer, srcImage);
+  _image.makeShaderReadable(cmdBuffer);
+}
+
+void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {
+  copyFrom(cmdBuffer, srcTexture.image());
+}
+
+void Texture2D::blitFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
+  _image.blitFrom(cmdBuffer, srcImage);
+  _image.makeShaderReadable(cmdBuffer);
+}
+
+void Texture2D::blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {
+  blitFrom(cmdBuffer, srcTexture.image());
 }
 
 NAMESPACE_END(Vulk)

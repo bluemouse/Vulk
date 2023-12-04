@@ -95,6 +95,7 @@ set(HEADER_FILES
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
+    include/Vulk/Utility.h
     # Engine classes
     include/Vulk/Context.h
     include/Vulk/Drawable.h

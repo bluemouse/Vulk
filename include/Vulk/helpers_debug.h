@@ -20,20 +20,19 @@
   }
 
 #if defined(_NDEBUG) || defined(NDEBUG)
-#  define MI_NOT_TESTED(function_name) \
-    __helpers_debug__::not_tested(#function_name, __FILE__, __LINE__)
-#  define MI_NOT_IMPLEMENTED(function_name) \
-    __helpers_debug__::not_implemented(#function_name, __FILE__, __LINE__)
+#  define MI_NOT_TESTED() ((void)0)
+#  define MI_NOT_IMPLEMENTED() \
+    __helpers_debug__::not_implemented(__func__, __FILE__, __LINE__)
 #  define MI_LOG(...) ((void)0)
 #  define MI_LOG_ERROR(...) ((void)0)
 #  define MI_LOG_WARNING(...) ((void)0)
 #  define MI_LOG_INFO(...) ((void)0)
 #  define MI_LOG_DEBUG(...) ((void)0)
 #else
-#  define MI_NOT_TESTED(function_name) \
-    __helpers_debug__::not_tested(#function_name, __FILE__, __LINE__)
-#  define MI_NOT_IMPLEMENTED(function_name) \
-    __helpers_debug__::not_implemented(#function_name, __FILE__, __LINE__)
+#  define MI_NOT_TESTED() \
+    __helpers_debug__::not_tested(__func__, __FILE__, __LINE__)
+#  define MI_NOT_IMPLEMENTED() \
+    __helpers_debug__::not_implemented(__func__, __FILE__, __LINE__)
 #  define MI_LOG(...) __helpers_debug__::log("", __VA_ARGS__)
 #  define MI_LOG_ERROR(...) __helpers_debug__::log("ERROR", __VA_ARGS__)
 #  define MI_LOG_WARNING(...) __helpers_debug__::log("WARNING", __VA_ARGS__)

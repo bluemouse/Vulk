@@ -37,12 +37,16 @@ class Texture2D {
   void destroy();
 
   void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  void copyFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage);
+  void copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
+  void blitFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage);
+  void blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
 
-  const Image& image() const { return _image; }
+  const Image2D& image() const { return _image; }
   const ImageView& view() const { return _view; }
   const Sampler& sampler() const { return _sampler; }
 
-  Image& image() { return _image; }
+  Image2D& image() { return _image; }
   ImageView& view() { return _view; }
   Sampler& sampler() { return _sampler; }
 

@@ -56,6 +56,40 @@ std::filesystem::path getExecutablePath() {
   return std::filesystem::path{};
 }
 #endif
+
+struct Checkerboard : public std::vector<uint8_t> {
+  Checkerboard(glm::uvec2 numBlocks,
+               glm::uvec2 blockSize,
+               glm::uvec4 black = {0, 0, 0, 255},
+               glm::uvec4 white = {255, 255, 255, 255})
+      : extent{numBlocks * blockSize} {
+    resize(extent.x * extent.y * kNumColorChannels);
+
+    for (unsigned int x = 0; x < extent.x; ++x) {
+      for (unsigned int y = 0; y < extent.y; ++y) {
+        auto p     = at(x, y);
+        auto color = (((x & blockSize.x) == 0) ^ ((y & blockSize.y) == 0)) ? white : black;
+
+        p[0] = color[0];
+        p[1] = color[1];
+        p[2] = color[2];
+        p[3] = color[3];
+      }
+    }
+  }
+
+  glm::uvec4 operator()(uint32_t x, uint32_t y) {
+    uint8_t* pixel = at(x, y);
+    return {pixel[0], pixel[1], pixel[2], pixel[3]};
+  }
+
+  glm::uvec2 extent;
+
+ private:
+  static constexpr unsigned int kNumColorChannels = 4;
+  uint8_t* at(uint32_t x, uint32_t y) { return data() + (x + y * extent.x) * kNumColorChannels; }
+};
+
 } // namespace
 
 void Testbed::init(int width, int height) {
@@ -216,10 +250,13 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
 
 void Testbed::createDrawable() {
   if (_textureFile.empty()) {
-    auto file = executablePath() / "textures/color-rendition-chart.jpg";
-    _texture  = Vulk::Toolbox(_context).createTexture(file.string().c_str());
+    Checkerboard checkerboard{{8, 8}, {128, 128}, {60, 60, 60, 255}};
+    _texture = Vulk::Toolbox(_context).createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
+                                                       checkerboard.data(),
+                                                       checkerboard.extent.x,
+                                                       checkerboard.extent.y);
   } else {
-    _texture = Vulk::Toolbox(_context).createTexture(_textureFile.c_str());
+    _texture = Vulk::Toolbox(_context).createTexture2D(_textureFile.c_str());
   }
 
   if (_modelFile.empty()) {
@@ -238,10 +275,11 @@ void Testbed::createDrawable() {
         top    = 1.0F / textureAspect;
       }
     }
-    const std::vector<Vertex> vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                                          {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                                          {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                                          {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+    const std::vector<Vertex> vertices = {
+        {{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+        {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+        {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+        {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
 
     const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
 
@@ -497,7 +535,7 @@ void Testbed::onMouseButton(int button, int action, int mods) {
     double xpos{0}, ypos{0};
     glfwGetCursorPos(window(), &xpos, &ypos);
     startingMousePos = {xpos, ypos};
-    mousePosHistory = {};
+    mousePosHistory  = {};
     mousePosHistory.push({xpos, ypos});
   }
 }
@@ -544,7 +582,7 @@ void Testbed::setModelFile(const std::string& modelFile) {
     throw std::runtime_error("Error: model file [" + modelFile + "] does not exist!");
   }
 
-  std::cout << "modelFile: " << _modelFile << std::endl;
+  std::cout << "Model file: " << _modelFile << std::endl;
 }
 void Testbed::setTextureFile(const std::string& textureFile) {
   _textureFile = locateFile(textureFile);
@@ -552,5 +590,5 @@ void Testbed::setTextureFile(const std::string& textureFile) {
     throw std::runtime_error("Error: texture file [" + textureFile + "] does not exist!");
   }
 
-  std::cout << "textureFile: " << _textureFile << std::endl;
+  std::cout << "Texture file: " << _textureFile << std::endl;
 }

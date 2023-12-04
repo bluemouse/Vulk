@@ -3,6 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
+#include <Vulk/Utility.h>
 
 #include <Vulk/helpers_vulkan.h>
 
@@ -92,7 +93,7 @@ Image::~Image() noexcept(false) {
   if (isAllocated()) {
     free();
   }
-} // NAMESPACE_BEGIN(Vulk)
+}
 
 Image::Image(Image&& rhs) noexcept {
   moveFrom(rhs);
@@ -193,6 +194,87 @@ void Image::unmap() {
 void Image::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
   transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   stagingBuffer.copyToImage(cmdBuffer, *this, width(), height());
+}
+
+// copy the image data from `srcImage` to this image
+void Image::copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
+  // TODO should we execute transit and copy in one command buffer execution?
+
+  auto& dstImage = *this;
+  MI_VERIFY(srcImage.extent() == dstImage.extent());
+
+  dstImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  auto prevSrcLayout = srcImage._layout;
+  srcImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+  cmdBuffer.executeSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+    const auto& srcLayout = srcImage._layout;
+    const auto& dstLayout = dstImage._layout;
+
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource.aspectMask     = selectAspectMask(srcLayout);
+    copyRegion.srcSubresource.mipLevel       = 0;
+    copyRegion.srcSubresource.baseArrayLayer = 0;
+    copyRegion.srcSubresource.layerCount     = 1;
+
+    copyRegion.dstSubresource.aspectMask     = selectAspectMask(dstLayout);
+    copyRegion.dstSubresource.mipLevel       = 0;
+    copyRegion.dstSubresource.baseArrayLayer = 0;
+    copyRegion.dstSubresource.layerCount     = 1;
+
+    copyRegion.srcOffset = {0, 0, 0};
+    copyRegion.dstOffset = {0, 0, 0};
+    copyRegion.extent    = {srcImage.width(), srcImage.height(), srcImage.depth()};
+
+    vkCmdCopyImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &copyRegion);
+  });
+
+  cmdBuffer.waitIdle();
+
+  srcImage.transitToNewLayout(cmdBuffer, prevSrcLayout);
+}
+
+// blit the image data from `srcImage` to this image
+void Image::blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
+  // TODO should we execute transit and blit in one command buffer execution?
+
+  auto& dstImage = *this;
+
+  dstImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  auto prevSrcLayout = srcImage._layout;
+  srcImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+  cmdBuffer.executeSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+    const auto& srcLayout = srcImage._layout;
+    const auto& dstLayout = dstImage._layout;
+
+    const int32_t srcW = static_cast<int32_t>(srcImage.width());
+    const int32_t srcH = static_cast<int32_t>(srcImage.height());
+    const int32_t srcD = static_cast<int32_t>(srcImage.depth());
+
+    const int32_t dstW = static_cast<int32_t>(dstImage.width());
+    const int32_t dstH = static_cast<int32_t>(dstImage.height());
+    const int32_t dstD = static_cast<int32_t>(dstImage.depth());
+
+    VkImageBlit blit{};
+    blit.srcSubresource.aspectMask = selectAspectMask(srcLayout);
+    blit.srcSubresource.layerCount = 1;
+    blit.srcOffsets[0]             = {0, 0, 0};
+    blit.srcOffsets[1]             = {srcW, srcH, srcD};
+
+    blit.dstSubresource.aspectMask = selectAspectMask(dstLayout);
+    blit.dstSubresource.layerCount = 1;
+    blit.dstOffsets[0]             = {0, 0, 0};
+    blit.dstOffsets[1]             = {dstW, dstH, dstD};
+
+    vkCmdBlitImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
+  });
+
+  cmdBuffer.waitIdle();
+
+  srcImage.transitToNewLayout(cmdBuffer, prevSrcLayout);
 }
 
 void Image::transitToNewLayout(const CommandBuffer& commandBuffer,

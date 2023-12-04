@@ -32,6 +32,8 @@ class Image {
   virtual void unmap();
 
   virtual void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  virtual void copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage);
+  virtual void blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage);
 
   void makeShaderReadable(const CommandBuffer& cmdBuffer) const;
 

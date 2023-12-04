@@ -8,8 +8,11 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-StagingBuffer::StagingBuffer(const Device& device, VkDeviceSize size) {
+StagingBuffer::StagingBuffer(const Device& device, VkDeviceSize size, const void* data) {
   create(device, size);
+  if (data) {
+    copyFromHost(data, size);
+  }
 }
 
 void StagingBuffer::create(const Device& device, VkDeviceSize size) {

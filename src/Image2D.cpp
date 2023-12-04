@@ -56,9 +56,11 @@ void Image2D::create(const Device& device,
   // The Vulkan spec states: initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED or
   // VK_IMAGE_LAYOUT_PREINITIALIZED
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
   imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+
+  imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                    VK_IMAGE_USAGE_SAMPLED_BIT;
 
   if (override) {
     override(&imageInfo);
