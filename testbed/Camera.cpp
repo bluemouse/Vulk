@@ -19,7 +19,7 @@ DEFINE_OSTREAM_GLM_TYPE(vec4);
 DEFINE_OSTREAM_GLM_TYPE(mat4);
 
 void Camera::init(const glm::vec2& frameSize, const BBox& roi) {
-  init(frameSize, roi, {0.0F, -1.0F, 0.0F}, {0.0F, 0.0F, -1.0F}, 1.0F);
+  init(frameSize, roi, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F, -1.0F}, 1.0F);
 }
 
 void Camera::init(const glm::vec2& frameSize,

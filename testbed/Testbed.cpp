@@ -250,7 +250,7 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
 
 void Testbed::createDrawable() {
   if (_textureFile.empty()) {
-    Checkerboard checkerboard{{8, 8}, {128, 128}, {60, 60, 60, 255}};
+    Checkerboard checkerboard{{4, 4}, {128, 128}, {60, 60, 60, 255}};
     _texture = Vulk::Toolbox(_context).createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
                                                        checkerboard.data(),
                                                        checkerboard.extent.x,

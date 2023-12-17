@@ -2,9 +2,16 @@
 
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 #include <utility>
+#include <vector>
+#include <set>
+#include <string>
 
 #include <Vulk/Surface.h>
+#include <Vulk/helpers_debug.h>
+
+#include <vulkan/vulkan_core.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -35,7 +42,8 @@ void Instance::create(
   MI_VERIFY(!isCreated());
 
   if (debugUtilsMessengerCreateInfoOverride) {
-    MI_VERIFY(checkLayerSupport(_layers = {"VK_LAYER_KHRONOS_validation"}));
+    _layers = {"VK_LAYER_KHRONOS_validation"};
+    MI_VERIFY(checkLayerSupport(_layers));
   }
 
   initDefaultValidationCallback();
@@ -67,7 +75,7 @@ void Instance::create(
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
   if (debugUtilsMessengerCreateInfoOverride) {
     debugUtilsMessengerCreateInfoOverride(&debugCreateInfo);
-    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+    createInfo.pNext = &debugCreateInfo;
   }
 
   MI_VERIFY_VKCMD(vkCreateInstance(&createInfo, nullptr, &_instance));
@@ -154,18 +162,16 @@ bool Instance::checkLayerSupport(const std::vector<const char*>& layers) {
   uint32_t layerCount = 0;
   vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-  std::vector<VkLayerProperties> availableLayers(layerCount);
+  std::vector<VkLayerProperties> availableLayers{layerCount};
   vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
+  std::set<std::string> availableLayerNames;
+  for (const auto& layer : availableLayers) {
+    availableLayerNames.insert(layer.layerName);
+  }
+
   for (const auto* layer : layers) {
-    bool layerFound = false;
-    for (const auto& layerProperties : availableLayers) {
-      if (strcmp(layer, static_cast<const char*>(layerProperties.layerName)) == 0) {
-        layerFound = true;
-        break;
-      }
-    }
-    if (!layerFound) {
+    if (availableLayerNames.find(layer) == availableLayerNames.end()) {
       return false;
     }
   }
