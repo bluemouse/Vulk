@@ -18,10 +18,12 @@ class Image2D : public Image {
   Image2D(const Device& device,
           VkFormat format,
           VkExtent2D extent,
+          VkImageUsageFlags usage,
           const ImageCreateInfoOverride& override = {});
   Image2D(const Device& device,
           VkFormat format,
           VkExtent2D extent,
+          VkImageUsageFlags usage,
           VkMemoryPropertyFlags properties,
           const ImageCreateInfoOverride& override = {});
 
@@ -34,6 +36,7 @@ class Image2D : public Image {
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
+              VkImageUsageFlags usage,
               const ImageCreateInfoOverride& override = {});
   void destroy() override;
 

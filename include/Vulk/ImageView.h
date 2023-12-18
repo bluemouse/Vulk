@@ -20,10 +20,10 @@ class ImageView {
  public:
   ImageView() = default;
   ImageView(const Device& device,
-            const Image2D& image,
+            Image2D& image,
             ImageViewCreateInfoOverride createInfoOverride = {});
   ImageView(const Device& device,
-            const DepthImage& image,
+            DepthImage& image,
             ImageViewCreateInfoOverride createInfoOverride = {});
   ~ImageView();
 
@@ -32,22 +32,23 @@ class ImageView {
   ImageView& operator=(ImageView&& rhs) noexcept(false);
 
   void create(const Device& device,
-              const Image2D& image,
+              Image2D& image,
               ImageViewCreateInfoOverride createInfoOverride = {});
   void create(const Device& device,
-              const DepthImage& image,
+              DepthImage& image,
               ImageViewCreateInfoOverride createInfoOverride = {});
   void destroy();
 
   operator VkImageView() const { return _view; }
 
+  [[nodiscard]] Image& image() { return *_image; }
   [[nodiscard]] const Image& image() const { return *_image; }
 
   [[nodiscard]] bool isCreated() const { return _view != VK_NULL_HANDLE; }
 
  private:
   void create(const Device& device,
-              const Image& image,
+              Image& image,
               VkImageAspectFlags aspectMask,
               ImageViewCreateInfoOverride createInfoOverride);
 
@@ -57,7 +58,7 @@ class ImageView {
   VkImageView _view = VK_NULL_HANDLE;
 
   const Device* _device = nullptr;
-  const Image* _image   = nullptr;
+  Image* _image   = nullptr;
 };
 
 NAMESPACE_END(Vulk)

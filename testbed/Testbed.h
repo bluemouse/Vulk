@@ -6,6 +6,7 @@
 #include <Vulk/Context.h>
 #include <Vulk/Drawable.h>
 #include <Vulk/Texture2D.h>
+#include <Vulk/Framebuffer.h>
 #include <Vulk/TypeTraits.h>
 
 class Testbed : public MainWindow {
@@ -120,14 +121,20 @@ class Testbed : public MainWindow {
   struct Frame {
     Vulk::CommandBuffer commandBuffer;
 
-    Vulk::Semaphore imageAvailableSemaphore;
-    Vulk::Semaphore renderFinishedSemaphore;
-    Vulk::Fence fence;
+    Vulk::Image2D colorBuffer;
+    Vulk::ImageView colorAttachment;
+    Vulk::DepthImage depthBuffer;
+    Vulk::ImageView depthAttachment;
+    Vulk::Framebuffer framebuffer;
 
     Vulk::UniformBuffer uniformBuffer;
     void* uniformBufferMapped;
 
     Vulk::DescriptorSet descriptorSet;
+
+    Vulk::Semaphore imageAvailableSemaphore;
+    Vulk::Semaphore renderFinishedSemaphore;
+    Vulk::Fence fence;
   };
 
   std::vector<Frame> _frames;

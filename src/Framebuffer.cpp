@@ -9,14 +9,14 @@ NAMESPACE_BEGIN(Vulk)
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& colorAttachment) {
+                         ImageView& colorAttachment) {
   create(device, renderPass, colorAttachment);
 }
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& colorAttachment,
-                         const ImageView& depthStencilAttachment) {
+                         ImageView& colorAttachment,
+                         ImageView& depthStencilAttachment) {
   create(device, renderPass, colorAttachment, depthStencilAttachment);
 }
 
@@ -32,7 +32,7 @@ Framebuffer::Framebuffer(Framebuffer&& rhs) noexcept {
 
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& colorAttachment) {
+                         ImageView& colorAttachment) {
   _device                 = &device;
   _renderPass             = &renderPass;
   _colorAttachment        = &colorAttachment;
@@ -43,8 +43,8 @@ void Framebuffer::create(const Device& device,
 
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
-                         const ImageView& colorAttachment,
-                         const ImageView& depthStencilAttachment) {
+                         ImageView& colorAttachment,
+                         ImageView& depthStencilAttachment) {
   _device                 = &device;
   _renderPass             = &renderPass;
   _colorAttachment        = &colorAttachment;
@@ -92,7 +92,7 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& rhs) noexcept(false) {
 }
 
 VkExtent2D Framebuffer::extent() const {
-  auto imageExtent = _colorAttachment->image().extent();
+  auto imageExtent = image().extent();
   return {imageExtent.width, imageExtent.height};
 }
 
@@ -109,6 +109,14 @@ void Framebuffer::moveFrom(Framebuffer& rhs) {
   rhs._renderPass             = nullptr;
   rhs._colorAttachment        = nullptr;
   rhs._depthStencilAttachment = nullptr;
+}
+
+Image& Framebuffer::image() {
+  return _colorAttachment->image();
+}
+
+const Image& Framebuffer::image() const {
+  return _colorAttachment->image();
 }
 
 NAMESPACE_END(Vulk)

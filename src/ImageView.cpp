@@ -8,12 +8,12 @@
 NAMESPACE_BEGIN(Vulk)
 
 ImageView::ImageView(const Device& device,
-                     const Image2D& image,
+                     Image2D& image,
                      ImageViewCreateInfoOverride createInfoOverride) {
   create(device, image, createInfoOverride);
 }
 ImageView::ImageView(const Device& device,
-                     const DepthImage& image,
+                     DepthImage& image,
                      ImageViewCreateInfoOverride createInfoOverride) {
   create(device, image, createInfoOverride);
 }
@@ -47,21 +47,21 @@ void ImageView::moveFrom(ImageView& rhs) {
 }
 
 void ImageView::create(const Device& device,
-                       const Image2D& image,
+                       Image2D& image,
                        ImageViewCreateInfoOverride createInfoOverride) {
   auto aspect = VK_IMAGE_ASPECT_COLOR_BIT;
   create(device, image, aspect, createInfoOverride);
 }
 
 void ImageView::create(const Device& device,
-                       const DepthImage& image,
+                       DepthImage& image,
                        ImageViewCreateInfoOverride createInfoOverride) {
   auto aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   create(device, image, aspect, createInfoOverride);
 }
 
 void ImageView::create(const Device& device,
-                       const Image& image,
+                       Image& image,
                        VkImageAspectFlags aspectMask,
                        ImageViewCreateInfoOverride createInfoOverride) {
   MI_VERIFY(!isCreated());

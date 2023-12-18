@@ -54,7 +54,7 @@ void Swapchain::create(const Device& device,
   createInfo.imageFormat      = surfaceFormat.format;
   createInfo.imageColorSpace  = surfaceFormat.colorSpace;
   createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
   uint32_t queueFamilyIndices[] = {physicalDevice.queueFamilies().graphicsIndex(),
                                    physicalDevice.queueFamilies().presentIndex()};
@@ -151,7 +151,7 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   }
   const RenderPass* renderPass = nullptr;
   if (!_framebuffers.empty()) {
-    renderPass = _framebuffers[0].renderPass();
+    renderPass = &_framebuffers[0].renderPass();
 
     // Be careful about changing the destroying order.
     _framebuffers.clear();

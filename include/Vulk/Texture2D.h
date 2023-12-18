@@ -21,6 +21,7 @@ class Texture2D {
   Texture2D(const Device& device,
             VkFormat format,
             VkExtent2D extent,
+            VkImageUsageFlags usage,
             Filter filter           = {VK_FILTER_LINEAR},
             AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   ~Texture2D() = default;
@@ -32,6 +33,7 @@ class Texture2D {
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
+              VkImageUsageFlags usage,
               Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();

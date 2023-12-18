@@ -55,12 +55,12 @@ class Image {
 
   [[nodiscard]] VkImageViewType imageViewType() const;
 
- protected:
-  void create(const Device& device, const VkImageCreateInfo& imageInfo);
-
   void transitToNewLayout(const CommandBuffer& commandBuffer,
                           VkImageLayout newLayout,
                           bool waitForFinish = true) const;
+
+ protected:
+  void create(const Device& device, const VkImageCreateInfo& imageInfo);
 
  private:
   void moveFrom(Image& rhs);

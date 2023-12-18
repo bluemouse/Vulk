@@ -82,6 +82,10 @@ void selectStageAccess(VkImageLayout layout, VkPipelineStageFlags& stage, VkAcce
       stage  = VK_PIPELINE_STAGE_TRANSFER_BIT;
       access = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
+    case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+      stage  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+      access = VK_ACCESS_MEMORY_READ_BIT;
+      break;
     default: throw std::invalid_argument("Unsupported image layout!");
   }
 }

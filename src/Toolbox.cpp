@@ -17,7 +17,8 @@ Toolbox::Toolbox(const Context& context) : _context(context) {
 Image2D Toolbox::createImage2D(const char* imageFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(imageFile);
 
-  Image2D image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  Image2D image{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}, usage};
   image.allocate();
   CommandBuffer cmdBuffer{_context.commandPool()};
   image.copyFrom(cmdBuffer, stagingBuffer);
@@ -29,7 +30,8 @@ Image2D Toolbox::createImage2D(const char* imageFile) const {
 Texture2D Toolbox::createTexture2D(const char* textureFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
 
-  Texture2D texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}};
+  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  Texture2D texture{_context.device(), VK_FORMAT_R8G8B8A8_SRGB, {width, height}, usage};
   texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
 
   return texture;
@@ -39,12 +41,13 @@ Texture2D Toolbox::createTexture2D(TextureFormat format,
                                    const uint8_t* data,
                                    uint32_t width,
                                    uint32_t height) const {
-  uint32_t size = width * height * (format == TextureFormat::RGBA ? 4 : 3);
+  uint32_t size      = width * height * (format == TextureFormat::RGBA ? 4 : 3);
   auto stagingBuffer = createStagingBuffer(data, size);
 
-  VkFormat vkFormat =
+  const auto vkFormat =
       format == TextureFormat::RGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8_SRGB;
-  Texture2D texture{_context.device(), vkFormat, {width, height}};
+  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  Texture2D texture{_context.device(), vkFormat, {width, height}, usage};
   texture.copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
 
   return texture;

@@ -7,17 +7,19 @@ NAMESPACE_BEGIN(Vulk)
 Texture2D::Texture2D(const Device& device,
                      VkFormat format,
                      VkExtent2D extent,
+                     VkImageUsageFlags usage,
                      Filter filter,
                      AddressMode addressMode) {
-  create(device, format, extent, filter, addressMode);
+  create(device, format, extent, usage, filter, addressMode);
 }
 
 void Texture2D::create(const Device& device,
                        VkFormat format,
                        VkExtent2D extent,
+                       VkImageUsageFlags usage,
                        Filter filter,
                        AddressMode addressMode) {
-  _image.create(device, format, extent);
+  _image.create(device, format, extent, usage);
   _image.allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   _view.create(device, _image);
   _sampler.create(device, filter, addressMode);

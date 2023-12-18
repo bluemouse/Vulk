@@ -62,6 +62,13 @@ class Swapchain {
   [[nodiscard]] VkFormat surfaceFormat() const { return _surfaceFormat.format; }
   [[nodiscard]] VkExtent2D surfaceExtent() const { return _surfaceExtent; }
 
+  [[nodiscard]] std::vector<Image2D>& images() { return _images; }
+  [[nodiscard]] Image2D& image(size_t i) { return _images[i]; }
+  [[nodiscard]] std::vector<ImageView>& imageViews() { return _imageViews; }
+  [[nodiscard]] ImageView& imageView(size_t i) { return _imageViews[i]; }
+  [[nodiscard]] std::vector<Framebuffer>& framebuffers() { return _framebuffers; }
+  [[nodiscard]] Framebuffer& framebuffer(size_t i) { return _framebuffers[i]; }
+
   [[nodiscard]] const std::vector<Image2D>& images() const { return _images; }
   [[nodiscard]] const Image2D& image(size_t i) const { return _images[i]; }
   [[nodiscard]] const std::vector<ImageView>& imageViews() const { return _imageViews; }
@@ -80,6 +87,10 @@ class Swapchain {
   VkResult present(const Vulk::Semaphore& renderFinished) const;
 
   [[nodiscard]] uint32_t activeImageIndex() const { return _activeImageIndex; }
+
+  [[nodiscard]] Image& activeImage() { return image(activeImageIndex()); }
+  [[nodiscard]] ImageView& activeImageView() { return imageView(activeImageIndex()); }
+  [[nodiscard]] Framebuffer& activeFramebuffer() { return framebuffer(activeImageIndex()); }
 
   [[nodiscard]] const Image& activeImage() const { return image(activeImageIndex()); }
   [[nodiscard]] const ImageView& activeImageView() const { return imageView(activeImageIndex()); }

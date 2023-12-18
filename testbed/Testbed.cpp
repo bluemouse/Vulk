@@ -103,6 +103,13 @@ void Testbed::init(int width, int height) {
 }
 
 void Testbed::cleanup() {
+  for (auto& frame : _frames) {
+    frame.colorBuffer.destroy();
+    frame.colorAttachment.destroy();
+    frame.depthBuffer.destroy();
+    frame.depthAttachment.destroy();
+    frame.framebuffer.destroy();
+  }
   _frames.clear();
 
   _texture.destroy();
@@ -141,7 +148,7 @@ void Testbed::drawFrame() {
   _currentFrame->commandBuffer.reset();
   _currentFrame->commandBuffer.executeCommands(
       [this](const Vulk::CommandBuffer& commandBuffer) {
-        const auto& framebuffer = _context.swapchain().activeFramebuffer();
+        const auto& framebuffer = _currentFrame->framebuffer;
 
         commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
 
@@ -161,6 +168,14 @@ void Testbed::drawFrame() {
       {&_currentFrame->imageAvailableSemaphore},
       {&_currentFrame->renderFinishedSemaphore},
       _currentFrame->fence);
+
+  _currentFrame->commandBuffer.waitIdle();
+
+  auto& swapchainFramebuffer = _context.swapchain().activeFramebuffer();
+  swapchainFramebuffer.image().blitFrom(_currentFrame->commandBuffer,
+                                        _currentFrame->framebuffer.image());
+  swapchainFramebuffer.image().transitToNewLayout(_currentFrame->commandBuffer,
+                                                  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
   auto result = _context.swapchain().present(_currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
@@ -309,13 +324,27 @@ void Testbed::createFrames() {
   transformationBufferInfo.offset = 0;
   transformationBufferInfo.range  = VK_WHOLE_SIZE;
 
+  const auto& device = _context.device();
+  const auto& extent = _context.swapchain().surfaceExtent();
   for (auto& frame : _frames) {
     frame.commandBuffer.allocate(_context.commandPool());
-    frame.imageAvailableSemaphore.create(_context.device());
-    frame.renderFinishedSemaphore.create(_context.device());
-    frame.fence.create(_context.device(), true);
 
-    frame.uniformBuffer.create(_context.device(), sizeof(Transformation));
+    const auto usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+                       VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    frame.colorBuffer.create(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
+    frame.colorBuffer.allocate();
+    frame.colorAttachment.create(device, frame.colorBuffer);
+    frame.depthBuffer.create(device, extent, chooseDepthFormat());
+    frame.depthBuffer.allocate();
+    frame.depthAttachment.create(device, frame.depthBuffer);
+    frame.framebuffer.create(
+        device, _context.renderPass(), frame.colorAttachment, frame.depthAttachment);
+
+    frame.imageAvailableSemaphore.create(device);
+    frame.renderFinishedSemaphore.create(device);
+    frame.fence.create(device, true);
+
+    frame.uniformBuffer.create(device, sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
 
     transformationBufferInfo.buffer = frame.uniformBuffer;
@@ -327,6 +356,8 @@ void Testbed::createFrames() {
         {"texSampler", "sampler2D", &textureImageInfo}};
     frame.descriptorSet.allocate(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
+
+    frame.colorBuffer.transitToNewLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();

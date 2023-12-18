@@ -7,7 +7,6 @@
 #include <Vulk/Device.h>
 #include <Vulk/Pipeline.h>
 #include <Vulk/RenderPass.h>
-#include <Vulk/Framebuffer.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/CommandPool.h>
 #include <Vulk/VertexShader.h>
