@@ -1,10 +1,12 @@
 #include <Vulk/DescriptorPool.h>
 
-#include <utility>
+#include <Vulk/internal/base.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/Device.h>
 #include <Vulk/DescriptorSetLayout.h>
-#include <Vulk/helpers_vulkan.h>
+
+#include <utility>
 
 NAMESPACE_BEGIN(Vulk)
 

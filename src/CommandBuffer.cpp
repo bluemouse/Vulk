@@ -8,7 +8,7 @@
 #include <Vulk/VertexBuffer.h>
 #include <Vulk/IndexBuffer.h>
 #include <Vulk/DescriptorSet.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

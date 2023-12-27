@@ -4,7 +4,8 @@
 
 #include <functional>
 
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/base.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

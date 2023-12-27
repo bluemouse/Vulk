@@ -1,4 +1,4 @@
-#include <Vulk/helpers_debug.h>
+#include <Vulk/internal/debug.h>
 
 #include <execinfo.h>
 #include <unistd.h>

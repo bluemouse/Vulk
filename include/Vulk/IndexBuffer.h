@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Vulk/Buffer.h>
-#include <Vulk/TypeTraits.h>
+#include <Vulk/engine/TypeTraits.h>
 
 NAMESPACE_BEGIN(Vulk)
 

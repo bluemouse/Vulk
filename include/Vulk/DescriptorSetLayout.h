@@ -2,10 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
-#include <vector>
+#include <Vulk/internal/base.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/ShaderModule.h>
-#include <Vulk/helpers_vulkan.h>
+
+#include <vector>
 
 NAMESPACE_BEGIN(Vulk)
 

@@ -5,7 +5,7 @@
 #include <Vulk/Image2D.h>
 #include <Vulk/ImageView.h>
 #include <Vulk/Sampler.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/base.h>
 
 NAMESPACE_BEGIN(Vulk)
 

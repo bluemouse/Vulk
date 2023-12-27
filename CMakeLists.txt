@@ -22,8 +22,8 @@ add_library(spirv-reflect::spirv-reflect ALIAS spirv-reflect-static)
 
 
 set(SRC_FILES
-    # Helpers
-    src/helpers_debug.cpp
+    # Internal helpers
+    src/internal/debug.cpp
     # Vulkan core classes
     src/Instance.cpp
     src/PhysicalDevice.cpp
@@ -55,16 +55,18 @@ set(SRC_FILES
     src/Semaphore.cpp
     src/Fence.cpp
     # Engine classes
-    src/Context.cpp
-    src/Toolbox.cpp
-    src/Texture2D.cpp
-    src/TypeTraits.cpp
+    src/engine/Context.cpp
+    src/engine/Toolbox.cpp
+    src/engine/Texture2D.cpp
+    src/engine/TypeTraits.cpp
 )
 
 set(HEADER_FILES
-    # Helpers
-    include/Vulk/helpers_debug.h
-    include/Vulk/helpers_vulkan.h
+    # Internal helpers
+    include/Vulk/internal/base.h
+    include/Vulk/internal/debug.h
+    include/Vulk/internal/vulkan_debug.h
+    include/Vulk/internal/helpers.h
     # Vulkan core classes
     include/Vulk/Instance.h
     include/Vulk/PhysicalDevice.h
@@ -95,13 +97,12 @@ set(HEADER_FILES
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
-    include/Vulk/Utility.h
     # Engine classes
-    include/Vulk/Context.h
-    include/Vulk/Drawable.h
-    include/Vulk/Toolbox.h
-    include/Vulk/Texture2D.h
-    include/Vulk/TypeTraits.h
+    include/Vulk/engine/Context.h
+    include/Vulk/engine/Drawable.h
+    include/Vulk/engine/Toolbox.h
+    include/Vulk/engine/Texture2D.h
+    include/Vulk/engine/TypeTraits.h
 )
 
 add_library(${PROJECT_NAME} SHARED

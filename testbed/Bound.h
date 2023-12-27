@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Vulk/helpers_debug.h>
+#include <Vulk/internal/debug.h>
 
 #include <glm/glm.hpp>
 

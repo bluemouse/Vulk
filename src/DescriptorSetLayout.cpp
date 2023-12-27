@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/ShaderModule.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <map>
 #include <vector>

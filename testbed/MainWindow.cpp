@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 #include <Vulk/Instance.h>
-#include <Vulk/helpers_debug.h>
+#include <Vulk/internal/debug.h>
 
 bool MainWindow::_continuousUpdate = false;
 void MainWindow::setContinuousUpdate(bool continous) {

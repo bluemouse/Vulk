@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Vulk/Image2D.h>
-#include <Vulk/Texture2D.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/engine/Texture2D.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <tuple>
 

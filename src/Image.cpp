@@ -5,7 +5,7 @@
 #include <Vulk/StagingBuffer.h>
 #include <Vulk/Utility.h>
 
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <set>
 

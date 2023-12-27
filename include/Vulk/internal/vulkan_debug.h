@@ -2,10 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/helpers_debug.h>
-
-#define NAMESPACE_BEGIN(name) namespace name {
-#define NAMESPACE_END(name) }
+#include <Vulk/internal/debug.h>
 
 #define MI_VERIFY_VKCMD(cmd)                                             \
   if (cmd != VK_SUCCESS) {                                               \
@@ -24,7 +21,3 @@
   if (handle == VK_NULL_HANDLE) {                   \
     throw std::runtime_error(msg _MI_AT_THIS_LINE); \
   }
-
-#define MI_INIT_VKPROC(cmd)                                                       \
-  auto cmd = reinterpret_cast<PFN_##cmd>(vkGetInstanceProcAddr(_instance, #cmd)); \
-  MI_VERIFY(cmd != nullptr);

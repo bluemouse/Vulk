@@ -4,7 +4,7 @@
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <cstring>
 

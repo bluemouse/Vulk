@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <Vulk/DescriptorSetLayout.h>
-#include <Vulk/helpers_vulkan.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <limits>
 

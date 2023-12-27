@@ -3,11 +3,11 @@
 #include "MainWindow.h"
 #include "Camera.h"
 
-#include <Vulk/Context.h>
-#include <Vulk/Drawable.h>
-#include <Vulk/Texture2D.h>
+#include <Vulk/engine/Context.h>
+#include <Vulk/engine/Drawable.h>
+#include <Vulk/engine/Texture2D.h>
 #include <Vulk/Framebuffer.h>
-#include <Vulk/TypeTraits.h>
+#include <Vulk/engine/TypeTraits.h>
 
 class Testbed : public MainWindow {
  public:

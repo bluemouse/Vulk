@@ -1,8 +1,8 @@
-#include <Vulk/Toolbox.h>
+#include <Vulk/engine/Toolbox.h>
 
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/CommandPool.h>
-#include <Vulk/Context.h>
+#include <Vulk/engine/Context.h>
 #include <Vulk/Device.h>
 #include <Vulk/StagingBuffer.h>
 

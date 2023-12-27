@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/internal/base.h>
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <functional>
 #include <memory>
-
-#include <Vulk/helpers_vulkan.h>
 
 NAMESPACE_BEGIN(Vulk)
 
