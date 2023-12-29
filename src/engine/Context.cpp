@@ -63,25 +63,25 @@ void Context::destroy() {
   _swapchain.destroy();
   _renderPass.destroy();
 
-  _device.destroy();
+  _device->destroy();
   _surface.destroy();
-  _instance.destroy();
+  _instance->destroy();
 }
 
 void Context::createInstance(int versionMajor,
                              int versionMinor,
                              const std::vector<const char*>& extensions,
                              ValidationLevel validation) {
-  _instance.create(versionMajor, versionMinor, extensions, validation);
+  _instance = Vulk::Instance::make_shared(versionMajor, versionMinor, extensions, validation);
 }
 
 void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {
-  _surface.create(_instance, createWindowSurface(_instance));
+  _surface.create(instance(), createWindowSurface(instance()));
 }
 
 void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
   if (isDeviceSuitable) {
-    _instance.pickPhysicalDevice(_surface, [this, &isDeviceSuitable](VkPhysicalDevice device) {
+    _instance->pickPhysicalDevice(_surface, [this, &isDeviceSuitable](VkPhysicalDevice device) {
       if (!isDeviceSuitable(device)) {
         return false;
       }
@@ -91,7 +91,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
       return isQueueFamiliesComplete && _surface.isAdequate(device);
     });
   } else {
-    _instance.pickPhysicalDevice(_surface, [this](VkPhysicalDevice device) {
+    _instance->pickPhysicalDevice(_surface, [this](VkPhysicalDevice device) {
       uint32_t extensionCount = 0;
       vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
       std::vector<VkExtensionProperties> availableExtensions{extensionCount};
@@ -118,14 +118,15 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
 }
 
 void Context::createLogicalDevice() {
-  const auto& queueFamilies = _instance.physicalDevice().queueFamilies();
+  const auto& queueFamilies = _instance->physicalDevice().queueFamilies();
 
-  _device.create(_instance.physicalDevice(),
-                 {queueFamilies.graphicsIndex(), queueFamilies.presentIndex()},
-                 {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
+  _device = Vulk::Device::make_shared(
+      _instance->physicalDevice(),
+      std::vector<uint32_t>{queueFamilies.graphicsIndex(), queueFamilies.presentIndex()},
+      std::vector<const char*>{VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 
-  _device.initQueue("graphics", queueFamilies.graphicsIndex());
-  _device.initQueue("present", queueFamilies.presentIndex());
+  _device->initQueue("graphics", queueFamilies.graphicsIndex());
+  _device->initQueue("present", queueFamilies.presentIndex());
 }
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
@@ -145,7 +146,7 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
     MI_VERIFY(depthStencilFormat != VK_FORMAT_UNDEFINED);
   }
 
-  _renderPass.create(_device, colorFormat, depthStencilFormat);
+  _renderPass.create(device(), colorFormat, depthStencilFormat);
 }
 
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
@@ -176,19 +177,19 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
     presentMode = chooseDefaultPresentMode(presentModes);
   }
 
-  _swapchain.create(_device, _surface, extent, format, presentMode);
+  _swapchain.create(device(), _surface, extent, format, presentMode);
   _swapchain.createFramebuffers(_renderPass);
 }
 
 void Context::createPipeline(const CreateVertShaderFunc& createVertShader,
                              const CreateFragShaderFunc& createFragShader) {
-  auto vertShader = createVertShader(_device);
-  auto fragShader = createFragShader(_device);
-  _pipeline.create(_device, _renderPass, vertShader, fragShader);
+  auto vertShader = createVertShader(device());
+  auto fragShader = createFragShader(device());
+  _pipeline.create(device(), _renderPass, vertShader, fragShader);
 }
 
 void Context::createCommandPool() {
-  _commandPool.create(_device, _instance.physicalDevice().queueFamilies().graphicsIndex());
+  _commandPool.create(device(), _instance->physicalDevice().queueFamilies().graphicsIndex());
 }
 
 void Context::createDescriptorPool(uint32_t maxSets) {
@@ -196,7 +197,7 @@ void Context::createDescriptorPool(uint32_t maxSets) {
 }
 
 void Context::waitIdle() const {
-  _device.waitIdle();
+  _device->waitIdle();
 }
 
 bool Context::isComplete() const {

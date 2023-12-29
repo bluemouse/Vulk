@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <vector>
+#include <memory>
 
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
@@ -14,7 +15,8 @@ NAMESPACE_BEGIN(Vulk)
 class Instance;
 class Surface;
 
-class PhysicalDevice {
+
+class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
  public:
   struct QueueFamilies {
     std::optional<uint32_t> graphics;
@@ -31,9 +33,8 @@ class PhysicalDevice {
   using IsDeviceSuitableFunc = std::function<bool(VkPhysicalDevice)>;
 
  public:
-  PhysicalDevice() = default;
   PhysicalDevice(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
-  ~PhysicalDevice();
+  virtual ~PhysicalDevice();
 
   void instantiate(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
   void reset();
@@ -44,14 +45,10 @@ class PhysicalDevice {
 
   [[nodiscard]] const QueueFamilies& queueFamilies() const { return _queueFamilies; }
 
-  [[nodiscard]] const Instance& instance() const { return *_instance; }
+  [[nodiscard]] const Instance& instance() const {return *_instance.lock(); }
 
   [[nodiscard]] static QueueFamilies findQueueFamilies(VkPhysicalDevice device,
                                                        VkSurfaceKHR surface);
-
-  // Disable copy and assignment operators
-  PhysicalDevice(const PhysicalDevice&)            = delete;
-  PhysicalDevice& operator=(const PhysicalDevice&) = delete;
 
   [[nodiscard]] bool isInstantiated() const { return _device != VK_NULL_HANDLE; }
 
@@ -70,7 +67,7 @@ class PhysicalDevice {
   VkPhysicalDevice _device = VK_NULL_HANDLE;
   QueueFamilies _queueFamilies;
 
-  const Instance* _instance = nullptr;
+  std::weak_ptr<const Instance> _instance;
 };
 
 NAMESPACE_END(Vulk)

@@ -1,6 +1,7 @@
 #include <Vulk/Sampler.h>
 
 #include <Vulk/Device.h>
+#include <Vulk/PhysicalDevice.h>
 
 NAMESPACE_BEGIN(Vulk)
 

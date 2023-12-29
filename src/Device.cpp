@@ -4,6 +4,7 @@
 #include <utility>
 
 #include <Vulk/Instance.h>
+#include <Vulk/PhysicalDevice.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -20,33 +21,12 @@ Device::~Device() {
   }
 }
 
-Device::Device(Device&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Device& Device::operator=(Device&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Device::moveFrom(Device& rhs) {
-  MI_VERIFY(!isCreated());
-  _device         = rhs._device;
-  _queues         = std::move(rhs._queues);
-  _physicalDevice = rhs._physicalDevice;
-
-  rhs._device         = VK_NULL_HANDLE;
-  rhs._physicalDevice = nullptr;
-}
-
 void Device::create(const PhysicalDevice& physicalDevice,
                     const std::vector<uint32_t>& queueFamilies,
                     const std::vector<const char*>& extensions,
                     const DeviceCreateInfoOverride& override) {
   MI_VERIFY(!isCreated());
-  _physicalDevice = &physicalDevice;
+  _physicalDevice = physicalDevice.get_weak();
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   float queuePriority = 1.0F;
@@ -107,11 +87,16 @@ void Device::destroy() {
 
   _device = VK_NULL_HANDLE;
   _queues.clear();
-  _physicalDevice = nullptr;
+  _physicalDevice.reset();
 }
 
 void Device::waitIdle() const {
   MI_VERIFY(isCreated());
   vkDeviceWaitIdle(_device);
 }
+
+const Instance& Device::instance() const {
+  return physicalDevice().instance();
+}
+
 NAMESPACE_END(Vulk)

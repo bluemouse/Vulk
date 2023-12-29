@@ -75,18 +75,18 @@ class Context {
 
   [[nodiscard]] bool isComplete() const;
 
-  [[nodiscard]] Instance& instance() { return _instance; }
+  [[nodiscard]] Instance& instance() { return *_instance; }
   [[nodiscard]] Surface& surface() { return _surface; }
-  [[nodiscard]] Device& device() { return _device; }
+  [[nodiscard]] Device& device() { return *_device; }
   [[nodiscard]] Swapchain& swapchain() { return _swapchain; }
   [[nodiscard]] RenderPass& renderPass() { return _renderPass; }
   [[nodiscard]] Pipeline& pipeline() { return _pipeline; }
   [[nodiscard]] DescriptorPool& descriptorPool() { return _descriptorPool; }
   [[nodiscard]] CommandPool& commandPool() { return _commandPool; }
 
-  [[nodiscard]] const Instance& instance() const { return _instance; }
+  [[nodiscard]] const Instance& instance() const { return *_instance; }
   [[nodiscard]] const Surface& surface() const { return _surface; }
-  [[nodiscard]] const Device& device() const { return _device; }
+  [[nodiscard]] const Device& device() const { return *_device; }
   [[nodiscard]] const Swapchain& swapchain() const { return _swapchain; }
   [[nodiscard]] const RenderPass& renderPass() const { return _renderPass; }
   [[nodiscard]] const Pipeline& pipeline() const { return _pipeline; }
@@ -114,10 +114,10 @@ class Context {
   virtual void createDescriptorPool(uint32_t maxSets);
 
  protected:
-  Vulk::Instance _instance;
+  Vulk::Instance::shared_ptr _instance;
 
   Vulk::Surface _surface;
-  Vulk::Device _device;
+  Vulk::Device::shared_ptr _device;
   Vulk::Swapchain _swapchain;
 
   Vulk::RenderPass _renderPass;

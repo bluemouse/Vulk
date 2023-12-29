@@ -20,7 +20,7 @@ void PhysicalDevice::instantiate(const Instance& instance,
                                  const IsDeviceSuitableFunc& isDeviceSuitable) {
   MI_VERIFY(!isInstantiated());
 
-  _instance = &instance;
+  _instance = instance.get_weak();
 
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -43,7 +43,7 @@ void PhysicalDevice::instantiate(const Instance& instance,
 void PhysicalDevice::reset() {
   _device        = VK_NULL_HANDLE;
   _queueFamilies = {};
-  _instance      = nullptr;
+  _instance.reset();
 }
 
 void PhysicalDevice::initQueueFamilies(const Surface& surface) {

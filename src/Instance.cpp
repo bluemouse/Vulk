@@ -8,8 +8,10 @@
 #include <set>
 #include <string>
 
-#include <Vulk/Surface.h>
+#include <Vulk/internal/base.h>
 #include <Vulk/internal/debug.h>
+
+#include <Vulk/Surface.h>
 
 #include <vulkan/vulkan_core.h>
 
@@ -139,7 +141,7 @@ void Instance::create(int versionMajor,
 void Instance::destroy() {
   MI_VERIFY(isCreated());
 
-  _physicalDevice.reset();
+  _physicalDevice = nullptr;
 
   if (_debugMessenger != VK_NULL_HANDLE) {
     MI_INIT_VKPROC(vkDestroyDebugUtilsMessengerEXT);
@@ -154,8 +156,8 @@ void Instance::destroy() {
 
 void Instance::pickPhysicalDevice(const Surface& surface,
                                   const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
-  _physicalDevice.instantiate(*this, isDeviceSuitable);
-  _physicalDevice.initQueueFamilies(surface);
+  _physicalDevice = PhysicalDevice::make_shared(*this, isDeviceSuitable);
+  _physicalDevice->initQueueFamilies(surface);
 }
 
 bool Instance::checkLayerSupport(const std::vector<const char*>& layers) {
@@ -233,5 +235,6 @@ Instance::VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
   auto* instance = static_cast<Instance*>(pUserData);
   return instance->_validationCallback(messageSeverity, messageType, pCallbackData);
 }
+
 
 NAMESPACE_END(Vulk)

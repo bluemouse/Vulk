@@ -1,6 +1,7 @@
 #include <Vulk/DepthImage.h>
 
 #include <Vulk/Device.h>
+#include <Vulk/PhysicalDevice.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 

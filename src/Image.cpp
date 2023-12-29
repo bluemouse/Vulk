@@ -3,9 +3,9 @@
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
-#include <Vulk/Utility.h>
 
 #include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/helpers.h>
 
 #include <set>
 
