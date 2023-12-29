@@ -16,7 +16,7 @@ Surface::~Surface() {
 
 void Surface::create(const Instance& instance, VkSurfaceKHR surface) {
   MI_VERIFY(!isCreated());
-  _instance = &instance;
+  _instance = instance.get_weak();
 
   _surface = surface;
 }
@@ -24,10 +24,10 @@ void Surface::create(const Instance& instance, VkSurfaceKHR surface) {
 void Surface::destroy() {
   MI_VERIFY(isCreated());
 
-  vkDestroySurfaceKHR(*_instance, _surface, nullptr);
+  vkDestroySurfaceKHR(instance(), _surface, nullptr);
 
   _surface  = VK_NULL_HANDLE;
-  _instance = nullptr;
+  _instance.reset();
 }
 
 Surface::Supports Surface::querySupports(VkPhysicalDevice physicalDevice) const {
@@ -54,7 +54,7 @@ Surface::Supports Surface::querySupports(VkPhysicalDevice physicalDevice) const 
 }
 
 Surface::Supports Surface::querySupports() const {
-  return querySupports(_instance->physicalDevice());
+  return querySupports(instance().physicalDevice());
 }
 
 bool Surface::isAdequate(VkPhysicalDevice physicalDevice) const {

@@ -37,7 +37,7 @@ class Instance : public Sharable<Instance>, private NotCopyable {
            int versionMinor,
            std::vector<const char*> extensions,
            ValidationLevel validation = kNone);
-  virtual ~Instance();
+  ~Instance() override;
 
   void create(const ApplicationInfoOverride& appInfoOverride                           = {},
               const InstanceCreateInfoOverride& instanceCreateInfoOverride             = {},

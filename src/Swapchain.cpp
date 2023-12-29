@@ -19,7 +19,7 @@ Swapchain::Swapchain(const Device& device,
   create(device, surface, surfaceExtent, surfaceFormat, presentMode);
 }
 
-Swapchain::~Swapchain() {
+Swapchain::~Swapchain() noexcept {
   if (isCreated()) {
     destroy();
   }
@@ -31,8 +31,8 @@ void Swapchain::create(const Device& device,
                        const VkSurfaceFormatKHR& surfaceFormat,
                        VkPresentModeKHR presentMode) {
   MI_VERIFY(!isCreated());
-  _device  = &device;
-  _surface = &surface;
+  _device  = device.get_weak();
+  _surface = surface.get_weak();
 
   const auto& physicalDevice = device.physicalDevice();
   const auto capabilities    = surface.querySupports().capabilities;
@@ -98,14 +98,16 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   MI_VERIFY(isCreated());
   MI_VERIFY(renderPass.colorFormat() == _surfaceFormat.format);
 
-  uint32_t imageCount = 0;
-  vkGetSwapchainImagesKHR(*_device, _swapchain, &imageCount, nullptr);
-  std::vector<VkImage> imgs(imageCount);
-  vkGetSwapchainImagesKHR(*_device, _swapchain, &imageCount, imgs.data());
+  const auto& device = this->device();
 
-  _depthImage.create(*_device, _surfaceExtent, renderPass.depthStencilFormat());
+  uint32_t imageCount = 0;
+  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, nullptr);
+  std::vector<VkImage> imgs(imageCount);
+  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
+
+  _depthImage.create(device, _surfaceExtent, renderPass.depthStencilFormat());
   _depthImage.allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  _depthImageView.create(*_device, _depthImage);
+  _depthImageView.create(device, _depthImage);
 
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
   _images.reserve(imageCount);
@@ -113,8 +115,8 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   _framebuffers.reserve(_imageViews.size());
   for (auto& img : imgs) {
     _images.emplace_back(img, renderPass.colorFormat(), _surfaceExtent);
-    _imageViews.emplace_back(*_device, _images.back());
-    _framebuffers.emplace_back(*_device, renderPass, _imageViews.back(), _depthImageView);
+    _imageViews.emplace_back(device, _images.back());
+    _framebuffers.emplace_back(device, renderPass, _imageViews.back(), _depthImageView);
   }
 
   deactivateActiveImage();
@@ -139,8 +141,8 @@ void Swapchain::destroy() {
   _presentMode   = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
   _swapchain = VK_NULL_HANDLE;
-  _device    = nullptr;
-  _surface   = nullptr;
+  _device.reset();
+  _surface.reset();
 }
 
 void Swapchain::resize(uint32_t width, uint32_t height) {
@@ -167,7 +169,7 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
 
   const auto surfaceExtent = chooseSurfaceExtent(width, height);
 
-  create(*_device, *_surface, surfaceExtent, _surfaceFormat, _presentMode);
+  create(device(), surface(), surfaceExtent, _surfaceFormat, _presentMode);
 
   if (renderPass) {
     createFramebuffers(*renderPass);
@@ -207,11 +209,11 @@ VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
 
   presentInfo.pImageIndices = &_activeImageIndex;
 
-  return vkQueuePresentKHR(_device->queue("present"), &presentInfo);
+  return vkQueuePresentKHR(device().queue("present"), &presentInfo);
 }
 
 VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight) {
-  const auto caps = _surface->querySupports().capabilities;
+  const auto caps = surface().querySupports().capabilities;
 
   if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return caps.currentExtent;

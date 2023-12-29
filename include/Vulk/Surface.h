@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
+#include <memory>
 
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
@@ -11,7 +12,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 
-class Surface {
+class Surface : public Sharable<Surface>, private NotCopyable {
  public:
   struct Supports {
     VkSurfaceCapabilitiesKHR capabilities;
@@ -20,9 +21,8 @@ class Surface {
   };
 
  public:
-  Surface() = default;
   Surface(const Instance& instance, VkSurfaceKHR surface);
-  ~Surface();
+  ~Surface() override;
 
   // TODO we should be able to create the surface using functions such as vkCreateWin32SurfaceKHR,
   //      vkCreateXcbSurfaceKHR or vkCreateAndroidSurfaceKHR. Details can be found at
@@ -40,14 +40,13 @@ class Surface {
 
   [[nodiscard]] bool isAdequate(VkPhysicalDevice physicalDevice) const;
 
-  // Disable copy and assignment operators
-  Surface(const Surface&)            = delete;
-  Surface& operator=(const Surface&) = delete;
+ private:
+  const Instance& instance() const { return *_instance.lock(); }
 
  private:
   VkSurfaceKHR _surface = VK_NULL_HANDLE;
 
-  const Instance* _instance = nullptr;
+  std::weak_ptr<const Instance> _instance;
 };
 
 NAMESPACE_END(Vulk)

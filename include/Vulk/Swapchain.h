@@ -5,6 +5,9 @@
 #include <functional>
 #include <vector>
 #include <limits>
+#include <memory>
+
+#include <Vulk/internal/base.h>
 
 #include <Vulk/Image2D.h>
 #include <Vulk/DepthImage.h>
@@ -18,7 +21,8 @@ class PhysicalDevice;
 class Surface;
 class RenderPass;
 class Semaphore;
-class Swapchain {
+
+class Swapchain : public Sharable<Swapchain>, private NotCopyable {
  public:
   using SwapchainCreateInfoOverride = std::function<void(VkSwapchainCreateInfoKHR*)>;
   using ChooseSurfaceExtentFunc     = std::function<VkExtent2D(const VkSurfaceCapabilitiesKHR&)>;
@@ -28,17 +32,14 @@ class Swapchain {
       std::function<VkPresentModeKHR(const std::vector<VkPresentModeKHR>&)>;
 
  public:
-  Swapchain() = default;
   Swapchain(const Device& device,
             const Surface& surface,
             const VkExtent2D& surfaceExtent,
             const VkSurfaceFormatKHR& surfaceFormat,
             VkPresentModeKHR presentMode);
-  ~Swapchain();
-
-  // Disable copy and assignment operators
-  Swapchain(const Swapchain&)            = delete;
-  Swapchain& operator=(const Swapchain&) = delete;
+  // TODO: I need to add noexcept for the destructor to avoid the error of "exception specification
+  // of overriding function is more lax than base version". Don't know why!!??
+  ~Swapchain() noexcept override;
 
   void create(const Device& device,
               const Surface& surface,
@@ -76,7 +77,8 @@ class Swapchain {
   [[nodiscard]] const std::vector<Framebuffer>& framebuffers() const { return _framebuffers; }
   [[nodiscard]] const Framebuffer& framebuffer(size_t i) const { return _framebuffers[i]; }
 
-  [[nodiscard]] const Device& device() const { return *_device; }
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
+  [[nodiscard]] const Surface& surface() const { return *_surface.lock(); }
 
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
 
@@ -121,8 +123,8 @@ class Swapchain {
 
   mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();
 
-  const Device* _device   = nullptr;
-  const Surface* _surface = nullptr;
+  std::weak_ptr<const Device> _device;
+  std::weak_ptr<const Surface> _surface;
 };
 
 NAMESPACE_END(Vulk)

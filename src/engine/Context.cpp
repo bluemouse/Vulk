@@ -60,11 +60,11 @@ void Context::destroy() {
 
   _pipeline.destroy();
 
-  _swapchain.destroy();
+  _swapchain->destroy();
   _renderPass.destroy();
 
   _device->destroy();
-  _surface.destroy();
+  _surface->destroy();
   _instance->destroy();
 }
 
@@ -76,22 +76,23 @@ void Context::createInstance(int versionMajor,
 }
 
 void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {
-  _surface.create(instance(), createWindowSurface(instance()));
+  _surface = Vulk::Surface::make_shared(instance(), createWindowSurface(instance()));
 }
 
 void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
   if (isDeviceSuitable) {
-    _instance->pickPhysicalDevice(_surface, [this, &isDeviceSuitable](VkPhysicalDevice device) {
+    _instance->pickPhysicalDevice(surface(), [this, &isDeviceSuitable](VkPhysicalDevice device) {
       if (!isDeviceSuitable(device)) {
         return false;
       }
 
-      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, _surface);
+      const auto& surface = this->surface();
+      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-      return isQueueFamiliesComplete && _surface.isAdequate(device);
+      return isQueueFamiliesComplete && surface.isAdequate(device);
     });
   } else {
-    _instance->pickPhysicalDevice(_surface, [this](VkPhysicalDevice device) {
+    _instance->pickPhysicalDevice(surface(), [this](VkPhysicalDevice device) {
       uint32_t extensionCount = 0;
       vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
       std::vector<VkExtensionProperties> availableExtensions{extensionCount};
@@ -110,9 +111,10 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
         return false;
       }
 
-      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, _surface);
+      const auto& surface = this->surface();
+      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-      return isQueueFamiliesComplete && _surface.isAdequate(device);
+      return isQueueFamiliesComplete && surface.isAdequate(device);
     });
   }
 }
@@ -131,7 +133,7 @@ void Context::createLogicalDevice() {
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                const ChooseDepthFormatFunc& chooseDepthFormat) {
-  const auto [_, formats, __] = _surface.querySupports();
+  const auto [_, formats, __] = surface().querySupports();
 
   VkFormat colorFormat;
   if (chooseSurfaceFormat) {
@@ -152,7 +154,7 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                               const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                               const Swapchain::ChoosePresentModeFunc& choosePresentMode) {
-  const auto [capabilities, formats, presentModes] = _surface.querySupports();
+  const auto [capabilities, formats, presentModes] = surface().querySupports();
 
   VkExtent2D extent;
   if (chooseSurfaceExtent) {
@@ -177,8 +179,8 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
     presentMode = chooseDefaultPresentMode(presentModes);
   }
 
-  _swapchain.create(device(), _surface, extent, format, presentMode);
-  _swapchain.createFramebuffers(_renderPass);
+  _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
+  _swapchain->createFramebuffers(_renderPass);
 }
 
 void Context::createPipeline(const CreateVertShaderFunc& createVertShader,

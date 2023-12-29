@@ -34,7 +34,7 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
 
  public:
   PhysicalDevice(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
-  virtual ~PhysicalDevice();
+  ~PhysicalDevice() override;
 
   void instantiate(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
   void reset();

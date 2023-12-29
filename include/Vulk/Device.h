@@ -25,7 +25,7 @@ class Device : public Sharable<Device>, private NotCopyable {
          const std::vector<uint32_t>& queueFamilies,
          const std::vector<const char*>& extensions = {},
          const DeviceCreateInfoOverride& override   = {});
-  ~Device();
+  ~Device() override;
 
   void create(const PhysicalDevice& physicalDevice,
               const std::vector<uint32_t>& queueFamilies,
