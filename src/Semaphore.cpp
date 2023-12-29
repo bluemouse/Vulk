@@ -14,29 +14,9 @@ Semaphore::~Semaphore() {
   }
 }
 
-Semaphore::Semaphore(Semaphore&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Semaphore& Semaphore::operator=(Semaphore&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Semaphore::moveFrom(Semaphore& rhs) {
-  MI_VERIFY(!isCreated());
-  _semaphore = rhs._semaphore;
-  _device    = rhs._device;
-
-  rhs._semaphore = VK_NULL_HANDLE;
-  rhs._device    = nullptr;
-}
-
 void Semaphore::create(const Device& device) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -46,10 +26,10 @@ void Semaphore::create(const Device& device) {
 
 void Semaphore::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroySemaphore(*_device, _semaphore, nullptr);
+  vkDestroySemaphore(device(), _semaphore, nullptr);
 
   _semaphore = VK_NULL_HANDLE;
-  _device    = nullptr;
+  _device.reset();
 }
 
 NAMESPACE_END(Vulk)

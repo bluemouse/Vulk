@@ -14,29 +14,9 @@ Fence::~Fence() {
   }
 }
 
-Fence::Fence(Fence&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Fence& Fence::operator=(Fence&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Fence::moveFrom(Fence& rhs) {
-  MI_VERIFY(!isCreated());
-  _fence  = rhs._fence;
-  _device = rhs._device;
-
-  rhs._fence  = VK_NULL_HANDLE;
-  rhs._device = nullptr;
-}
-
 void Fence::create(const Device& device, bool signaled) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   VkFenceCreateInfo fenceInfo{};
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -49,20 +29,20 @@ void Fence::create(const Device& device, bool signaled) {
 
 void Fence::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyFence(*_device, _fence, nullptr);
+  vkDestroyFence(device(), _fence, nullptr);
 
-  _device = nullptr;
   _fence  = VK_NULL_HANDLE;
+  _device.reset();
 }
 
 void Fence::wait(uint64_t timeout) const {
   MI_VERIFY(isCreated());
-  MI_VERIFY_VKCMD(vkWaitForFences(*_device, 1, &_fence, VK_TRUE, timeout));
+  MI_VERIFY_VKCMD(vkWaitForFences(device(), 1, &_fence, VK_TRUE, timeout));
 }
 
 void Fence::reset() {
   MI_VERIFY(isCreated());
-  MI_VERIFY_VKCMD(vkResetFences(*_device, 1, &_fence));
+  MI_VERIFY_VKCMD(vkResetFences(device(), 1, &_fence));
 }
 
 NAMESPACE_END(Vulk)

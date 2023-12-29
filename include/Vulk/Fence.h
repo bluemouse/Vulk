@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <memory>
+
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
 
@@ -9,15 +11,11 @@ NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class Fence {
+class Fence : public Sharable<Fence>, private NotCopyable {
  public:
   Fence() = default;
   explicit Fence(const Device& device, bool signaled = false);
-  ~Fence();
-
-  // Transfer the ownership from `rhs` to `this`
-  Fence(Fence&& rhs) noexcept;
-  Fence& operator=(Fence&& rhs) noexcept(false);
+  ~Fence() override;
 
   void create(const Device& device, bool signaled = false);
   void destroy();
@@ -30,13 +28,12 @@ class Fence {
   void wait(uint64_t timeout = UINT64_MAX) const;
   void reset();
 
- private:
-  void moveFrom(Fence& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkFence _fence = VK_NULL_HANDLE;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <memory>
+
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
 
@@ -9,15 +11,11 @@ NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class Semaphore {
+class Semaphore : public Sharable<Semaphore>, private NotCopyable {
  public:
   Semaphore() = default;
   explicit Semaphore(const Device& device);
-  ~Semaphore();
-
-  // Transfer the ownership from `rhs` to `this`
-  Semaphore(Semaphore&& rhs) noexcept;
-  Semaphore& operator=(Semaphore&& rhs) noexcept(false);
+  ~Semaphore() override;
 
   void create(const Device& device);
   void destroy();
@@ -27,13 +25,12 @@ class Semaphore {
 
   [[nodiscard]] bool isCreated() const { return _semaphore != VK_NULL_HANDLE; }
 
- private:
-  void moveFrom(Semaphore& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkSemaphore _semaphore = VK_NULL_HANDLE;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

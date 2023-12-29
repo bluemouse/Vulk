@@ -3,10 +3,12 @@
 #include "MainWindow.h"
 #include "Camera.h"
 
+#include <Vulk/Framebuffer.h>
+#include <Vulk/Fence.h>
+
 #include <Vulk/engine/Context.h>
 #include <Vulk/engine/Drawable.h>
 #include <Vulk/engine/Texture2D.h>
-#include <Vulk/Framebuffer.h>
 #include <Vulk/engine/TypeTraits.h>
 
 class Testbed : public MainWindow {
@@ -132,9 +134,9 @@ class Testbed : public MainWindow {
 
     Vulk::DescriptorSet descriptorSet;
 
-    Vulk::Semaphore imageAvailableSemaphore;
-    Vulk::Semaphore renderFinishedSemaphore;
-    Vulk::Fence fence;
+    Vulk::Semaphore::shared_ptr imageAvailableSemaphore;
+    Vulk::Semaphore::shared_ptr renderFinishedSemaphore;
+    Vulk::Fence::shared_ptr fence;
   };
 
   std::vector<Frame> _frames;

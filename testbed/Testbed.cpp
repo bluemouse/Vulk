@@ -132,16 +132,16 @@ void Testbed::mainLoop() {
 void Testbed::drawFrame() {
   nextFrame();
 
-  _currentFrame->fence.wait();
+  _currentFrame->fence->wait();
 
-  if (_context.swapchain().acquireNextImage(_currentFrame->imageAvailableSemaphore) ==
+  if (_context.swapchain().acquireNextImage(*_currentFrame->imageAvailableSemaphore) ==
       VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
     return;
   }
   // Need to reset the fence after the potential swapchain resize. Otherwise, there will be no
   // fence signal command submitted and we could have a dead lock.
-  _currentFrame->fence.reset();
+  _currentFrame->fence->reset();
 
   updateUniformBuffer();
 
@@ -165,9 +165,9 @@ void Testbed::drawFrame() {
 
         commandBuffer.endRenderpass();
       },
-      {&_currentFrame->imageAvailableSemaphore},
-      {&_currentFrame->renderFinishedSemaphore},
-      _currentFrame->fence);
+      {_currentFrame->imageAvailableSemaphore.get()},
+      {_currentFrame->renderFinishedSemaphore.get()},
+      *_currentFrame->fence);
 
   _currentFrame->commandBuffer.waitIdle();
 
@@ -177,7 +177,7 @@ void Testbed::drawFrame() {
   swapchainFramebuffer.image().transitToNewLayout(_currentFrame->commandBuffer,
                                                   VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-  auto result = _context.swapchain().present(_currentFrame->renderFinishedSemaphore);
+  auto result = _context.swapchain().present(*_currentFrame->renderFinishedSemaphore);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -340,9 +340,9 @@ void Testbed::createFrames() {
     frame.framebuffer.create(
         device, _context.renderPass(), frame.colorAttachment, frame.depthAttachment);
 
-    frame.imageAvailableSemaphore.create(device);
-    frame.renderFinishedSemaphore.create(device);
-    frame.fence.create(device, true);
+    frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
+    frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
+    frame.fence = Vulk::Fence::make_shared(device, true);
 
     frame.uniformBuffer.create(device, sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
