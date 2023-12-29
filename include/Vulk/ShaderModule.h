@@ -2,19 +2,19 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vector>
+#include <memory>
+
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
 
-#include <vector>
-
-struct SpvReflectShaderModule;
 struct SpvReflectShaderModule;
 
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class ShaderModule {
+class ShaderModule : public Sharable<ShaderModule>, private NotCopyable {
  public:
   struct DescriptorSetLayoutBinding {
     std::string name;
@@ -35,7 +35,6 @@ class ShaderModule {
   };
 
  public:
-  ShaderModule() = default;
   // If `reflection` is true, SPIRV-Reflect is used to generate VkDescriptorSetLayoutBinding,
   // VkVertexInputBindingDescription (vertex shader only) and VkVertexInputAttributeDescription
   // (vertex shader only) from the shader code reflection.
@@ -45,15 +44,11 @@ class ShaderModule {
   // only.
   ShaderModule(const Device& device, const std::vector<char>& codes, bool reflection = true);
   ShaderModule(const Device& device, const char* shaderFile, bool reflection = true);
-  virtual ~ShaderModule();
+  virtual ~ShaderModule() override;
 
   void create(const Device& device, const std::vector<char>& codes, bool reflection = true);
   void create(const Device& device, const char* shaderFile, bool reflection = true);
   void destroy();
-
-  // Transfer the ownership from `rhs` to `this`
-  ShaderModule(ShaderModule&& rhs) noexcept;
-  ShaderModule& operator=(ShaderModule&& rhs) noexcept(false);
 
   operator VkShaderModule() const { return _shader; }
 
@@ -72,11 +67,10 @@ class ShaderModule {
   void setEntry(const char* entry) { _entry = entry; }
   [[nodiscard]] const char* entry() const { return _entry.c_str(); }
 
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
+
   static void enablePrintReflection();
   static void disablePrintReflection();
-
- protected:
-  void moveFrom(ShaderModule& rhs);
 
  private:
   void reflectShader(const std::vector<char>& codes);
@@ -92,7 +86,7 @@ class ShaderModule {
   std::vector<VertexInputAttribute> _vertexInputAttributes;
   std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
 
-  const Device* _device;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

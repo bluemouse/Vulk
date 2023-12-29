@@ -2,22 +2,17 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/ShaderModule.h>
-#include <Vulk/internal/vulkan_debug.h>
-
 #include <vector>
 
-NAMESPACE_BEGIN(Vulk)
+#include <Vulk/internal/base.h>
 
-class Device;
+#include <Vulk/ShaderModule.h>
+
+NAMESPACE_BEGIN(Vulk)
 
 class VertexShader : public ShaderModule {
  public:
   using ShaderModule::ShaderModule;
-
-  // Transfer the ownership from `rhs` to `this`
-  VertexShader(VertexShader&& rhs) noexcept;
-  VertexShader& operator=(VertexShader&& rhs) noexcept(false);
 
   void addVertexInputBinding(uint32_t binding,
                              uint32_t stride,
@@ -46,9 +41,6 @@ class VertexShader : public ShaderModule {
   const std::vector<VertexInputAttribute>& vertexInputAttributes() const {
     return _vertexInputAttributes;
   }
-
- private:
-  void moveFrom(VertexShader& rhs);
 };
 
 NAMESPACE_END(Vulk)

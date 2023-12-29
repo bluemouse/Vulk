@@ -219,7 +219,7 @@ ShaderModule::~ShaderModule() {
 
 void ShaderModule::create(const Device& device, const std::vector<char>& codes, bool reflection) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
   _entry  = "main";
 
   if (reflection) {
@@ -240,34 +240,10 @@ void ShaderModule::create(const Device& device, const char* shaderFile, bool ref
 
 void ShaderModule::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyShaderModule(*_device, _shader, nullptr);
+  vkDestroyShaderModule(device(), _shader, nullptr);
 
   _shader = VK_NULL_HANDLE;
-  _device = nullptr;
-}
-
-ShaderModule::ShaderModule(ShaderModule&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-ShaderModule& ShaderModule::operator=(ShaderModule&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void ShaderModule::moveFrom(ShaderModule& rhs) {
-  MI_VERIFY(!isCreated());
-  _shader                      = rhs._shader;
-  _entry                       = rhs._entry;
-  _descriptorSetLayoutBindings = std::move(rhs._descriptorSetLayoutBindings);
-  _device                      = rhs._device;
-
-  rhs._shader = VK_NULL_HANDLE;
-  rhs._entry  = nullptr;
-  rhs._descriptorSetLayoutBindings.clear();
-  rhs._device = nullptr;
+  _device.reset();
 }
 
 void ShaderModule::addDescriptorSetLayoutBinding(const std::string& name,

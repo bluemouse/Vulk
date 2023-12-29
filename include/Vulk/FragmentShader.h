@@ -2,8 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/internal/base.h>
+
 #include <Vulk/ShaderModule.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -11,18 +12,11 @@ class FragmentShader : public ShaderModule {
  public:
   using ShaderModule::ShaderModule;
 
-  // Transfer the ownership from `rhs` to `this`
-  FragmentShader(FragmentShader&& rhs) noexcept;
-  FragmentShader& operator=(FragmentShader&& rhs) noexcept(false);
-
   void addDescriptorSetLayoutBinding(
       const std::string& name,
       const std::string& type,
       uint32_t binding,
       VkDescriptorType descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-
- private:
-  void moveFrom(FragmentShader& rhs);
 };
 
 NAMESPACE_END(Vulk)

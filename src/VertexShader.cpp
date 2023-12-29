@@ -4,28 +4,6 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-VertexShader::VertexShader(VertexShader&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-VertexShader& VertexShader::operator=(VertexShader&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void VertexShader::moveFrom(VertexShader& rhs) {
-  MI_VERIFY(!isCreated());
-  ShaderModule::moveFrom(rhs);
-
-  _vertexInputBindings   = std::move(rhs._vertexInputBindings);
-  _vertexInputAttributes = std::move(rhs._vertexInputAttributes);
-
-  rhs._vertexInputBindings.clear();
-  rhs._vertexInputAttributes.clear();
-}
-
 void VertexShader::addVertexInputBinding(uint32_t binding,
                                          uint32_t stride,
                                          VkVertexInputRate inputRate) {
