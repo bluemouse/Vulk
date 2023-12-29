@@ -26,30 +26,6 @@ RenderPass::~RenderPass() {
   }
 }
 
-RenderPass::RenderPass(RenderPass&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-RenderPass& RenderPass::operator=(RenderPass&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void RenderPass::moveFrom(RenderPass& rhs) {
-  MI_VERIFY(!isCreated());
-  _renderPass         = rhs._renderPass;
-  _colorFormat        = rhs._colorFormat;
-  _depthStencilFormat = rhs._depthStencilFormat;
-  _device             = rhs._device;
-
-  rhs._renderPass         = VK_NULL_HANDLE;
-  rhs._colorFormat        = VK_FORMAT_UNDEFINED;
-  rhs._depthStencilFormat = VK_FORMAT_UNDEFINED;
-  rhs._device             = nullptr;
-}
-
 void RenderPass::create(const Device& device,
                         VkFormat colorFormat,
                         VkFormat depthStencilFormat,
@@ -58,7 +34,7 @@ void RenderPass::create(const Device& device,
                         const SubpassDescriptionOverride& subpassOverride,
                         const SubpassDependencyOverride& dependencyOverride) {
   MI_VERIFY(!isCreated());
-  _device             = &device;
+  _device             = device.get_weak();
   _colorFormat        = colorFormat;
   _depthStencilFormat = depthStencilFormat;
 
@@ -152,10 +128,10 @@ void RenderPass::create(const Device& device,
 
 void RenderPass::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyRenderPass(*_device, _renderPass, nullptr);
+  vkDestroyRenderPass(device(), _renderPass, nullptr);
 
   _renderPass = VK_NULL_HANDLE;
-  _device     = nullptr;
+  _device.reset();
 }
 
 NAMESPACE_END(Vulk)

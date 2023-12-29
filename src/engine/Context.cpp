@@ -55,13 +55,13 @@ void Context::create(const CreateInfo& createInfo) {
 }
 
 void Context::destroy() {
-  _descriptorPool.destroy();
-  _commandPool.destroy();
+  _descriptorPool->destroy();
+  _commandPool->destroy();
 
-  _pipeline.destroy();
+  _pipeline->destroy();
 
   _swapchain->destroy();
-  _renderPass.destroy();
+  _renderPass->destroy();
 
   _device->destroy();
   _surface->destroy();
@@ -86,7 +86,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
         return false;
       }
 
-      const auto& surface = this->surface();
+      const auto& surface          = this->surface();
       auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
       return isQueueFamiliesComplete && surface.isAdequate(device);
@@ -111,7 +111,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
         return false;
       }
 
-      const auto& surface = this->surface();
+      const auto& surface          = this->surface();
       auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
       bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
       return isQueueFamiliesComplete && surface.isAdequate(device);
@@ -148,7 +148,7 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
     MI_VERIFY(depthStencilFormat != VK_FORMAT_UNDEFINED);
   }
 
-  _renderPass.create(device(), colorFormat, depthStencilFormat);
+  _renderPass = Vulk::RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
 }
 
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
@@ -180,22 +180,25 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
   }
 
   _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
-  _swapchain->createFramebuffers(_renderPass);
+  _swapchain->createFramebuffers(renderPass());
 }
 
 void Context::createPipeline(const CreateVertShaderFunc& createVertShader,
                              const CreateFragShaderFunc& createFragShader) {
-  auto vertShader = createVertShader(device());
-  auto fragShader = createFragShader(device());
-  _pipeline.create(device(), _renderPass, vertShader, fragShader);
+  const Device& device = this->device();
+  auto vertShader      = createVertShader(device);
+  auto fragShader      = createFragShader(device);
+
+  _pipeline = Vulk::Pipeline::make_shared(device, renderPass(), vertShader, fragShader);
 }
 
 void Context::createCommandPool() {
-  _commandPool.create(device(), _instance->physicalDevice().queueFamilies().graphicsIndex());
+  _commandPool = Vulk::CommandPool::make_shared(
+      device(), _instance->physicalDevice().queueFamilies().graphicsIndex());
 }
 
 void Context::createDescriptorPool(uint32_t maxSets) {
-  _descriptorPool.create(_pipeline.descriptorSetLayout(), maxSets);
+  _descriptorPool = Vulk::DescriptorPool::make_shared(_pipeline->descriptorSetLayout(), maxSets);
 }
 
 void Context::waitIdle() const {

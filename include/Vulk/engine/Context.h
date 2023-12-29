@@ -79,19 +79,19 @@ class Context {
   [[nodiscard]] Surface& surface() { return *_surface; }
   [[nodiscard]] Device& device() { return *_device; }
   [[nodiscard]] Swapchain& swapchain() { return *_swapchain; }
-  [[nodiscard]] RenderPass& renderPass() { return _renderPass; }
-  [[nodiscard]] Pipeline& pipeline() { return _pipeline; }
-  [[nodiscard]] DescriptorPool& descriptorPool() { return _descriptorPool; }
-  [[nodiscard]] CommandPool& commandPool() { return _commandPool; }
+  [[nodiscard]] RenderPass& renderPass() { return *_renderPass; }
+  [[nodiscard]] Pipeline& pipeline() { return *_pipeline; }
+  [[nodiscard]] DescriptorPool& descriptorPool() { return *_descriptorPool; }
+  [[nodiscard]] CommandPool& commandPool() { return *_commandPool; }
 
   [[nodiscard]] const Instance& instance() const { return *_instance; }
   [[nodiscard]] const Surface& surface() const { return *_surface; }
   [[nodiscard]] const Device& device() const { return *_device; }
   [[nodiscard]] const Swapchain& swapchain() const { return *_swapchain; }
-  [[nodiscard]] const RenderPass& renderPass() const { return _renderPass; }
-  [[nodiscard]] const Pipeline& pipeline() const { return _pipeline; }
-  [[nodiscard]] const DescriptorPool& descriptorPool() const { return _descriptorPool; }
-  [[nodiscard]] const CommandPool& commandPool() const { return _commandPool; }
+  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass; }
+  [[nodiscard]] const Pipeline& pipeline() const { return *_pipeline; }
+  [[nodiscard]] const DescriptorPool& descriptorPool() const { return *_descriptorPool; }
+  [[nodiscard]] const CommandPool& commandPool() const { return *_commandPool; }
 
  protected:
   virtual void createInstance(int versionMajor,
@@ -120,11 +120,11 @@ class Context {
   Vulk::Device::shared_ptr _device;
   Vulk::Swapchain::shared_ptr _swapchain;
 
-  Vulk::RenderPass _renderPass;
-  Vulk::Pipeline _pipeline;
+  Vulk::RenderPass::shared_ptr _renderPass;
+  Vulk::Pipeline::shared_ptr _pipeline;
 
-  Vulk::DescriptorPool _descriptorPool;
-  Vulk::CommandPool _commandPool;
+  Vulk::DescriptorPool::shared_ptr _descriptorPool;
+  Vulk::CommandPool::shared_ptr _commandPool;
 };
 
 NAMESPACE_END(Vulk)

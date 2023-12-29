@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
+#include <memory>
 
 #include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
@@ -12,18 +13,13 @@ NAMESPACE_BEGIN(Vulk)
 class Device;
 class DescriptorSetLayout;
 
-class DescriptorPool {
+class DescriptorPool : public Sharable<DescriptorPool>, private NotCopyable {
  public:
-  DescriptorPool() = default;
   DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets);
   DescriptorPool(const Device& device,
                  std::vector<VkDescriptorPoolSize> poolSizes,
                  uint32_t maxSets);
-  ~DescriptorPool();
-
-  // Transfer the ownership from `rhs` to `this`
-  DescriptorPool(DescriptorPool&& rhs) noexcept;
-  DescriptorPool& operator=(DescriptorPool&& rhs) noexcept(false);
+  ~DescriptorPool() override;
 
   void create(const DescriptorSetLayout& layout, uint32_t maxSets);
   void create(const Device& device, std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
@@ -31,17 +27,14 @@ class DescriptorPool {
 
   operator VkDescriptorPool() const { return _pool; }
 
-  [[nodiscard]] const Device& device() const { return *_device; }
-
   [[nodiscard]] bool isCreated() const { return _pool != VK_NULL_HANDLE; }
 
- private:
-  void moveFrom(DescriptorPool& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkDescriptorPool _pool = VK_NULL_HANDLE;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

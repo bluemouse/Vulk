@@ -2,24 +2,24 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
-
 #include <vector>
 #include <functional>
+#include <memory>
+
+#include <Vulk/internal/base.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class RenderPass {
+class RenderPass : public Sharable<RenderPass>, private NotCopyable {
  public:
   using AttachmentDescriptionOverride = std::function<void(VkAttachmentDescription&)>;
   using SubpassDescriptionOverride    = std::function<void(VkSubpassDescription&)>;
   using SubpassDependencyOverride     = std::function<void(VkSubpassDependency&)>;
 
  public:
-  RenderPass() = default;
   RenderPass(const Device& device,
              VkFormat colorFormat,
              VkFormat depthStencilFormat                                  = VK_FORMAT_UNDEFINED,
@@ -27,11 +27,7 @@ class RenderPass {
              const AttachmentDescriptionOverride& depthStencilAttachmentOverride = {},
              const SubpassDescriptionOverride& subpassOverride                   = {},
              const SubpassDependencyOverride& dependencyOverride                 = {});
-  ~RenderPass();
-
-  // Transfer the ownership from `rhs` to `this`
-  RenderPass(RenderPass&& rhs) noexcept;
-  RenderPass& operator=(RenderPass&& rhs) noexcept(false);
+  ~RenderPass() override;
 
   void create(const Device& device,
               VkFormat colorFormat,
@@ -54,8 +50,7 @@ class RenderPass {
   VkFormat colorFormat() const { return _colorFormat; }
   VkFormat depthStencilFormat() const { return _depthStencilFormat; }
 
- private:
-  void moveFrom(RenderPass& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkRenderPass _renderPass = VK_NULL_HANDLE;
@@ -63,7 +58,7 @@ class RenderPass {
   VkFormat _colorFormat        = VK_FORMAT_UNDEFINED;
   VkFormat _depthStencilFormat = VK_FORMAT_UNDEFINED;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

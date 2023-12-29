@@ -3,11 +3,13 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
+#include <limits>
+#include <memory>
 
-#include <Vulk/DescriptorSetLayout.h>
+#include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
 
-#include <limits>
+#include <Vulk/DescriptorSetLayout.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -16,18 +18,13 @@ class RenderPass;
 class VertexShader;
 class FragmentShader;
 
-class Pipeline {
+class Pipeline : public Sharable<Pipeline>, private NotCopyable {
  public:
-  Pipeline() = default;
   Pipeline(const Device& device,
            const RenderPass& renderPass,
            const VertexShader& vertShader,
            const FragmentShader& fragShader);
-  ~Pipeline();
-
-  // Transfer the ownership from `rhs` to `this`
-  Pipeline(Pipeline&& rhs) noexcept;
-  Pipeline& operator=(Pipeline&& rhs) noexcept(false);
+  ~Pipeline() override;
 
   void create(const Device& device,
               const RenderPass& renderPass,
@@ -56,8 +53,7 @@ class Pipeline {
     return std::numeric_limits<uint32_t>::max();
   }
 
- private:
-  void moveFrom(Pipeline& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkPipeline _pipeline     = VK_NULL_HANDLE;
@@ -67,7 +63,7 @@ class Pipeline {
 
   std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

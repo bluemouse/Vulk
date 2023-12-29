@@ -23,34 +23,12 @@ Pipeline::~Pipeline() {
   }
 }
 
-Pipeline::Pipeline(Pipeline &&rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Pipeline &Pipeline::operator=(Pipeline &&rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Pipeline::moveFrom(Pipeline &rhs) {
-  MI_VERIFY(!isCreated());
-  _pipeline = rhs._pipeline;
-  _layout   = rhs._layout;
-  _device   = rhs._device;
-
-  rhs._pipeline = VK_NULL_HANDLE;
-  rhs._layout   = VK_NULL_HANDLE;
-  rhs._device   = nullptr;
-}
-
 void Pipeline::create(const Device &device,
                       const RenderPass &renderPass,
                       const VertexShader &vertShader,
                       const FragmentShader &fragShader) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -170,12 +148,12 @@ void Pipeline::create(const Device &device,
 
 void Pipeline::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyPipeline(*_device, _pipeline, nullptr);
-  vkDestroyPipelineLayout(*_device, _layout, nullptr);
+  vkDestroyPipeline(device(), _pipeline, nullptr);
+  vkDestroyPipelineLayout(device(), _layout, nullptr);
   _descriptorSetLayout.destroy();
 
-  _device   = nullptr;
   _pipeline = VK_NULL_HANDLE;
+  _device.reset();
 }
 
 NAMESPACE_END(Vulk)
