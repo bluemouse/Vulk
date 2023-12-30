@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/Image2D.h>
 #include <Vulk/ImageView.h>
@@ -43,19 +42,19 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   void blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
 
   const Image2D& image() const { return *_image; }
-  const ImageView& view() const { return _view; }
+  const ImageView& view() const { return *_view; }
   const Sampler& sampler() const { return *_sampler; }
 
   Image2D& image() { return *_image; }
-  ImageView& view() { return _view; }
+  ImageView& view() { return *_view; }
   Sampler& sampler() { return *_sampler; }
 
   // Note the input reference will lost the ownership of the data
-  void setView(ImageView&& view) { _view = std::move(view); }
+  void setView(ImageView::shared_ptr view) { _view = view; }
   void setSampler(Sampler::shared_ptr sampler) { _sampler = sampler; }
 
   operator VkImage() const { return *_image; }
-  operator VkImageView() const { return _view; }
+  operator VkImageView() const { return *_view; }
   operator VkSampler() const { return *_sampler; }
 
   [[nodiscard]] VkImageType type() const { return _image->type(); }
@@ -79,7 +78,7 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
 
  private:
   Image2D::shared_ptr _image;
-  ImageView _view;
+  ImageView::shared_ptr _view;
   Sampler::shared_ptr _sampler;
 };
 

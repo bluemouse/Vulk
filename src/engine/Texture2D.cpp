@@ -22,13 +22,13 @@ void Texture2D::create(const Device& device,
   _image = Image2D::make_shared(device, format, extent, usage);
   _image->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  _view.create(device, image());
+  _view = ImageView::make_shared(device, image());
   _sampler = Sampler::make_shared(device, filter, addressMode);
 }
 
 void Texture2D::destroy() {
   _sampler.reset();
-  _view.destroy();
+  _view.reset();
   _image.reset();
 }
 

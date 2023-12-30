@@ -1,5 +1,7 @@
 #include <Vulk/ImageView.h>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/Image.h>
 #include <Vulk/Image2D.h>
@@ -24,28 +26,6 @@ ImageView::~ImageView() {
   }
 }
 
-ImageView::ImageView(ImageView&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-ImageView& ImageView::operator=(ImageView&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void ImageView::moveFrom(ImageView& rhs) {
-  MI_VERIFY(!isCreated());
-  _view   = rhs._view;
-  _device = rhs._device;
-  _image  = rhs._image;
-
-  rhs._view   = VK_NULL_HANDLE;
-  rhs._device = nullptr;
-  rhs._image  = nullptr;
-}
-
 void ImageView::create(const Device& device,
                        Image2D& image,
                        ImageViewCreateInfoOverride createInfoOverride) {
@@ -65,8 +45,8 @@ void ImageView::create(const Device& device,
                        VkImageAspectFlags aspectMask,
                        ImageViewCreateInfoOverride createInfoOverride) {
   MI_VERIFY(!isCreated());
-  _device = &device;
-  _image  = &image;
+  _device = device.get_weak();
+  _image  = image.get_weak();
 
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -83,16 +63,16 @@ void ImageView::create(const Device& device,
     createInfoOverride(viewInfo);
   }
 
-  MI_VERIFY_VKCMD(vkCreateImageView(*_device, &viewInfo, nullptr, &_view));
+  MI_VERIFY_VKCMD(vkCreateImageView(device, &viewInfo, nullptr, &_view));
 }
 
 void ImageView::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyImageView(*_device, _view, nullptr);
+  vkDestroyImageView(device(), _view, nullptr);
 
   _view   = VK_NULL_HANDLE;
-  _device = nullptr;
-  _image  = nullptr;
+  _device.reset();
+  _image.reset();
 }
 
 NAMESPACE_END(Vulk)

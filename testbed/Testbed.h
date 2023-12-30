@@ -124,9 +124,9 @@ class Testbed : public MainWindow {
     Vulk::CommandBuffer::shared_ptr commandBuffer;
 
     Vulk::Image2D::shared_ptr colorBuffer;
-    Vulk::ImageView colorAttachment;
+    Vulk::ImageView::shared_ptr colorAttachment;
     Vulk::DepthImage::shared_ptr depthBuffer;
-    Vulk::ImageView depthAttachment;
+    Vulk::ImageView::shared_ptr depthAttachment;
     Vulk::Framebuffer framebuffer;
 
     Vulk::UniformBuffer uniformBuffer;

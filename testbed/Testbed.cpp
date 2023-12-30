@@ -105,9 +105,9 @@ void Testbed::init(int width, int height) {
 void Testbed::cleanup() {
   for (auto& frame : _frames) {
     frame.colorBuffer->destroy();
-    frame.colorAttachment.destroy();
+    frame.colorAttachment->destroy();
     frame.depthBuffer->destroy();
-    frame.depthAttachment.destroy();
+    frame.depthAttachment->destroy();
     frame.framebuffer.destroy();
   }
   _frames.clear();
@@ -333,12 +333,12 @@ void Testbed::createFrames() {
                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
-    frame.colorAttachment.create(device, *frame.colorBuffer);
+    frame.colorAttachment = Vulk::ImageView::make_shared(device, *frame.colorBuffer);
     frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
-    frame.depthAttachment.create(device, *frame.depthBuffer);
+    frame.depthAttachment = Vulk::ImageView::make_shared(device, *frame.depthBuffer);
     frame.framebuffer.create(
-        device, _context.renderPass(), frame.colorAttachment, frame.depthAttachment);
+        device, _context.renderPass(), *frame.colorAttachment, *frame.depthAttachment);
 
     frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);

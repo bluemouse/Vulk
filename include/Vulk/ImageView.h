@@ -3,9 +3,9 @@
 #include <vulkan/vulkan.h>
 
 #include <functional>
+#include <memory>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -14,7 +14,7 @@ class Image;
 class Image2D;
 class DepthImage;
 
-class ImageView {
+class ImageView : public Sharable<ImageView>, private NotCopyable {
  public:
   using ImageViewCreateInfoOverride = std::function<void(VkImageViewCreateInfo&)>;
 
@@ -28,10 +28,6 @@ class ImageView {
             ImageViewCreateInfoOverride createInfoOverride = {});
   ~ImageView();
 
-  // Transfer the ownership from `rhs` to `this`
-  ImageView(ImageView&& rhs) noexcept;
-  ImageView& operator=(ImageView&& rhs) noexcept(false);
-
   void create(const Device& device,
               Image2D& image,
               ImageViewCreateInfoOverride createInfoOverride = {});
@@ -42,8 +38,10 @@ class ImageView {
 
   operator VkImageView() const { return _view; }
 
-  [[nodiscard]] Image& image() { return *_image; }
-  [[nodiscard]] const Image& image() const { return *_image; }
+  [[nodiscard]] Image& image() { return *_image.lock(); }
+  [[nodiscard]] const Image& image() const { return *_image.lock(); }
+
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
   [[nodiscard]] bool isCreated() const { return _view != VK_NULL_HANDLE; }
 
@@ -53,13 +51,11 @@ class ImageView {
               VkImageAspectFlags aspectMask,
               ImageViewCreateInfoOverride createInfoOverride);
 
-  void moveFrom(ImageView& rhs);
-
  private:
   VkImageView _view = VK_NULL_HANDLE;
 
-  const Device* _device = nullptr;
-  Image* _image   = nullptr;
+  std::weak_ptr<const Device> _device;
+  std::weak_ptr<Image> _image;
 };
 
 NAMESPACE_END(Vulk)

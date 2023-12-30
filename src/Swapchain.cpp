@@ -116,8 +116,11 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   for (auto& img : imgs) {
     auto img2d = Vulk::Image2D::make_shared(img, renderPass.colorFormat(), _surfaceExtent);
     _images.push_back(img2d);
-    _imageViews.emplace_back(device, *img2d);
-    _framebuffers.emplace_back(device, renderPass, _imageViews.back(), _depthImageView);
+
+    auto view = Vulk::ImageView::make_shared(device, *img2d);
+    _imageViews.push_back(view);
+
+    _framebuffers.emplace_back(device, renderPass, *_imageViews.back(), _depthImageView);
   }
 
   deactivateActiveImage();
