@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/RenderPass.h>
 #include <Vulk/ShaderModule.h>
@@ -113,13 +115,14 @@ void Pipeline::create(const Device &device,
   dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
   dynamicState.pDynamicStates    = dynamicStates.data();
 
-  MI_VERIFY(!_descriptorSetLayout.isCreated());
-  _descriptorSetLayout.create(device, {(ShaderModule *)&vertShader, (ShaderModule *)&fragShader});
+  MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
+  _descriptorSetLayout = DescriptorSetLayout::make_shared(
+      device, std::vector<ShaderModule*>{(ShaderModule *)&vertShader, (ShaderModule *)&fragShader});
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts    = _descriptorSetLayout;
+  pipelineLayoutInfo.pSetLayouts    = *_descriptorSetLayout;
 
   MI_VERIFY_VKCMD(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &_layout));
 
@@ -150,7 +153,7 @@ void Pipeline::destroy() {
   MI_VERIFY(isCreated());
   vkDestroyPipeline(device(), _pipeline, nullptr);
   vkDestroyPipelineLayout(device(), _layout, nullptr);
-  _descriptorSetLayout.destroy();
+  _descriptorSetLayout.reset();
 
   _pipeline = VK_NULL_HANDLE;
   _device.reset();

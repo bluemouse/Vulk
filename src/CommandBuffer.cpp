@@ -22,29 +22,9 @@ CommandBuffer::~CommandBuffer() {
   }
 }
 
-CommandBuffer::CommandBuffer(CommandBuffer&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-CommandBuffer& CommandBuffer::operator=(CommandBuffer&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void CommandBuffer::moveFrom(CommandBuffer& rhs) {
-  MI_VERIFY(!isAllocated());
-  _buffer = rhs._buffer;
-  _pool   = rhs._pool;
-
-  rhs._buffer = VK_NULL_HANDLE;
-  rhs._pool   = nullptr;
-}
-
 void CommandBuffer::allocate(const CommandPool& commandPool) {
   MI_VERIFY(!isAllocated());
-  _pool = &commandPool;
+  _pool = commandPool.get_weak();
 
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -62,10 +42,11 @@ void CommandBuffer::reset() {
 void CommandBuffer::free() {
   MI_VERIFY(isAllocated());
 
-  vkFreeCommandBuffers(_pool->device(), *_pool, 1, &_buffer);
+  const auto& pool = this->pool();
+  vkFreeCommandBuffers(pool.device(), pool, 1, &_buffer);
 
   _buffer = VK_NULL_HANDLE;
-  _pool   = nullptr;
+  _pool.reset();
 }
 
 void CommandBuffer::executeCommands(const Recorder& recorder,
@@ -85,7 +66,7 @@ void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
 }
 
 void CommandBuffer::waitIdle() const {
-  vkQueueWaitIdle(_pool->queue());
+  vkQueueWaitIdle(pool().queue());
 }
 
 void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) const {
@@ -132,7 +113,7 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
     submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
     submitInfo.pSignalSemaphores    = signalSemaphores.data();
   }
-  VkQueue queue = _pool->queue();
+  VkQueue queue = pool().queue();
   MI_VERIFY_VKCMD(vkQueueSubmit(queue, 1, &submitInfo, fence));
 }
 

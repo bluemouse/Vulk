@@ -1,5 +1,7 @@
 #include <Vulk/RenderPass.h>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 
 NAMESPACE_BEGIN(Vulk)

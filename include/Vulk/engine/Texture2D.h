@@ -44,19 +44,19 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
 
   const Image2D& image() const { return *_image; }
   const ImageView& view() const { return _view; }
-  const Sampler& sampler() const { return _sampler; }
+  const Sampler& sampler() const { return *_sampler; }
 
   Image2D& image() { return *_image; }
   ImageView& view() { return _view; }
-  Sampler& sampler() { return _sampler; }
+  Sampler& sampler() { return *_sampler; }
 
   // Note the input reference will lost the ownership of the data
   void setView(ImageView&& view) { _view = std::move(view); }
-  void setSampler(Sampler&& sampler) { _sampler = std::move(sampler); }
+  void setSampler(Sampler::shared_ptr sampler) { _sampler = sampler; }
 
   operator VkImage() const { return *_image; }
   operator VkImageView() const { return _view; }
-  operator VkSampler() const { return _sampler; }
+  operator VkSampler() const { return *_sampler; }
 
   [[nodiscard]] VkImageType type() const { return _image->type(); }
   [[nodiscard]] VkFormat format() const { return _image->format(); }
@@ -80,7 +80,7 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
  private:
   Image2D::shared_ptr _image;
   ImageView _view;
-  Sampler _sampler;
+  Sampler::shared_ptr _sampler;
 };
 
 NAMESPACE_END(Vulk)

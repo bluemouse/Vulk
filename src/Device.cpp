@@ -3,6 +3,8 @@
 #include <set>
 #include <utility>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Instance.h>
 #include <Vulk/PhysicalDevice.h>
 

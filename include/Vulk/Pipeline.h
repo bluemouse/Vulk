@@ -7,7 +7,6 @@
 #include <memory>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/DescriptorSetLayout.h>
 
@@ -38,7 +37,7 @@ class Pipeline : public Sharable<Pipeline>, private NotCopyable {
   [[nodiscard]] bool isCreated() const { return _pipeline != VK_NULL_HANDLE; }
 
   [[nodiscard]] const DescriptorSetLayout& descriptorSetLayout() const {
-    return _descriptorSetLayout;
+    return *_descriptorSetLayout;
   }
 
   template <typename VertexInput>
@@ -59,7 +58,7 @@ class Pipeline : public Sharable<Pipeline>, private NotCopyable {
   VkPipeline _pipeline     = VK_NULL_HANDLE;
   VkPipelineLayout _layout = VK_NULL_HANDLE;
 
-  DescriptorSetLayout _descriptorSetLayout;
+  DescriptorSetLayout::shared_ptr _descriptorSetLayout;
 
   std::vector<VkVertexInputBindingDescription> _vertexInputBindings;
 

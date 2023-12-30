@@ -9,7 +9,7 @@
 #include <string>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/debug.h>
+#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/Surface.h>
 

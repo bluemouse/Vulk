@@ -4,13 +4,15 @@
 
 #include <functional>
 #include <vector>
+#include <memory>
 
 // Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
+#include <Vulk/internal/base.h>
+
 #include <Vulk/Fence.h>
 #include <Vulk/Semaphore.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -23,15 +25,11 @@ class VertexBuffer;
 class IndexBuffer;
 class DescriptorSet;
 
-class CommandBuffer {
+class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
   CommandBuffer() = default;
   CommandBuffer(const CommandPool& commandPool);
-  ~CommandBuffer();
-
-  // Transfer the ownership from `rhs` to `this`
-  CommandBuffer(CommandBuffer&& rhs) noexcept;
-  CommandBuffer& operator=(CommandBuffer&& rhs) noexcept(false);
+  ~CommandBuffer() override;
 
   void allocate(const CommandPool& commandPool);
   void free();
@@ -83,14 +81,15 @@ class CommandBuffer {
 
   [[nodiscard]] bool isAllocated() const { return _buffer != VK_NULL_HANDLE; }
 
+  [[nodiscard]] const CommandPool& pool() const { return *_pool.lock(); }
+
  private:
   void recordCommands(const Recorder& recorder, bool singleTime) const;
-  void moveFrom(CommandBuffer& rhs);
 
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;
 
-  const CommandPool* _pool = nullptr;
+  std::weak_ptr<const CommandPool> _pool;
 };
 
 NAMESPACE_END(Vulk)

@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/PhysicalDevice.h>
 

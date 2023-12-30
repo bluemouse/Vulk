@@ -2,16 +2,16 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
-
 #include <functional>
+#include <memory>
+
+#include <Vulk/internal/base.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class Sampler {
+class Sampler : public Sharable<Sampler>, private NotCopyable {
  public:
   struct Filter {
     VkFilter mag;
@@ -43,10 +43,6 @@ class Sampler {
           const SamplerCreateInfoOverride& createInfoOverride = {});
   ~Sampler();
 
-  // Transfer the ownership from `rhs` to `this`
-  Sampler(Sampler&& rhs) noexcept;
-  Sampler& operator=(Sampler&& rhs) noexcept(false);
-
   void create(const Device& device,
               Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT},
@@ -58,13 +54,12 @@ class Sampler {
 
   [[nodiscard]] bool isCreated() const { return _sampler != VK_NULL_HANDLE; }
 
- private:
-  void moveFrom(Sampler& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  private:
   VkSampler _sampler = VK_NULL_HANDLE;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

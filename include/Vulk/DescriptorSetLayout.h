@@ -2,29 +2,25 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vector>
+#include <memory>
+
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/ShaderModule.h>
 
-#include <vector>
 
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
-class DescriptorSetLayout {
+class DescriptorSetLayout : public Sharable<DescriptorSetLayout>, private NotCopyable {
  public:
   using DescriptorSetLayoutBinding = ShaderModule::DescriptorSetLayoutBinding;
 
  public:
-  DescriptorSetLayout() = default;
   DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders);
   ~DescriptorSetLayout();
-
-  // Transfer the ownership from `rhs` to `this`
-  DescriptorSetLayout(DescriptorSetLayout&& rhs) noexcept;
-  DescriptorSetLayout& operator=(DescriptorSetLayout&& rhs) noexcept(false);
 
   void create(const Device& device, std::vector<ShaderModule*> shaders);
   void destroy();
@@ -34,7 +30,7 @@ class DescriptorSetLayout {
 
   [[nodiscard]] bool isCreated() const { return _layout != VK_NULL_HANDLE; }
 
-  [[nodiscard]] const Device& device() const { return *_device; }
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
   [[nodiscard]] const std::vector<VkDescriptorPoolSize>& poolSizes() const { return _poolSizes; }
   [[nodiscard]] const std::vector<DescriptorSetLayoutBinding>& bindings() const {
@@ -42,15 +38,12 @@ class DescriptorSetLayout {
   }
 
  private:
-  void moveFrom(DescriptorSetLayout& rhs);
-
- private:
   VkDescriptorSetLayout _layout = VK_NULL_HANDLE;
 
   std::vector<DescriptorSetLayoutBinding> _bindings;
   std::vector<VkDescriptorPoolSize> _poolSizes;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

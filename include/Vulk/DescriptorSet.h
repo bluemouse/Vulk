@@ -2,17 +2,17 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
-
 #include <vector>
+#include <memory>
+
+#include <Vulk/internal/base.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 class DescriptorPool;
 class DescriptorSetLayout;
 
-class DescriptorSet {
+class DescriptorSet : public Sharable<DescriptorSet>, private NotCopyable {
  public:
   struct Binding {
     std::string name;
@@ -34,10 +34,6 @@ class DescriptorSet {
                 const std::vector<Binding>& bindings);
   ~DescriptorSet();
 
-  // Transfer the ownership from `rhs` to `this`
-  DescriptorSet(DescriptorSet&& rhs) noexcept;
-  DescriptorSet& operator=(DescriptorSet&& rhs) noexcept(false);
-
   void allocate(const DescriptorPool& pool,
                 const DescriptorSetLayout& layout,
                 const std::vector<Binding>& bindings);
@@ -48,13 +44,12 @@ class DescriptorSet {
 
   [[nodiscard]] bool isAllocated() const { return _set != VK_NULL_HANDLE; }
 
- private:
-  void moveFrom(DescriptorSet& rhs);
+  [[nodiscard]] const DescriptorPool& pool() const { return *_pool.lock(); }
 
  private:
   VkDescriptorSet _set = VK_NULL_HANDLE;
 
-  const DescriptorPool* _pool = nullptr;
+  std::weak_ptr<const DescriptorPool> _pool;
 };
 
 NAMESPACE_END(Vulk)

@@ -121,7 +121,7 @@ class Testbed : public MainWindow {
   Vulk::Texture2D::shared_ptr _texture;
 
   struct Frame {
-    Vulk::CommandBuffer commandBuffer;
+    Vulk::CommandBuffer::shared_ptr commandBuffer;
 
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::ImageView colorAttachment;
@@ -132,7 +132,7 @@ class Testbed : public MainWindow {
     Vulk::UniformBuffer uniformBuffer;
     void* uniformBufferMapped;
 
-    Vulk::DescriptorSet descriptorSet;
+    Vulk::DescriptorSet::shared_ptr descriptorSet;
 
     Vulk::Semaphore::shared_ptr imageAvailableSemaphore;
     Vulk::Semaphore::shared_ptr renderFinishedSemaphore;

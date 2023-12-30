@@ -20,33 +20,9 @@ DescriptorSetLayout::~DescriptorSetLayout() {
   }
 }
 
-DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-DescriptorSetLayout& DescriptorSetLayout::operator=(DescriptorSetLayout&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void DescriptorSetLayout::moveFrom(DescriptorSetLayout& rhs) {
-  MI_VERIFY(!isCreated());
-  _layout    = rhs._layout;
-  _bindings  = std::move(rhs._bindings);
-  _poolSizes = std::move(rhs._poolSizes);
-  _device    = rhs._device;
-
-  rhs._layout = VK_NULL_HANDLE;
-  rhs._bindings.clear();
-  rhs._poolSizes.clear();
-  rhs._device = nullptr;
-}
-
 void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*> shaders) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   size_t numBindings = 0;
   for (auto* shader : shaders) {
@@ -98,11 +74,11 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
 void DescriptorSetLayout::destroy() {
   MI_VERIFY(isCreated());
 
-  vkDestroyDescriptorSetLayout(*_device, _layout, nullptr);
+  vkDestroyDescriptorSetLayout(device(), _layout, nullptr);
   _layout = VK_NULL_HANDLE;
   _bindings.clear();
   _poolSizes.clear();
-  _device = nullptr;
+  _device.reset();
 }
 
 NAMESPACE_END(Vulk)

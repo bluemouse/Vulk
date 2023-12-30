@@ -1,5 +1,7 @@
 #include <Vulk/Sampler.h>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/PhysicalDevice.h>
 
@@ -18,32 +20,12 @@ Sampler::~Sampler() {
   }
 }
 
-Sampler::Sampler(Sampler&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Sampler& Sampler::operator=(Sampler&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Sampler::moveFrom(Sampler& rhs) {
-  MI_VERIFY(!isCreated());
-  _sampler = rhs._sampler;
-  _device  = rhs._device;
-
-  rhs._sampler = VK_NULL_HANDLE;
-  rhs._device  = nullptr;
-}
-
 void Sampler::create(const Device& device,
                      Filter filter,
                      AddressMode addressMode,
                      const SamplerCreateInfoOverride& createInfoOverride) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   VkPhysicalDeviceProperties properties{};
   vkGetPhysicalDeviceProperties(device.physicalDevice(), &properties);
@@ -72,10 +54,10 @@ void Sampler::create(const Device& device,
 
 void Sampler::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroySampler(*_device, _sampler, nullptr);
+  vkDestroySampler(device(), _sampler, nullptr);
 
   _sampler = VK_NULL_HANDLE;
-  _device  = nullptr;
+  _device.reset();
 }
 
 NAMESPACE_END(Vulk)

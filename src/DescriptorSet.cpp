@@ -19,31 +19,11 @@ DescriptorSet::~DescriptorSet() {
   }
 }
 
-DescriptorSet::DescriptorSet(DescriptorSet&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-DescriptorSet& DescriptorSet::operator=(DescriptorSet&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void DescriptorSet::moveFrom(DescriptorSet& rhs) {
-  MI_VERIFY(!isAllocated());
-  _set  = rhs._set;
-  _pool = rhs._pool;
-
-  rhs._set  = VK_NULL_HANDLE;
-  rhs._pool = nullptr;
-}
-
 void DescriptorSet::allocate(const DescriptorPool& pool,
                              const DescriptorSetLayout& layout,
                              const std::vector<Binding>& bindings) {
   MI_VERIFY(!isAllocated());
-  _pool = &pool;
+  _pool = pool.get_weak();
 
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -83,7 +63,7 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
               layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
   }
 
-  vkUpdateDescriptorSets(_pool->device(), writes.size(), writes.data(), 0, nullptr);
+  vkUpdateDescriptorSets(pool.device(), writes.size(), writes.data(), 0, nullptr);
 }
 
 void DescriptorSet::free() {
@@ -94,7 +74,7 @@ void DescriptorSet::free() {
   //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
 
   _set  = VK_NULL_HANDLE;
-  _pool = nullptr;
+  _pool.reset();
 }
 
 NAMESPACE_END(Vulk)

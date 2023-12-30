@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <Vulk/DeviceMemory.h>
 

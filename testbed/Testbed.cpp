@@ -145,8 +145,8 @@ void Testbed::drawFrame() {
 
   updateUniformBuffer();
 
-  _currentFrame->commandBuffer.reset();
-  _currentFrame->commandBuffer.executeCommands(
+  _currentFrame->commandBuffer->reset();
+  _currentFrame->commandBuffer->executeCommands(
       [this](const Vulk::CommandBuffer& commandBuffer) {
         const auto& framebuffer = _currentFrame->framebuffer;
 
@@ -159,7 +159,7 @@ void Testbed::drawFrame() {
 
         commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
         commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
-        commandBuffer.bindDescriptorSet(_context.pipeline(), _currentFrame->descriptorSet);
+        commandBuffer.bindDescriptorSet(_context.pipeline(), *_currentFrame->descriptorSet);
 
         commandBuffer.drawIndexed(_drawable.numIndices());
 
@@ -169,12 +169,12 @@ void Testbed::drawFrame() {
       {_currentFrame->renderFinishedSemaphore.get()},
       *_currentFrame->fence);
 
-  _currentFrame->commandBuffer.waitIdle();
+  _currentFrame->commandBuffer->waitIdle();
 
   auto& swapchainFramebuffer = _context.swapchain().activeFramebuffer();
-  swapchainFramebuffer.image().blitFrom(_currentFrame->commandBuffer,
+  swapchainFramebuffer.image().blitFrom(*_currentFrame->commandBuffer,
                                         _currentFrame->framebuffer.image());
-  swapchainFramebuffer.image().transitToNewLayout(_currentFrame->commandBuffer,
+  swapchainFramebuffer.image().transitToNewLayout(*_currentFrame->commandBuffer,
                                                   VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
   auto result = _context.swapchain().present(*_currentFrame->renderFinishedSemaphore);
@@ -327,7 +327,7 @@ void Testbed::createFrames() {
   const auto& device = _context.device();
   const auto& extent = _context.swapchain().surfaceExtent();
   for (auto& frame : _frames) {
-    frame.commandBuffer.allocate(_context.commandPool());
+    frame.commandBuffer = Vulk::CommandBuffer::make_shared(_context.commandPool());
 
     const auto usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -354,10 +354,10 @@ void Testbed::createFrames() {
     std::vector<Vulk::DescriptorSet::Binding> bindings = {
         {"xform", "Transformation", &transformationBufferInfo},
         {"texSampler", "sampler2D", &textureImageInfo}};
-    frame.descriptorSet.allocate(
+    frame.descriptorSet = Vulk::DescriptorSet::make_shared(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
-    frame.colorBuffer->transitToNewLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();
