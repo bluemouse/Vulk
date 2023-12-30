@@ -24,32 +24,51 @@ class NotCopyable {
 
 template <typename T>
 class Sharable : public std::enable_shared_from_this<T> {
-public:
- using shared_ptr = std::shared_ptr<T>;
- using weak_ptr   = std::weak_ptr<T>;
+ public:
+  using shared_ptr = std::shared_ptr<T>;
+  using weak_ptr   = std::weak_ptr<T>;
 
- using shared_const_ptr = std::shared_ptr<const T>;
- using weak_const_ptr   = std::weak_ptr<const T>;
+  using shared_const_ptr = std::shared_ptr<const T>;
+  using weak_const_ptr   = std::weak_ptr<const T>;
 
- using unique_ptr = std::unique_ptr<T>;
+  using unique_ptr = std::unique_ptr<T>;
 
- virtual ~Sharable() = default;
+  virtual ~Sharable() = default;
 
- template <class... Args>
- static shared_ptr make_shared(Args&&... args) {
-   return std::make_shared<T>(std::forward<Args>(args)...);
- }
+  template <class... Args>
+  static shared_ptr make_shared(Args&&... args) {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+  }
 
- template <class... Args>
- static unique_ptr make_unique(Args&&... args) {
-   return std::make_unique<T>(std::forward<Args>(args)...);
- }
+  template <class... Args>
+  static unique_ptr make_unique(Args&&... args) {
+    return std::make_unique<T>(std::forward<Args>(args)...);
+  }
 
- shared_ptr get_shared() { return std::enable_shared_from_this<T>::shared_from_this(); }
- weak_ptr get_weak() { return std::enable_shared_from_this<T>::weak_from_this(); }
+  shared_ptr get_shared() { return std::enable_shared_from_this<T>::shared_from_this(); }
+  weak_ptr get_weak() { return std::enable_shared_from_this<T>::weak_from_this(); }
 
- shared_const_ptr get_shared() const { return std::enable_shared_from_this<T>::shared_from_this(); }
- weak_const_ptr get_weak() const { return std::enable_shared_from_this<T>::weak_from_this(); }
+  shared_const_ptr get_shared() const {
+    return std::enable_shared_from_this<T>::shared_from_this();
+  }
+  weak_const_ptr get_weak() const { return std::enable_shared_from_this<T>::weak_from_this(); }
 };
+
+// Create a macro to define the following codes
+#define MI_DEFINE_SHARED_PTR(type, base)                            \
+  using shared_ptr = std::shared_ptr<type>;                         \
+  using weak_ptr   = std::weak_ptr<type>;                           \
+                                                                    \
+  template <class... Args>                                          \
+  static shared_ptr make_shared(Args&&... args) {                   \
+    return std::make_shared<type>(std::forward<Args>(args)...);     \
+  }                                                                 \
+                                                                    \
+  shared_ptr get_shared() {                                         \
+    return std::static_pointer_cast<type>(base::get_shared());      \
+  }                                                                 \
+  weak_ptr get_weak() {                                             \
+    return std::static_pointer_cast<type>(base::get_weak().lock()); \
+  }
 
 NAMESPACE_END(Vulk)

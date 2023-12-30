@@ -59,16 +59,7 @@ class DepthImage : public Image {
   //
   // Override the sharable types and functions
   //
-  using shared_ptr = std::shared_ptr<DepthImage>;
-  using weak_ptr   = std::weak_ptr<DepthImage>;
-
-  template <class... Args>
-  static shared_ptr make_shared(Args&&... args) {
-    return std::make_shared<DepthImage>(std::forward<Args>(args)...);
-  }
-
-  shared_ptr get_shared() { return std::static_pointer_cast<DepthImage>(Image::get_shared()); }
-  weak_ptr get_weak() { return std::static_pointer_cast<DepthImage>(Image::get_weak().lock()); }
+  MI_DEFINE_SHARED_PTR(DepthImage, Image);
 
  private:
   VkFormat _format = VK_FORMAT_UNDEFINED;

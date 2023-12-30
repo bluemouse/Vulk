@@ -51,16 +51,7 @@ class Image2D : public Image {
   //
   // Override the sharable types and functions
   //
-  using shared_ptr = std::shared_ptr<Image2D>;
-  using weak_ptr   = std::weak_ptr<Image2D>;
-
-  template <class... Args>
-  static shared_ptr make_shared(Args&&... args) {
-    return std::make_shared<Image2D>(std::forward<Args>(args)...);
-  }
-
-  shared_ptr get_shared() { return std::static_pointer_cast<Image2D>(Image::get_shared()); }
-  weak_ptr get_weak() { return std::static_pointer_cast<Image2D>(Image::get_weak().lock()); }
+  MI_DEFINE_SHARED_PTR(Image2D, Image);
 
  protected:
   bool isExternal() const { return _external; }
