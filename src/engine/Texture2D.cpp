@@ -19,26 +19,27 @@ void Texture2D::create(const Device& device,
                        VkImageUsageFlags usage,
                        Filter filter,
                        AddressMode addressMode) {
-  _image.create(device, format, extent, usage);
-  _image.allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  _view.create(device, _image);
+  _image = Image2D::make_shared(device, format, extent, usage);
+  _image->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  _view.create(device, image());
   _sampler.create(device, filter, addressMode);
 }
 
 void Texture2D::destroy() {
   _sampler.destroy();
   _view.destroy();
-  _image.destroy();
+  _image.reset();
 }
 
 void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
-  _image.copyFrom(cmdBuffer, stagingBuffer);
-  _image.makeShaderReadable(cmdBuffer);
+  _image->copyFrom(cmdBuffer, stagingBuffer);
+  _image->makeShaderReadable(cmdBuffer);
 }
 
 void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
-  _image.copyFrom(cmdBuffer, srcImage);
-  _image.makeShaderReadable(cmdBuffer);
+  _image->copyFrom(cmdBuffer, srcImage);
+  _image->makeShaderReadable(cmdBuffer);
 }
 
 void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {
@@ -46,8 +47,8 @@ void Texture2D::copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTex
 }
 
 void Texture2D::blitFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
-  _image.blitFrom(cmdBuffer, srcImage);
-  _image.makeShaderReadable(cmdBuffer);
+  _image->blitFrom(cmdBuffer, srcImage);
+  _image->makeShaderReadable(cmdBuffer);
 }
 
 void Texture2D::blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {

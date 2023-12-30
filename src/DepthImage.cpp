@@ -15,15 +15,11 @@ DepthImage::DepthImage(const Device& device,
   create(device, extent, depthBits, stencilBits, override);
 }
 
-DepthImage::DepthImage(DepthImage&& rhs) noexcept {
-  operator=(std::move(rhs));
-}
-
-DepthImage& DepthImage::operator=(DepthImage&& rhs) noexcept(false) {
-  _format     = rhs._format;
-  rhs._format = VK_FORMAT_UNDEFINED;
-  Image::operator=(std::move(rhs));
-  return *this;
+DepthImage::DepthImage(const Device& device,
+                       VkExtent2D extent,
+                       VkFormat format,
+                       const ImageCreateInfoOverride& override) {
+  create(device, extent, format, override);
 }
 
 void DepthImage::create(const Device& device,

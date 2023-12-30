@@ -105,17 +105,18 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   std::vector<VkImage> imgs(imageCount);
   vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
 
-  _depthImage.create(device, _surfaceExtent, renderPass.depthStencilFormat());
-  _depthImage.allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  _depthImageView.create(device, _depthImage);
+  _depthImage = DepthImage::make_shared(device, _surfaceExtent, renderPass.depthStencilFormat());
+  _depthImage->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  _depthImageView.create(device, *_depthImage);
 
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
   _images.reserve(imageCount);
   _imageViews.reserve(imageCount);
   _framebuffers.reserve(_imageViews.size());
   for (auto& img : imgs) {
-    _images.emplace_back(img, renderPass.colorFormat(), _surfaceExtent);
-    _imageViews.emplace_back(device, _images.back());
+    auto img2d = Vulk::Image2D::make_shared(img, renderPass.colorFormat(), _surfaceExtent);
+    _images.push_back(img2d);
+    _imageViews.emplace_back(device, *img2d);
     _framebuffers.emplace_back(device, renderPass, _imageViews.back(), _depthImageView);
   }
 
@@ -132,7 +133,7 @@ void Swapchain::destroy() {
   _imageViews.clear();
   _images.clear();
   _depthImageView.destroy();
-  _depthImage.destroy();
+  _depthImage.reset();
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
 
@@ -161,7 +162,7 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
     _images.clear();
 
     _depthImageView.destroy();
-    _depthImage.destroy();
+    _depthImage.reset();
   }
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);

@@ -30,17 +30,6 @@ Image2D::Image2D(VkImage image, VkFormat format, VkExtent2D extent) : _external{
   _extent = {extent.width, extent.height, 1};
 }
 
-Image2D::Image2D(Image2D&& rhs) noexcept {
-  operator=(std::move(rhs));
-}
-
-Image2D& Image2D::operator=(Image2D&& rhs) noexcept(false) {
-  _external     = rhs._external;
-  rhs._external = false;
-  Image::operator=(std::move(rhs));
-  return *this;
-}
-
 void Image2D::create(const Device& device,
                      VkFormat format,
                      VkExtent2D extent,
@@ -72,6 +61,16 @@ void Image2D::create(const Device& device,
   }
 
   Image::create(device, imageInfo);
+}
+
+Image2D::~Image2D() {
+  if (isExternal()) {
+    // We need to reset _image to VK_NULL_HANDLE so that Image::destroy() in ~Image() won't try to
+    // destroy it.
+    _image  = VK_NULL_HANDLE;
+    _format = VK_FORMAT_UNDEFINED;
+    _extent = {0, 0, 0};
+  }
 }
 
 void Image2D::destroy() {

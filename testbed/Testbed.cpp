@@ -104,15 +104,15 @@ void Testbed::init(int width, int height) {
 
 void Testbed::cleanup() {
   for (auto& frame : _frames) {
-    frame.colorBuffer.destroy();
+    frame.colorBuffer->destroy();
     frame.colorAttachment.destroy();
-    frame.depthBuffer.destroy();
+    frame.depthBuffer->destroy();
     frame.depthAttachment.destroy();
     frame.framebuffer.destroy();
   }
   _frames.clear();
 
-  _texture.destroy();
+  _texture->destroy();
 
   _drawable.destroy();
   _context.destroy();
@@ -277,9 +277,9 @@ void Testbed::createDrawable() {
   if (_modelFile.empty()) {
     float left{-1.0F}, right{1.0F}, bottom{-1.0F}, top{1.0F};
 
-    if (_texture.isValid()) {
+    if (_texture->isValid()) {
       // to make sure the texture and the quad has the same aspect ratio
-      auto [textureW, textureH] = _texture.extent();
+      auto [textureW, textureH] = _texture->extent();
       float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
 
       if (textureAspect > 1.0F) {
@@ -317,8 +317,8 @@ void Testbed::createFrames() {
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  textureImageInfo.imageView   = _texture;
-  textureImageInfo.sampler     = _texture;
+  textureImageInfo.imageView   = _texture->view();
+  textureImageInfo.sampler     = _texture->sampler();
 
   VkDescriptorBufferInfo transformationBufferInfo{};
   transformationBufferInfo.offset = 0;
@@ -331,12 +331,12 @@ void Testbed::createFrames() {
 
     const auto usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    frame.colorBuffer.create(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
-    frame.colorBuffer.allocate();
-    frame.colorAttachment.create(device, frame.colorBuffer);
-    frame.depthBuffer.create(device, extent, chooseDepthFormat());
-    frame.depthBuffer.allocate();
-    frame.depthAttachment.create(device, frame.depthBuffer);
+    frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
+    frame.colorBuffer->allocate();
+    frame.colorAttachment.create(device, *frame.colorBuffer);
+    frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
+    frame.depthBuffer->allocate();
+    frame.depthAttachment.create(device, *frame.depthBuffer);
     frame.framebuffer.create(
         device, _context.renderPass(), frame.colorAttachment, frame.depthAttachment);
 
@@ -357,7 +357,7 @@ void Testbed::createFrames() {
     frame.descriptorSet.allocate(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
-    frame.colorBuffer.transitToNewLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();

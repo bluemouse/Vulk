@@ -1,13 +1,12 @@
 #include <Vulk/Image.h>
 
+#include <set>
+
+#include <Vulk/internal/helpers.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
-
-#include <Vulk/internal/vulkan_debug.h>
-#include <Vulk/internal/helpers.h>
-
-#include <set>
 
 namespace {
 VkImageAspectFlags selectAspectMask(VkImageLayout layout) {
@@ -93,43 +92,15 @@ void selectStageAccess(VkImageLayout layout, VkPipelineStageFlags& stage, VkAcce
 
 NAMESPACE_BEGIN(Vulk)
 
-Image::~Image() noexcept(false) {
-  if (isAllocated()) {
-    free();
+Image::~Image() {
+  if (isCreated()) {
+    destroy();
   }
-}
-
-Image::Image(Image&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Image& Image::operator=(Image&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Image::moveFrom(Image& rhs) {
-  MI_VERIFY(!isCreated());
-  _image  = rhs._image;
-  _memory = rhs._memory;
-  _format = rhs._format;
-  _extent = rhs._extent;
-  _layout = rhs._layout;
-  _device = rhs._device;
-
-  rhs._image  = VK_NULL_HANDLE;
-  rhs._memory = VK_NULL_HANDLE;
-  rhs._format = VK_FORMAT_UNDEFINED;
-  rhs._extent = {0, 0, 0};
-  rhs._layout = VK_IMAGE_LAYOUT_UNDEFINED;
-  rhs._device = nullptr;
 }
 
 void Image::create(const Device& device, const VkImageCreateInfo& imageInfo) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
 
   MI_VERIFY_VKCMD(vkCreateImage(device, &imageInfo, nullptr, &_image));
 
@@ -145,24 +116,26 @@ void Image::destroy() {
   if (isAllocated()) {
     free();
   }
-  vkDestroyImage(*_device, _image, nullptr);
+  vkDestroyImage(device(), _image, nullptr);
 
   _image  = VK_NULL_HANDLE;
   _format = VK_FORMAT_UNDEFINED;
   _extent = {0, 0, 0};
   _layout = VK_IMAGE_LAYOUT_UNDEFINED;
-  _device = nullptr;
+  _device.reset();
 }
 
 void Image::allocate(VkMemoryPropertyFlags properties) {
   MI_VERIFY(!isAllocated());
   _memory = DeviceMemory::make();
 
-  VkMemoryRequirements requirements;
-  vkGetImageMemoryRequirements(*_device, _image, &requirements);
-  _memory->allocate(*_device, properties, requirements);
+  const Device& device = this->device();
 
-  vkBindImageMemory(*_device, _image, *_memory.get(), 0);
+  VkMemoryRequirements requirements;
+  vkGetImageMemoryRequirements(device, _image, &requirements);
+  _memory->allocate(device, properties, requirements);
+
+  vkBindImageMemory(device, _image, *_memory.get(), 0);
 }
 
 void Image::free() {
@@ -177,7 +150,7 @@ void Image::bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset) {
     free();
   }
   _memory = memory;
-  vkBindImageMemory(*_device, _image, *_memory.get(), offset);
+  vkBindImageMemory(device(), _image, *_memory.get(), offset);
 }
 
 void* Image::map() {

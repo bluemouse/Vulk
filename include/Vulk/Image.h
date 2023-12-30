@@ -2,8 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/DeviceMemory.h>
+#include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
+
+#include <Vulk/DeviceMemory.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -11,14 +13,10 @@ class Device;
 class CommandBuffer;
 class StagingBuffer;
 
-class Image {
+class Image : public Sharable<Image>, private NotCopyable {
  public:
   Image() = default;
-  virtual ~Image() noexcept(false);
-
-  // Transfer the ownership from `rhs` to `this`
-  Image(Image&& rhs) noexcept;
-  Image& operator=(Image&& rhs) noexcept(false);
+  virtual ~Image() override;
 
   virtual void destroy();
 
@@ -59,11 +57,10 @@ class Image {
                           VkImageLayout newLayout,
                           bool waitForFinish = true) const;
 
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
+
  protected:
   void create(const Device& device, const VkImageCreateInfo& imageInfo);
-
- private:
-  void moveFrom(Image& rhs);
 
  protected:
   VkImage _image = VK_NULL_HANDLE;
@@ -75,7 +72,7 @@ class Image {
 
   DeviceMemory::Ptr _memory;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

@@ -15,14 +15,14 @@ class Toolbox {
   Toolbox(const Context& context);
   ~Toolbox() = default;
 
-  Image2D createImage2D(const char* imageFile) const;
-  Texture2D createTexture2D(const char* textureFile) const;
+  Image2D::shared_ptr createImage2D(const char* imageFile) const;
+  Texture2D::shared_ptr createTexture2D(const char* textureFile) const;
 
   enum class TextureFormat { RGB, RGBA };
-  Texture2D createTexture2D(TextureFormat format,
-                            const uint8_t* data,
-                            uint32_t width,
-                            uint32_t height) const;
+  Texture2D::shared_ptr createTexture2D(TextureFormat format,
+                                        const uint8_t* data,
+                                        uint32_t width,
+                                        uint32_t height) const;
 
   Toolbox(const Toolbox& rhs)            = delete;
   Toolbox& operator=(const Toolbox& rhs) = delete;

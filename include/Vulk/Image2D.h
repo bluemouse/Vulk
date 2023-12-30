@@ -2,8 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/Image.h>
+#include <memory>
+
+#include <Vulk/internal/base.h>
 #include <Vulk/internal/vulkan_debug.h>
+
+#include <Vulk/Image.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -29,9 +33,7 @@ class Image2D : public Image {
 
   Image2D(VkImage image, VkFormat format, VkExtent2D extent); // special use by Swapchain
 
-  // Transfer the ownership from `rhs` to `this`
-  Image2D(Image2D&& rhs) noexcept;
-  Image2D& operator=(Image2D&& rhs) noexcept(false);
+  ~Image2D() override;
 
   void create(const Device& device,
               VkFormat format,
@@ -46,6 +48,20 @@ class Image2D : public Image {
   [[nodiscard]] VkExtent2D extent() const { return {_extent.width, _extent.height}; }
 
   operator VkImage() const { return Image::operator VkImage(); }
+
+  //
+  // Override the sharable types and functions
+  //
+  using shared_ptr = std::shared_ptr<Image2D>;
+  using weak_ptr   = std::weak_ptr<Image2D>;
+
+  template <class... Args>
+  static shared_ptr make_shared(Args&&... args) {
+    return std::make_shared<Image2D>(std::forward<Args>(args)...);
+  }
+
+  shared_ptr get_shared() { return std::static_pointer_cast<Image2D>(Image::get_shared()); }
+  weak_ptr get_weak() { return std::static_pointer_cast<Image2D>(Image::get_weak().lock()); }
 
  protected:
   bool isExternal() const { return _external; }

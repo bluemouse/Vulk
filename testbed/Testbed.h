@@ -118,14 +118,14 @@ class Testbed : public MainWindow {
   Camera _camera;
 
   Vulk::Drawable<Vertex, uint32_t> _drawable;
-  Vulk::Texture2D _texture;
+  Vulk::Texture2D::shared_ptr _texture;
 
   struct Frame {
     Vulk::CommandBuffer commandBuffer;
 
-    Vulk::Image2D colorBuffer;
+    Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::ImageView colorAttachment;
-    Vulk::DepthImage depthBuffer;
+    Vulk::DepthImage::shared_ptr depthBuffer;
     Vulk::ImageView depthAttachment;
     Vulk::Framebuffer framebuffer;
 
