@@ -1,5 +1,7 @@
 #include <Vulk/Framebuffer.h>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/Image.h>
 #include <Vulk/ImageView.h>
@@ -26,17 +28,13 @@ Framebuffer::~Framebuffer() {
   }
 }
 
-Framebuffer::Framebuffer(Framebuffer&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
                          ImageView& colorAttachment) {
-  _device                 = &device;
-  _renderPass             = &renderPass;
-  _colorAttachment        = &colorAttachment;
-  _depthStencilAttachment = nullptr;
+  _device          = device.get_weak();
+  _renderPass      = renderPass.get_weak();
+  _colorAttachment = colorAttachment.get_weak();
+  _depthStencilAttachment.reset();
 
   create();
 }
@@ -45,10 +43,10 @@ void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
                          ImageView& colorAttachment,
                          ImageView& depthStencilAttachment) {
-  _device                 = &device;
-  _renderPass             = &renderPass;
-  _colorAttachment        = &colorAttachment;
-  _depthStencilAttachment = &depthStencilAttachment;
+  _device                 = device.get_weak();
+  _renderPass             = renderPass.get_weak();
+  _colorAttachment        = colorAttachment.get_weak();
+  _depthStencilAttachment = depthStencilAttachment.get_weak();
 
   create();
 }
@@ -56,39 +54,33 @@ void Framebuffer::create(const Device& device,
 void Framebuffer::create() {
   MI_VERIFY(!isCreated());
 
-  std::vector<VkImageView> attachments = {*_colorAttachment};
-  if (_depthStencilAttachment != nullptr) {
-    attachments.push_back(*_depthStencilAttachment);
+  std::vector<VkImageView> attachments = {colorAttachment()};
+  if (_depthStencilAttachment.lock()) {
+    attachments.push_back(depthStencilAttachment());
   }
 
   VkFramebufferCreateInfo framebufferInfo{};
   framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  framebufferInfo.renderPass      = *_renderPass;
+  framebufferInfo.renderPass      = renderPass();
   framebufferInfo.attachmentCount = attachments.size();
   framebufferInfo.pAttachments    = attachments.data();
-  framebufferInfo.width           = _colorAttachment->image().width();
-  framebufferInfo.height          = _colorAttachment->image().height();
+  framebufferInfo.width           = image().width();
+  framebufferInfo.height          = image().height();
   framebufferInfo.layers          = 1;
 
-  MI_VERIFY_VKCMD(vkCreateFramebuffer(*_device, &framebufferInfo, nullptr, &_buffer));
+  MI_VERIFY_VKCMD(vkCreateFramebuffer(device(), &framebufferInfo, nullptr, &_buffer));
 }
 
 void Framebuffer::destroy() {
   MI_VERIFY(isCreated());
-  vkDestroyFramebuffer(*_device, _buffer, nullptr);
+  vkDestroyFramebuffer(device(), _buffer, nullptr);
 
   _buffer                 = VK_NULL_HANDLE;
-  _device                 = nullptr;
-  _renderPass             = nullptr;
-  _colorAttachment        = nullptr;
-  _depthStencilAttachment = nullptr;
-}
 
-Framebuffer& Framebuffer::operator=(Framebuffer&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
+  _device.reset();
+  _renderPass.reset();
+  _colorAttachment.reset();
+  _depthStencilAttachment.reset();
 }
 
 VkExtent2D Framebuffer::extent() const {
@@ -96,27 +88,12 @@ VkExtent2D Framebuffer::extent() const {
   return {imageExtent.width, imageExtent.height};
 }
 
-void Framebuffer::moveFrom(Framebuffer& rhs) {
-  MI_VERIFY(_buffer == VK_NULL_HANDLE);
-  _buffer                 = rhs._buffer;
-  _device                 = rhs._device;
-  _renderPass             = rhs._renderPass;
-  _colorAttachment        = rhs._colorAttachment;
-  _depthStencilAttachment = rhs._depthStencilAttachment;
-
-  rhs._buffer                 = VK_NULL_HANDLE;
-  rhs._device                 = nullptr;
-  rhs._renderPass             = nullptr;
-  rhs._colorAttachment        = nullptr;
-  rhs._depthStencilAttachment = nullptr;
-}
-
 Image& Framebuffer::image() {
-  return _colorAttachment->image();
+  return _colorAttachment.lock()->image();
 }
 
 const Image& Framebuffer::image() const {
-  return _colorAttachment->image();
+  return _colorAttachment.lock()->image();
 }
 
 NAMESPACE_END(Vulk)

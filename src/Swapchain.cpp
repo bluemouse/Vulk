@@ -107,7 +107,7 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
 
   _depthImage = DepthImage::make_shared(device, _surfaceExtent, renderPass.depthStencilFormat());
   _depthImage->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  _depthImageView.create(device, *_depthImage);
+  _depthImageView = ImageView::make_shared(device, *_depthImage);
 
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
   _images.reserve(imageCount);
@@ -120,7 +120,8 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
     auto view = Vulk::ImageView::make_shared(device, *img2d);
     _imageViews.push_back(view);
 
-    _framebuffers.emplace_back(device, renderPass, *_imageViews.back(), _depthImageView);
+    auto framebuffer = Vulk::Framebuffer::make_shared(device, renderPass, *view, *_depthImageView);
+    _framebuffers.push_back(framebuffer);
   }
 
   deactivateActiveImage();
@@ -135,7 +136,7 @@ void Swapchain::destroy() {
   _framebuffers.clear();
   _imageViews.clear();
   _images.clear();
-  _depthImageView.destroy();
+  _depthImageView.reset();
   _depthImage.reset();
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
@@ -155,16 +156,16 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   if (width == _surfaceExtent.width && height == _surfaceExtent.height) {
     return;
   }
-  const RenderPass* renderPass = nullptr;
+  RenderPass::shared_const_ptr renderPass;
   if (!_framebuffers.empty()) {
-    renderPass = &_framebuffers[0].renderPass();
+    renderPass = _framebuffers[0]->renderPass().get_shared();
 
     // Be careful about changing the destroying order.
     _framebuffers.clear();
     _imageViews.clear();
     _images.clear();
 
-    _depthImageView.destroy();
+    _depthImageView.reset();
     _depthImage.reset();
   }
 

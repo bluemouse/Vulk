@@ -108,7 +108,7 @@ void Testbed::cleanup() {
     frame.colorAttachment->destroy();
     frame.depthBuffer->destroy();
     frame.depthAttachment->destroy();
-    frame.framebuffer.destroy();
+    frame.framebuffer->destroy();
   }
   _frames.clear();
 
@@ -150,11 +150,11 @@ void Testbed::drawFrame() {
       [this](const Vulk::CommandBuffer& commandBuffer) {
         const auto& framebuffer = _currentFrame->framebuffer;
 
-        commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
+        commandBuffer.beginRenderPass(_context.renderPass(), *framebuffer);
 
         commandBuffer.bindPipeline(_context.pipeline());
 
-        auto extent = framebuffer.extent();
+        auto extent = framebuffer->extent();
         commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
         commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
@@ -173,7 +173,7 @@ void Testbed::drawFrame() {
 
   auto& swapchainFramebuffer = _context.swapchain().activeFramebuffer();
   swapchainFramebuffer.image().blitFrom(*_currentFrame->commandBuffer,
-                                        _currentFrame->framebuffer.image());
+                                        _currentFrame->framebuffer->image());
   swapchainFramebuffer.image().transitToNewLayout(*_currentFrame->commandBuffer,
                                                   VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
@@ -334,15 +334,15 @@ void Testbed::createFrames() {
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
     frame.colorAttachment = Vulk::ImageView::make_shared(device, *frame.colorBuffer);
-    frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
+    frame.depthBuffer     = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
     frame.depthAttachment = Vulk::ImageView::make_shared(device, *frame.depthBuffer);
-    frame.framebuffer.create(
+    frame.framebuffer     = Vulk::Framebuffer::make_shared(
         device, _context.renderPass(), *frame.colorAttachment, *frame.depthAttachment);
 
     frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
-    frame.fence = Vulk::Fence::make_shared(device, true);
+    frame.fence                   = Vulk::Fence::make_shared(device, true);
 
     frame.uniformBuffer.create(device, sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer.map();
@@ -357,7 +357,8 @@ void Testbed::createFrames() {
     frame.descriptorSet = Vulk::DescriptorSet::make_shared(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
-    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer,
+                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();

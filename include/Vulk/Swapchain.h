@@ -67,15 +67,15 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
   [[nodiscard]] Image2D& image(size_t i) { return *_images[i]; }
   [[nodiscard]] std::vector<ImageView::shared_ptr>& imageViews() { return _imageViews; }
   [[nodiscard]] ImageView& imageView(size_t i) { return *_imageViews[i]; }
-  [[nodiscard]] std::vector<Framebuffer>& framebuffers() { return _framebuffers; }
-  [[nodiscard]] Framebuffer& framebuffer(size_t i) { return _framebuffers[i]; }
+  [[nodiscard]] std::vector<Framebuffer::shared_ptr>& framebuffers() { return _framebuffers; }
+  [[nodiscard]] Framebuffer& framebuffer(size_t i) { return *_framebuffers[i]; }
 
   [[nodiscard]] const std::vector<Image2D::shared_ptr>& images() const { return _images; }
   [[nodiscard]] const Image2D& image(size_t i) const { return *_images[i]; }
   [[nodiscard]] const std::vector<ImageView::shared_ptr>& imageViews() const { return _imageViews; }
   [[nodiscard]] const ImageView& imageView(size_t i) const { return *_imageViews[i]; }
-  [[nodiscard]] const std::vector<Framebuffer>& framebuffers() const { return _framebuffers; }
-  [[nodiscard]] const Framebuffer& framebuffer(size_t i) const { return _framebuffers[i]; }
+  [[nodiscard]] const std::vector<Framebuffer::shared_ptr>& framebuffers() const { return _framebuffers; }
+  [[nodiscard]] const Framebuffer& framebuffer(size_t i) const { return *_framebuffers[i]; }
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
   [[nodiscard]] const Surface& surface() const { return *_surface.lock(); }
@@ -116,10 +116,10 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
 
   std::vector<Image2D::shared_ptr> _images;
   std::vector<ImageView::shared_ptr> _imageViews;
-  std::vector<Framebuffer> _framebuffers;
+  std::vector<Framebuffer::shared_ptr> _framebuffers;
 
   DepthImage::shared_ptr _depthImage;
-  ImageView _depthImageView;
+  ImageView::shared_ptr _depthImageView;
 
   mutable uint32_t _activeImageIndex = std::numeric_limits<uint32_t>::max();
 

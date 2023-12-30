@@ -2,8 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include <memory>
+
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -12,19 +13,14 @@ class RenderPass;
 class ImageView;
 class Image;
 
-class Framebuffer {
+class Framebuffer : public Sharable<Framebuffer>, private NotCopyable {
  public:
-  Framebuffer() = default;
   Framebuffer(const Device& device, const RenderPass& renderPass, ImageView& colorAttachment);
   Framebuffer(const Device& device,
               const RenderPass& renderPass,
               ImageView& colorAttachment,
               ImageView& depthStencilAttachment);
   ~Framebuffer();
-
-  // Transfer the ownership from `rhs` to `this`
-  Framebuffer(Framebuffer&& rhs) noexcept;
-  Framebuffer& operator=(Framebuffer&& rhs) noexcept(false);
 
   void create(const Device& device, const RenderPass& renderPass, ImageView& colorAttachment);
   void create(const Device& device,
@@ -39,23 +35,27 @@ class Framebuffer {
 
   [[nodiscard]] bool isCreated() const { return _buffer != VK_NULL_HANDLE; }
 
-  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass; }
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
+  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass.lock(); }
 
   [[nodiscard]] Image& image();
   [[nodiscard]] const Image& image() const;
 
  private:
-  void moveFrom(Framebuffer& rhs);
-
   void create();
+
+  [[nodiscard]] const ImageView& colorAttachment() const { return *_colorAttachment.lock(); }
+  [[nodiscard]] const ImageView& depthStencilAttachment() const {
+    return *_depthStencilAttachment.lock();
+  }
 
  private:
   VkFramebuffer _buffer = VK_NULL_HANDLE;
 
-  const Device* _device              = nullptr;
-  const RenderPass* _renderPass      = nullptr;
-  ImageView* _colorAttachment        = nullptr;
-  ImageView* _depthStencilAttachment = nullptr;
+  std::weak_ptr<const Device> _device;
+  std::weak_ptr<const RenderPass> _renderPass;
+  std::weak_ptr<ImageView> _colorAttachment;
+  std::weak_ptr<ImageView> _depthStencilAttachment;
 };
 
 NAMESPACE_END(Vulk)
