@@ -1,13 +1,15 @@
 #include <Vulk/Swapchain.h>
 
+#include <limits>
+
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/Surface.h>
 #include <Vulk/Instance.h>
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/RenderPass.h>
 #include <Vulk/Semaphore.h>
-
-#include <limits>
 
 NAMESPACE_BEGIN(Vulk)
 

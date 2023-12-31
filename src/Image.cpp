@@ -2,6 +2,7 @@
 
 #include <set>
 
+#include <Vulk/internal/vulkan_debug.h>
 #include <Vulk/internal/helpers.h>
 
 #include <Vulk/Device.h>
@@ -127,15 +128,15 @@ void Image::destroy() {
 
 void Image::allocate(VkMemoryPropertyFlags properties) {
   MI_VERIFY(!isAllocated());
-  _memory = DeviceMemory::make();
 
   const Device& device = this->device();
 
   VkMemoryRequirements requirements;
   vkGetImageMemoryRequirements(device, _image, &requirements);
-  _memory->allocate(device, properties, requirements);
 
-  vkBindImageMemory(device, _image, *_memory.get(), 0);
+  _memory = DeviceMemory::make_shared(device, properties, requirements);
+
+  vkBindImageMemory(device, _image, *_memory, 0);
 }
 
 void Image::free() {
@@ -143,14 +144,14 @@ void Image::free() {
   _memory = nullptr;
 }
 
-void Image::bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset) {
+void Image::bind(DeviceMemory& memory, VkDeviceSize offset) {
   MI_VERIFY(isCreated());
-  MI_VERIFY(memory != _memory);
+  MI_VERIFY(&memory != _memory.get());
   if (isAllocated()) {
     free();
   }
-  _memory = memory;
-  vkBindImageMemory(device(), _image, *_memory.get(), offset);
+  _memory = memory.get_shared();
+  vkBindImageMemory(device(), _image, memory, offset);
 }
 
 void* Image::map() {

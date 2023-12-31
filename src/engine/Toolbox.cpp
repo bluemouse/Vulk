@@ -23,7 +23,7 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
 
   image->allocate();
   CommandBuffer cmdBuffer{_context.commandPool()};
-  image->copyFrom(cmdBuffer, stagingBuffer);
+  image->copyFrom(cmdBuffer, *stagingBuffer);
   image->makeShaderReadable(cmdBuffer);
 
   return image;
@@ -35,7 +35,7 @@ Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
   const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   auto texture     = Texture2D::make_shared(
       _context.device(), VK_FORMAT_R8G8B8A8_SRGB, VkExtent2D{width, height}, usage);
-  texture->copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+  texture->copyFrom(CommandBuffer{_context.commandPool()}, *stagingBuffer);
 
   return texture;
 }
@@ -52,13 +52,13 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
   const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   auto texture =
       Texture2D::make_shared(_context.device(), vkFormat, VkExtent2D{width, height}, usage);
-  texture->copyFrom(CommandBuffer{_context.commandPool()}, stagingBuffer);
+  texture->copyFrom(CommandBuffer{_context.commandPool()}, *stagingBuffer);
 
   return texture;
 }
 
 auto Toolbox::createStagingBuffer(const char* imageFile) const
-    -> std::tuple<StagingBuffer, width_t, height_t> {
+    -> std::tuple<StagingBuffer::shared_ptr, width_t, height_t> {
   int texWidth    = 0;
   int texHeight   = 0;
   int texChannels = 0;
@@ -68,15 +68,15 @@ auto Toolbox::createStagingBuffer(const char* imageFile) const
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
 
-  StagingBuffer stagingBuffer{_context.device(), imageSize, pixels};
+  auto stagingBuffer = StagingBuffer::make_shared(_context.device(), imageSize, pixels);
 
   stbi_image_free(pixels);
 
-  return {std::move(stagingBuffer), texWidth, texHeight};
+  return {stagingBuffer, texWidth, texHeight};
 }
 
-StagingBuffer Toolbox::createStagingBuffer(const uint8_t* data, uint32_t size) const {
-  return StagingBuffer{_context.device(), size, data};
+StagingBuffer::shared_ptr Toolbox::createStagingBuffer(const uint8_t* data, uint32_t size) const {
+  return StagingBuffer::make_shared(_context.device(), size, data);
 }
 
 NAMESPACE_END(Vulk)

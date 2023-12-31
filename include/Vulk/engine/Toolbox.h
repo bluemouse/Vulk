@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Vulk/internal/base.h>
+
 #include <Vulk/Image2D.h>
+#include <Vulk/StagingBuffer.h>
 #include <Vulk/engine/Texture2D.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 #include <tuple>
 
@@ -30,8 +32,8 @@ class Toolbox {
  private:
   using width_t  = uint32_t;
   using height_t = uint32_t;
-  std::tuple<StagingBuffer, width_t, height_t> createStagingBuffer(const char* imageFile) const;
-  StagingBuffer createStagingBuffer(const uint8_t* data, uint32_t size) const;
+  std::tuple<StagingBuffer::shared_ptr, width_t, height_t> createStagingBuffer(const char* imageFile) const;
+  StagingBuffer::shared_ptr createStagingBuffer(const uint8_t* data, uint32_t size) const;
 
  private:
   const Vulk::Context& _context;

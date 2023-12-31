@@ -3,16 +3,17 @@
 #include <vulkan/vulkan.h>
 
 #include <functional>
+#include <memory>
 
-#include <Vulk/DeviceMemory.h>
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/base.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
+class DeviceMemory;
 
-class Buffer {
+class Buffer : public Sharable<Buffer>, private NotCopyable {
  public:
   using BufferCreateInfoOverride = std::function<void(VkBufferCreateInfo*)>;
 
@@ -28,11 +29,7 @@ class Buffer {
          VkMemoryPropertyFlags properties,
          const BufferCreateInfoOverride& override = {});
 
-  virtual ~Buffer();
-
-  // Transfer the ownership from `rhs` to `this`
-  Buffer(Buffer&& rhs) noexcept;
-  Buffer& operator=(Buffer&& rhs) noexcept(false);
+  virtual ~Buffer() override;
 
   void create(const Device& device,
               VkDeviceSize size,
@@ -49,32 +46,29 @@ class Buffer {
             VkDeviceSize size,
             VkDeviceSize offset = 0);
 
-  void bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset = 0);
+  void bind(DeviceMemory& memory, VkDeviceSize offset = 0);
 
   void* map();
   void* map(VkDeviceSize offset, VkDeviceSize size);
   void unmap();
 
   operator VkBuffer() const { return _buffer; }
-  [[nodiscard]] const DeviceMemory& memory() const { return *_memory.get(); }
+  [[nodiscard]] const DeviceMemory& memory() const { return *_memory; }
   [[nodiscard]] VkDeviceSize size() const { return _size; }
 
   [[nodiscard]] bool isCreated() const { return _buffer != VK_NULL_HANDLE; }
-  [[nodiscard]] bool isAllocated() const {
-    return isCreated() && (_memory && _memory->isAllocated());
-  }
-  [[nodiscard]] bool isMapped() const { return isAllocated() && _memory->isMapped(); }
+  [[nodiscard]] bool isAllocated() const;
+  [[nodiscard]] bool isMapped() const;
 
- private:
-  void moveFrom(Buffer& rhs);
+  [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
  protected:
   VkBuffer _buffer = VK_NULL_HANDLE;
 
   VkDeviceSize _size = 0; // in bytes
-  DeviceMemory::Ptr _memory;
+  std::shared_ptr<DeviceMemory> _memory;
 
-  const Device* _device = nullptr;
+  std::weak_ptr<const Device> _device;
 };
 
 NAMESPACE_END(Vulk)

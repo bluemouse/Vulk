@@ -344,10 +344,10 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
     frame.fence                   = Vulk::Fence::make_shared(device, true);
 
-    frame.uniformBuffer.create(device, sizeof(Transformation));
-    frame.uniformBufferMapped = frame.uniformBuffer.map();
+    frame.uniformBuffer = Vulk::UniformBuffer::make_shared(device, sizeof(Transformation));
+    frame.uniformBufferMapped = frame.uniformBuffer->map();
 
-    transformationBufferInfo.buffer = frame.uniformBuffer;
+    transformationBufferInfo.buffer = *frame.uniformBuffer;
 
     // The order of bindings must match the order of bindings in shaders. The name and the type need
     // to match them in the shader as well.

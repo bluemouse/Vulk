@@ -1,12 +1,13 @@
 #include <Vulk/Buffer.h>
 
+#include <cstring>
+
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
-#include <Vulk/internal/vulkan_debug.h>
-
-#include <cstring>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -32,36 +33,12 @@ Buffer::~Buffer() {
   }
 }
 
-Buffer::Buffer(Buffer&& rhs) noexcept {
-  moveFrom(rhs);
-}
-
-Buffer& Buffer::operator=(Buffer&& rhs) noexcept(false) {
-  if (this != &rhs) {
-    moveFrom(rhs);
-  }
-  return *this;
-}
-
-void Buffer::moveFrom(Buffer& rhs) {
-  MI_VERIFY(!isCreated());
-  _buffer = rhs._buffer;
-  _size   = rhs._size;
-  _memory = rhs._memory;
-  _device = rhs._device;
-
-  rhs._buffer = VK_NULL_HANDLE;
-  rhs._size   = 0;
-  rhs._memory = nullptr;
-  rhs._device = nullptr;
-}
-
 void Buffer::create(const Device& device,
                     VkDeviceSize size,
                     VkBufferUsageFlags usage,
                     const BufferCreateInfoOverride& override) {
   MI_VERIFY(!isCreated());
-  _device = &device;
+  _device = device.get_weak();
   _size   = size;
 
   VkBufferCreateInfo bufferInfo{};
@@ -87,22 +64,25 @@ void Buffer::destroy() {
   if (isAllocated()) {
     free();
   }
-  vkDestroyBuffer(*_device, _buffer, nullptr);
+  vkDestroyBuffer(device(), _buffer, nullptr);
 
-  _device = nullptr;
   _buffer = VK_NULL_HANDLE;
   _size   = 0;
+
+  _device.reset();
 }
 
 void Buffer::allocate(VkMemoryPropertyFlags properties) {
   MI_VERIFY(!isAllocated());
-  _memory = DeviceMemory::make();
+
+  auto& device = this->device();
 
   VkMemoryRequirements requirements;
-  vkGetBufferMemoryRequirements(*_device, _buffer, &requirements);
-  _memory->allocate(*_device, properties, requirements);
+  vkGetBufferMemoryRequirements(device, _buffer, &requirements);
 
-  vkBindBufferMemory(*_device, _buffer, *_memory.get(), 0);
+  _memory = DeviceMemory::make_shared(device, properties, requirements);
+
+  vkBindBufferMemory(device, _buffer, *_memory, 0);
 }
 
 void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
@@ -119,7 +99,7 @@ void Buffer::load(const CommandBuffer& stagingCommandBuffer,
                   VkDeviceSize offset) {
   MI_VERIFY(isAllocated());
   MI_VERIFY(offset + size <= _size);
-  StagingBuffer stagingBuffer(*_device, size);
+  StagingBuffer stagingBuffer(device(), size);
   stagingBuffer.copyFromHost(data, size);
   stagingBuffer.copyToBuffer(stagingCommandBuffer, *this, {0, offset, size});
 }
@@ -129,14 +109,14 @@ void Buffer::free() {
   _memory = nullptr;
 }
 
-void Buffer::bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset) {
+void Buffer::bind(DeviceMemory& memory, VkDeviceSize offset) {
   MI_VERIFY(isCreated());
-  MI_VERIFY(memory != _memory);
+  MI_VERIFY(&memory != _memory.get());
   if (isAllocated()) {
     free();
   }
-  _memory = memory;
-  vkBindBufferMemory(*_device, _buffer, *_memory.get(), offset);
+  _memory = memory.get_shared();
+  vkBindBufferMemory(device(), _buffer, memory, offset);
 }
 
 void* Buffer::map() {
@@ -151,6 +131,13 @@ void* Buffer::map(VkDeviceSize offset, VkDeviceSize size) {
 void Buffer::unmap() {
   MI_VERIFY(isAllocated());
   _memory->unmap();
+}
+
+bool Buffer::isAllocated() const {
+  return isCreated() && (_memory && _memory->isAllocated());
+}
+bool Buffer::isMapped() const {
+  return isAllocated() && _memory->isMapped();
 }
 
 NAMESPACE_END(Vulk)

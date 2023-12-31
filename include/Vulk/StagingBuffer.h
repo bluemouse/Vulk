@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/internal/base.h>
+
 #include <Vulk/Buffer.h>
 
 NAMESPACE_BEGIN(Vulk)
@@ -12,12 +14,7 @@ class Image;
 
 class StagingBuffer : public Buffer {
  public:
-  StagingBuffer() = default;
   StagingBuffer(const Device& device, VkDeviceSize size, const void* data = nullptr);
-
-  // Transfer the ownership from `rhs` to `this`
-  StagingBuffer(StagingBuffer&& rhs)                            = default;
-  StagingBuffer& operator=(StagingBuffer&& rhs) noexcept(false) = default;
 
   void create(const Device& device, VkDeviceSize size);
 
@@ -42,6 +39,11 @@ class StagingBuffer : public Buffer {
                    uint32_t width,
                    uint32_t height,
                    bool waitForFinish = true) const;
+
+  //
+  // Override the sharable types and functions
+  //
+  MI_DEFINE_SHARED_PTR(StagingBuffer, Buffer);
 };
 
 NAMESPACE_END(Vulk)

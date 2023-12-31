@@ -9,7 +9,6 @@
 
 #include <Vulk/ShaderModule.h>
 
-
 NAMESPACE_BEGIN(Vulk)
 
 class Device;

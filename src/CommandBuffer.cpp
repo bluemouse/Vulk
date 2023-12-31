@@ -1,5 +1,7 @@
 #include <Vulk/CommandBuffer.h>
 
+#include <Vulk/internal/vulkan_debug.h>
+
 #include <Vulk/CommandPool.h>
 #include <Vulk/Device.h>
 #include <Vulk/Pipeline.h>
@@ -8,7 +10,6 @@
 #include <Vulk/VertexBuffer.h>
 #include <Vulk/IndexBuffer.h>
 #include <Vulk/DescriptorSet.h>
-#include <Vulk/internal/vulkan_debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

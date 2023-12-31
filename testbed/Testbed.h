@@ -129,7 +129,7 @@ class Testbed : public MainWindow {
     Vulk::ImageView::shared_ptr depthAttachment;
     Vulk::Framebuffer::shared_ptr framebuffer;
 
-    Vulk::UniformBuffer uniformBuffer;
+    Vulk::UniformBuffer::shared_ptr uniformBuffer;
     void* uniformBufferMapped;
 
     Vulk::DescriptorSet::shared_ptr descriptorSet;

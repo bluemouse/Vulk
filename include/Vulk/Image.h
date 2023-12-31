@@ -11,6 +11,7 @@ NAMESPACE_BEGIN(Vulk)
 class Device;
 class CommandBuffer;
 class StagingBuffer;
+class DeviceMemory;
 
 class Image : public Sharable<Image>, private NotCopyable {
  public:
@@ -22,7 +23,7 @@ class Image : public Sharable<Image>, private NotCopyable {
   virtual void allocate(VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   virtual void free();
 
-  virtual void bind(const DeviceMemory::Ptr& memory, VkDeviceSize offset = 0);
+  virtual void bind(DeviceMemory& memory, VkDeviceSize offset = 0);
 
   virtual void* map();
   virtual void* map(VkDeviceSize offset, VkDeviceSize size);
@@ -69,7 +70,7 @@ class Image : public Sharable<Image>, private NotCopyable {
   VkExtent3D _extent            = {0, 0, 0};
   mutable VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-  DeviceMemory::Ptr _memory;
+  std::shared_ptr<DeviceMemory> _memory;
 
   std::weak_ptr<const Device> _device;
 };

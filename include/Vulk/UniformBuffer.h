@@ -2,6 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/internal/base.h>
+
+#include <Vulk/DeviceMemory.h>
 #include <Vulk/Buffer.h>
 
 NAMESPACE_BEGIN(Vulk)
@@ -10,14 +13,14 @@ class Device;
 
 class UniformBuffer : public Buffer {
  public:
-  UniformBuffer() = default;
   UniformBuffer(const Device& device, VkDeviceSize size);
 
-  // Transfer the ownership from `rhs` to `this`
-  UniformBuffer(UniformBuffer&& rhs)                            = default;
-  UniformBuffer& operator=(UniformBuffer&& rhs) noexcept(false) = default;
-
   void create(const Device& device, VkDeviceSize size);
+
+  //
+  // Override the sharable types and functions
+  //
+  MI_DEFINE_SHARED_PTR(UniformBuffer, Buffer);
 };
 
 NAMESPACE_END(Vulk)

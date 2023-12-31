@@ -2,6 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Vulk/internal/base.h>
+
+#include <Vulk/DeviceMemory.h>
 #include <Vulk/Buffer.h>
 
 NAMESPACE_BEGIN(Vulk)
@@ -11,17 +14,22 @@ class CommandBuffer;
 
 class VertexBuffer : public Buffer {
  public:
-  VertexBuffer() = default;
   VertexBuffer(const Device& device, VkDeviceSize size, bool hostVisible = false);
-
-  // Transfer the ownership from `rhs` to `this`
-  VertexBuffer(VertexBuffer&& rhs)                            = default;
-  VertexBuffer& operator=(VertexBuffer&& rhs) noexcept(false) = default;
+  template <typename Vertex>
+  VertexBuffer(const Device& device, const std::vector<Vertex>& vertices) {
+    create(device, vertices);
+  }
+  template <typename Vertex>
+  VertexBuffer(const Device& device,
+               const CommandBuffer& stagingCommandBuffer,
+               const std::vector<Vertex>& vertices) {
+    create(device, stagingCommandBuffer, vertices);
+  }
 
   // Buffer will be device local and can only be loaded using a staging buffer
   void create(const Device& device, VkDeviceSize size, bool hostVisible = false);
-  template <typename Vertex>
   // Buffer will be host visible and the data will be copied directly from host to buffer
+  template <typename Vertex>
   void create(const Device& device, const std::vector<Vertex>& vertices);
   // Buffer will be device local only and the data will be copied from host to buffer using a
   // staging buffer
@@ -29,6 +37,11 @@ class VertexBuffer : public Buffer {
   void create(const Device& device,
               const CommandBuffer& stagingCommandBuffer,
               const std::vector<Vertex>& vertices);
+
+  //
+  // Override the sharable types and functions
+  //
+  MI_DEFINE_SHARED_PTR(VertexBuffer, Buffer);
 };
 
 template <typename Vertex>
