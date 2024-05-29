@@ -1,8 +1,10 @@
 #include "Testbed.h"
 
-#include <Vulk/engine/Toolbox.h>
 #include <Vulk/ShaderModule.h>
 #include <Vulk/DepthImage.h>
+#include <Vulk/Framebuffer.h>
+
+#include <Vulk/engine/Toolbox.h>
 
 #include <GLFW/glfw3.h>
 
@@ -145,39 +147,55 @@ void Testbed::drawFrame() {
 
   updateUniformBuffer();
 
-  _currentFrame->commandBuffer->reset();
-  _currentFrame->commandBuffer->executeCommands(
-      [this](const Vulk::CommandBuffer& commandBuffer) {
-        const auto& framebuffer = _currentFrame->framebuffer;
+  renderFrame(*_currentFrame->commandBuffer,
+              *_currentFrame->framebuffer,
+              {_currentFrame->imageAvailableSemaphore.get()},
+              {_currentFrame->renderFinishedSemaphore.get()},
+              *_currentFrame->fence);
 
-        commandBuffer.beginRenderPass(_context.renderPass(), *framebuffer);
+  presentFrame(*_currentFrame->commandBuffer,
+               *_currentFrame->framebuffer,
+               {_currentFrame->renderFinishedSemaphore.get()});
+}
 
-        commandBuffer.bindPipeline(_context.pipeline());
+void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
+                          Vulk::Framebuffer& framebuffer,
+                          const std::vector<Vulk::Semaphore*> waits,
+                          const std::vector<Vulk::Semaphore*> signals,
+                          Vulk::Fence& fence) {
+  commandBuffer.reset();
 
-        auto extent = framebuffer->extent();
-        commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
+  commandBuffer.beginRecording();
+  {
+    commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
 
-        commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
-        commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
-        commandBuffer.bindDescriptorSet(_context.pipeline(), *_currentFrame->descriptorSet);
+    commandBuffer.bindPipeline(_context.pipeline());
 
-        commandBuffer.drawIndexed(_drawable.numIndices());
+    auto extent = framebuffer.extent();
+    commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-        commandBuffer.endRenderpass();
-      },
-      {_currentFrame->imageAvailableSemaphore.get()},
-      {_currentFrame->renderFinishedSemaphore.get()},
-      *_currentFrame->fence);
+    commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
+    commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
+    commandBuffer.bindDescriptorSet(_context.pipeline(), *_currentFrame->descriptorSet);
+
+    commandBuffer.drawIndexed(_drawable.numIndices());
+
+    commandBuffer.endRenderpass();
+  }
+  commandBuffer.endRecording();
+
+  commandBuffer.executeRecordedCommands(waits, signals, fence);
 
   _currentFrame->commandBuffer->waitIdle();
-
+}
+void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
+                           Vulk::Framebuffer& framebuffer,
+                           const std::vector<Vulk::Semaphore*> waits) {
   auto& swapchainFramebuffer = _context.swapchain().activeFramebuffer();
-  swapchainFramebuffer.image().blitFrom(*_currentFrame->commandBuffer,
-                                        _currentFrame->framebuffer->image());
-  swapchainFramebuffer.image().transitToNewLayout(*_currentFrame->commandBuffer,
-                                                  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  swapchainFramebuffer.image().blitFrom(commandBuffer, framebuffer.image());
+  swapchainFramebuffer.image().transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-  auto result = _context.swapchain().present(*_currentFrame->renderFinishedSemaphore);
+  auto result = _context.swapchain().present(waits);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -344,7 +362,7 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
     frame.fence                   = Vulk::Fence::make_shared(device, true);
 
-    frame.uniformBuffer = Vulk::UniformBuffer::make_shared(device, sizeof(Transformation));
+    frame.uniformBuffer       = Vulk::UniformBuffer::make_shared(device, sizeof(Transformation));
     frame.uniformBufferMapped = frame.uniformBuffer->map();
 
     transformationBufferInfo.buffer = *frame.uniformBuffer;
@@ -545,11 +563,11 @@ void Testbed::onMouseMove(double xpos, double ypos) {
   MainWindow::onMouseMove(xpos, ypos);
 
   int button = getMouseButton();
-  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+  if (button == GLFW_MOUSE_BUTTON_RIGHT) {
     _camera.move(mousePosHistory.front(), {xpos, ypos});
     mousePosHistory.pop();
     mousePosHistory.push({xpos, ypos});
-  } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+  } else if (button == GLFW_MOUSE_BUTTON_LEFT) {
     if (mousePosHistory.size() >= 2) {
       _camera.rotate(mousePosHistory.front(), {xpos, ypos});
       mousePosHistory = {};

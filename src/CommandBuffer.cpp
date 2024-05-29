@@ -55,7 +55,7 @@ void CommandBuffer::executeCommands(const Recorder& recorder,
                                     const std::vector<Semaphore*>& signals,
                                     const Fence& fence) const {
   recordCommands(recorder);
-  executeCommands(waits, signals, fence);
+  executeRecordedCommands(waits, signals, fence);
 }
 
 void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
@@ -63,7 +63,7 @@ void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
                                              const std::vector<Semaphore*>& signals,
                                              const Fence& fence) const {
   recordSingleTimeCommand(recorder);
-  executeCommands(waits, signals, fence);
+  executeRecordedCommands(waits, signals, fence);
 }
 
 void CommandBuffer::waitIdle() const {
@@ -71,6 +71,12 @@ void CommandBuffer::waitIdle() const {
 }
 
 void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) const {
+  beginRecording(singleTime);
+  recorder(*this);
+  endRecording();
+}
+
+void CommandBuffer::beginRecording(bool singleTime) const {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   if (singleTime) {
@@ -78,15 +84,15 @@ void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) co
   }
 
   MI_VERIFY_VKCMD(vkBeginCommandBuffer(_buffer, &beginInfo));
+}
 
-  recorder(*this);
-
+void CommandBuffer::endRecording() const {
   MI_VERIFY_VKCMD(vkEndCommandBuffer(_buffer));
 }
 
-void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
-                                    const std::vector<Semaphore*>& signals,
-                                    const Fence& fence) const {
+void CommandBuffer::executeRecordedCommands(const std::vector<Semaphore*>& waits,
+                                            const std::vector<Semaphore*>& signals,
+                                            const Fence& fence) const {
   VkSubmitInfo submitInfo{};
   submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
@@ -100,9 +106,9 @@ void CommandBuffer::executeCommands(const std::vector<Semaphore*>& waits,
       waitSemaphores.push_back(*wait);
     }
 
-    submitInfo.waitSemaphoreCount     = static_cast<uint32_t>(waitSemaphores.size());
-    submitInfo.pWaitSemaphores        = waitSemaphores.data();
-    submitInfo.pWaitDstStageMask      = static_cast<VkPipelineStageFlags*>(waitStages);
+    submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
+    submitInfo.pWaitSemaphores    = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask  = static_cast<VkPipelineStageFlags*>(waitStages);
   }
   std::vector<VkSemaphore> signalSemaphores;
   if (!signals.empty()) {

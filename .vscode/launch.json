@@ -39,7 +39,8 @@
           "text": "source ${workspaceFolder}/external/GLMPrettyPrinter/gdb/glm/printers.py"
         }
       ]
-      // "visualizerFile": "${workspaceFolder}/.natvis/STL.natvis",
+      // "visualizerFile": "${workspaceFolder}/external/glm/glm.natvis",
+      // "showDisplayString": true
     }
   ]
 }

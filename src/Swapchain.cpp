@@ -56,7 +56,7 @@ void Swapchain::create(const Device& device,
   createInfo.imageFormat      = surfaceFormat.format;
   createInfo.imageColorSpace  = surfaceFormat.colorSpace;
   createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
   uint32_t queueFamilyIndices[] = {physicalDevice.queueFamilies().graphicsIndex(),
                                    physicalDevice.queueFamilies().presentIndex()};
@@ -183,13 +183,13 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   }
 }
 
-VkResult Swapchain::acquireNextImage(const Vulk::Semaphore& imageAvailable) const {
+VkResult Swapchain::acquireNextImage(const Semaphore& signal) const {
   deactivateActiveImage();
 
   auto result = vkAcquireNextImageKHR(device(),
                                       _swapchain,
                                       std::numeric_limits<uint64_t>::max(),
-                                      imageAvailable,
+                                      signal,
                                       VK_NULL_HANDLE,
                                       &_activeImageIndex);
 
@@ -202,14 +202,20 @@ VkResult Swapchain::acquireNextImage(const Vulk::Semaphore& imageAvailable) cons
   return result;
 }
 
-VkResult Swapchain::present(const Vulk::Semaphore& renderFinished) const {
+VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
   MI_VERIFY(hasActiveImage());
+
+  std::vector<VkSemaphore> semaphores;
+  std::transform(
+      waits.begin(), waits.end(), std::back_inserter(semaphores), [](Semaphore* semaphore) -> VkSemaphore {
+        return *semaphore;
+      });
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores    = renderFinished;
+  presentInfo.pWaitSemaphores    = semaphores.data();
 
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains    = &_swapchain;

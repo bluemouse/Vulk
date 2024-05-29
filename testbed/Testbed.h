@@ -101,6 +101,15 @@ class Testbed : public MainWindow {
                  std::vector<uint32_t>& indices);
   void initCamera(const std::vector<Vertex>& vertices);
 
+  virtual void renderFrame(Vulk::CommandBuffer& commandBuffer,
+                           Vulk::Framebuffer& framebuffer,
+                           const std::vector<Vulk::Semaphore*> waits,
+                           const std::vector<Vulk::Semaphore*> signals,
+                           Vulk::Fence& fence);
+  virtual void presentFrame(Vulk::CommandBuffer& commandBuffer,
+                            Vulk::Framebuffer& framebuffer,
+                            const std::vector<Vulk::Semaphore*> waits);
+
  private:
   Vulk::Context _context;
 

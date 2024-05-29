@@ -37,10 +37,6 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   using Recorder = std::function<void(const CommandBuffer& buffer)>;
   // Record the commands played by `recorder` into this command buffer
   void recordCommands(const Recorder& recorder) const { recordCommands(recorder, false); }
-  // Execute the commands currently recorded in this command buffer
-  void executeCommands(const std::vector<Semaphore*>& waits   = {},
-                       const std::vector<Semaphore*>& signals = {},
-                       const Fence& fence                     = {}) const;
   // Record the commands played by `recorder` into this command buffer and then execute them
   void executeCommands(const Recorder& recorder,
                        const std::vector<Semaphore*>& waits   = {},
@@ -52,6 +48,14 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
                                 const std::vector<Semaphore*>& waits   = {},
                                 const std::vector<Semaphore*>& signals = {},
                                 const Fence& fence                     = {}) const;
+
+  void beginRecording(bool singleTime = false) const;
+  void endRecording() const;
+
+  // Execute the commands currently recorded in this command buffer
+  void executeRecordedCommands(const std::vector<Semaphore*>& waits   = {},
+                               const std::vector<Semaphore*>& signals = {},
+                               const Fence& fence                     = {}) const;
 
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,

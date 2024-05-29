@@ -2,6 +2,10 @@ build/
 build.*/
 Build/
 Build.*/
+_build/
+_build.*/
+_Build/
+_Build.*/
 
 #vscode
 .vscode/*

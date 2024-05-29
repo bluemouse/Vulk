@@ -83,10 +83,10 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
 
   // Acquire the next image from the swapchain and tag it as the active image.
-  VkResult acquireNextImage(const Vulk::Semaphore& imageAvailable) const;
+  VkResult acquireNextImage(const Vulk::Semaphore& signal) const;
 
   // Present the active image to the surface
-  VkResult present(const Vulk::Semaphore& renderFinished) const;
+  VkResult present(const std::vector<Vulk::Semaphore*>& waits) const;
 
   [[nodiscard]] uint32_t activeImageIndex() const { return _activeImageIndex; }
 
