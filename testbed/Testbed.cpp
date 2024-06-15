@@ -271,7 +271,7 @@ void Testbed::loadModel(const std::string& modelFile,
 }
 
 void Testbed::initCamera(const std::vector<Vertex>& vertices) {
-  auto bbox = Camera::BBox::null();
+  auto bbox = Vulk::Camera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
   }

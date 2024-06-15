@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.29)
 
 project(Testbed
   DESCRIPTION "Testbed of Vulk library"
@@ -16,14 +16,11 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
-  Camera.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
-  Camera.h
-  Bound.h
 )
 
 set(SHADER_FILES

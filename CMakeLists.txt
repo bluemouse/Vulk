@@ -57,8 +57,9 @@ set(SRC_FILES
     # Engine classes
     src/engine/Context.cpp
     src/engine/Toolbox.cpp
-    src/engine/Texture2D.cpp
     src/engine/TypeTraits.cpp
+    src/engine/Texture2D.cpp
+    src/engine/Camera.cpp
 )
 
 set(HEADER_FILES
@@ -101,8 +102,12 @@ set(HEADER_FILES
     include/Vulk/engine/Context.h
     include/Vulk/engine/Drawable.h
     include/Vulk/engine/Toolbox.h
-    include/Vulk/engine/Texture2D.h
     include/Vulk/engine/TypeTraits.h
+    include/Vulk/engine/Texture2D.h
+    include/Vulk/engine/Vertex.h
+    include/Vulk/engine/Camera.h
+    include/Vulk/engine/Bound.h
+
 )
 
 add_library(${PROJECT_NAME} SHARED

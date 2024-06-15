@@ -2,9 +2,10 @@
 
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/CommandPool.h>
-#include <Vulk/engine/Context.h>
 #include <Vulk/Device.h>
 #include <Vulk/StagingBuffer.h>
+
+#include <Vulk/engine/Context.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

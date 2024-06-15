@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Bound.h"
+#include <Vulk/internal/base.h>
+#include <Vulk/engine/Bound.h>
 
 #include <glm/glm.hpp>
 
-#include <limits>
+NAMESPACE_BEGIN(Vulk)
 
 class Camera {
  public:
@@ -86,3 +87,5 @@ class Camera {
   glm::mat4 _projection, _invProjection;
   glm::mat4 _mvp;
 };
+
+NAMESPACE_END(Vulk)

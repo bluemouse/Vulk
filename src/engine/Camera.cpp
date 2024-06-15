@@ -1,4 +1,4 @@
-#include "Camera.h"
+#include <Vulk/engine/Camera.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,6 +17,8 @@ DEFINE_OSTREAM_GLM_TYPE(vec2);
 DEFINE_OSTREAM_GLM_TYPE(vec3);
 DEFINE_OSTREAM_GLM_TYPE(vec4);
 DEFINE_OSTREAM_GLM_TYPE(mat4);
+
+NAMESPACE_BEGIN(Vulk)
 
 void Camera::init(const glm::vec2& frameSize, const BBox& roi) {
   init(frameSize, roi, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F, -1.0F}, 1.0F);
@@ -189,3 +191,5 @@ glm::vec3 Camera::trackballPoint(glm::vec2 ndcPos) const {
 
   return glm::vec3{ndcPos, z};
 }
+
+NAMESPACE_END(Vulk)

@@ -1,10 +1,12 @@
 #pragma once
 
 #include <Vulk/internal/debug.h>
+#include <Vulk/internal/base.h>
 
 #include <glm/glm.hpp>
-
 #include <array>
+
+NAMESPACE_BEGIN(Vulk)
 
 template <typename T>
 class Bound {
@@ -177,3 +179,5 @@ void Bound<T>::expandPlanarSide(value_type padding) {
     }
   }
 }
+
+NAMESPACE_END(Vulk)
