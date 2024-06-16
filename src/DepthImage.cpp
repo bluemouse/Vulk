@@ -5,6 +5,8 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
+#include <Vulk/internal/debug.h>
+
 NAMESPACE_BEGIN(Vulk)
 
 DepthImage::DepthImage(const Device& device,

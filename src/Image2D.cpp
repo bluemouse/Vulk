@@ -4,6 +4,8 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
 
+#include <Vulk/internal/debug.h>
+
 NAMESPACE_BEGIN(Vulk)
 
 Image2D::Image2D(const Device& device,

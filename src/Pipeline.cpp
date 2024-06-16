@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
 
 #include <Vulk/Device.h>
 #include <Vulk/RenderPass.h>

@@ -6,6 +6,8 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/Image.h>
 
+#include <Vulk/internal/debug.h>
+
 NAMESPACE_BEGIN(Vulk)
 
 StagingBuffer::StagingBuffer(const Device& device, VkDeviceSize size, const void* data) {

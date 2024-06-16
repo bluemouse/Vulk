@@ -25,8 +25,6 @@
 #include <Vulk/Semaphore.h>
 #include <Vulk/Fence.h>
 
-#include <Vulk/internal/vulkan_debug.h>
-
 NAMESPACE_BEGIN(Vulk)
 
 class Context {
@@ -39,25 +37,26 @@ class Context {
   using CreateVertShaderFunc    = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
   using CreateFragShaderFunc    = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
   struct CreateInfo {
+    // The info in CreateInfo is used to create the Vulkan context and listed in the usage order.
     int versionMajor = 1;
     int versionMinor = 0;
     std::vector<const char*> extensions;
     ValidationLevel validationLevel = ValidationLevel::kNone;
 
-    PhysicalDevice::IsDeviceSuitableFunc isDeviceSuitable;
-
     CreateWindowSurfaceFunc createWindowSurface;
 
-    Swapchain::ChooseSurfaceExtentFunc chooseSurfaceExtent;
+    PhysicalDevice::IsDeviceSuitableFunc isPhysicalDeviceSuitable;
+
     Swapchain::ChooseSurfaceFormatFunc chooseSurfaceFormat;
+    ChooseDepthFormatFunc chooseDepthFormat;
+    Swapchain::ChooseSurfaceExtentFunc chooseSurfaceExtent;
     Swapchain::ChoosePresentModeFunc choosePresentMode;
 
-    ChooseDepthFormatFunc chooseDepthFormat;
-
-    uint32_t maxDescriptorSets = 2;
 
     CreateVertShaderFunc createVertShader;
     CreateFragShaderFunc createFragShader;
+
+    uint32_t maxDescriptorSets;
   };
 
  public:

@@ -4,6 +4,7 @@
 #include <Vulk/CommandPool.h>
 #include <Vulk/Device.h>
 #include <Vulk/StagingBuffer.h>
+#include <Vulk/internal/debug.h>
 
 #include <Vulk/engine/Context.h>
 

@@ -5,6 +5,7 @@
 #include <Vulk/Framebuffer.h>
 
 #include <Vulk/engine/Toolbox.h>
+#include <Vulk/internal/debug.h>
 
 #include <GLFW/glfw3.h>
 
@@ -217,29 +218,29 @@ void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
 }
 
 void Testbed::createContext() {
-  auto [extensionCount, extensions] = getRequiredInstanceExtensions();
-
   Vulk::Context::CreateInfo createInfo;
-  createInfo.extensions      = {extensions, extensions + extensionCount};
+  createInfo.versionMajor    = 1;
+  createInfo.versionMinor    = 0;
+  createInfo.extensions      = getRequiredInstanceExtensions();
   createInfo.validationLevel = _validationLevel;
 
-  createInfo.isDeviceSuitable = [this](VkPhysicalDevice device) {
-    return isPhysicalDeviceSuitable(device, _context.surface());
-  };
   createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {
-    return createWindowSurface(instance);
+    return MainWindow::createWindowSurface(instance);
   };
+  createInfo.isPhysicalDeviceSuitable = &Testbed::isPhysicalDeviceSuitable;
+
+  createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
+  createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
   createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
-  createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
   createInfo.choosePresentMode   = &Testbed::chooseSwapchainPresentMode;
 
-  createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
 
-  createInfo.maxDescriptorSets = _maxFrameInFlight;
   createInfo.createVertShader  = &Testbed::createVertexShader;
   createInfo.createFragShader  = &Testbed::createFragmentShader;
+
+  createInfo.maxDescriptorSets = _maxFramesInFlight;
 
   _context.create(createInfo);
 
@@ -344,7 +345,7 @@ void Testbed::createDrawable() {
 }
 
 void Testbed::createFrames() {
-  _frames.resize(_maxFrameInFlight);
+  _frames.resize(_maxFramesInFlight);
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -483,9 +484,15 @@ void Testbed::updateUniformBuffer() {
 #endif // USE_ARC_CAMERA
 }
 
-bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface& surface) {
-  auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
-  bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
+bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface* surface) {
+  if (surface) {
+    auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
+    bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
+
+    if (!isQueueFamiliesComplete || !surface->isAdequate(device)) {
+      return false;
+    }
+  }
 
   uint32_t extensionCount = 0;
   vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -501,8 +508,7 @@ bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surf
   VkPhysicalDeviceFeatures supportedFeatures;
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-  return isQueueFamiliesComplete && extensionsSupported && surface.isAdequate(device) &&
-         (supportedFeatures.samplerAnisotropy != 0U);
+  return extensionsSupported && (supportedFeatures.samplerAnisotropy != 0U);
 }
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
@@ -545,7 +551,7 @@ VkFormat Testbed::chooseDepthFormat() {
 }
 
 void Testbed::nextFrame() {
-  _currentFrameIdx = (_currentFrameIdx + 1) % _maxFrameInFlight;
+  _currentFrameIdx = (_currentFrameIdx + 1) % _maxFramesInFlight;
   _currentFrame    = &_frames[_currentFrameIdx];
 }
 

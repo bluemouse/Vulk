@@ -29,9 +29,9 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   using DebugUtilsMessengerCreateInfoOverride =
       std::function<void(VkDebugUtilsMessengerCreateInfoEXT*)>;
 
-  Instance(const ApplicationInfoOverride& appInfoOverride = {},
-           const InstanceCreateInfoOverride& instanceCreateInfoOverride = {},
-           const DebugUtilsMessengerCreateInfoOverride& debugUtilsMessengerCreateInfoOverride = {});
+  explicit Instance(const ApplicationInfoOverride& appInfoOverride = {},
+                    const InstanceCreateInfoOverride& instanceCreateInfoOverride = {},
+                    const DebugUtilsMessengerCreateInfoOverride& debugUtilsMessengerCreateInfoOverride = {});
   Instance(int versionMajor,
            int versionMinor,
            std::vector<const char*> extensions,
@@ -50,6 +50,7 @@ class Instance : public Sharable<Instance>, private NotCopyable {
 
   void pickPhysicalDevice(const Surface& surface,
                           const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
+  void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
 
   operator VkInstance() const { return _instance; }
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice; }

@@ -6,6 +6,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/engine/TypeTraits.h>
+#include <Vulk/internal/debug.h>
 
 #include <spirv_reflect.h>
 // Helpers for SpirvReflect

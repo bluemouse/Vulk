@@ -66,7 +66,6 @@ set(HEADER_FILES
     # Internal helpers
     include/Vulk/internal/base.h
     include/Vulk/internal/debug.h
-    include/Vulk/internal/vulkan_debug.h
     include/Vulk/internal/helpers.h
     # Vulkan core classes
     include/Vulk/Instance.h

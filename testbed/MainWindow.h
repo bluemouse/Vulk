@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.h>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
+
+#include <vector>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -53,11 +54,7 @@ class MainWindow {
   void setFramebufferResized(bool resized) { _framebufferResized = resized; }
   [[nodiscard]] bool isFramebufferResized() const { return _framebufferResized; }
 
-  struct Extensions {
-    unsigned int count;
-    const char** extensions;
-  };
-  [[nodiscard]] static Extensions getRequiredInstanceExtensions();
+  [[nodiscard]] static std::vector<const char*> getRequiredInstanceExtensions();
 
   [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance);
 

@@ -29,16 +29,18 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
     uint32_t presentIndex() const { return present.value(); }
   };
 
-  using IsDeviceSuitableFunc = std::function<bool(VkPhysicalDevice)>;
+  using IsDeviceSuitableFunc = std::function<bool(VkPhysicalDevice, const Surface*)>;
 
  public:
   PhysicalDevice(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
+  PhysicalDevice(const Instance& instance, const Surface* surface, const IsDeviceSuitableFunc& isDeviceSuitable);
   ~PhysicalDevice() override;
 
-  void instantiate(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
+  void instantiate(const Instance& instance, const Surface* surface, const IsDeviceSuitableFunc& isDeviceSuitable);
   void reset();
 
   void initQueueFamilies(const Surface& surface);
+  void initQueueFamilies();
 
   operator VkPhysicalDevice() const { return _device; }
 
@@ -47,7 +49,7 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
   [[nodiscard]] const Instance& instance() const {return *_instance.lock(); }
 
   [[nodiscard]] static QueueFamilies findQueueFamilies(VkPhysicalDevice device,
-                                                       VkSurfaceKHR surface);
+                                                       VkSurfaceKHR surface = VK_NULL_HANDLE);
 
   [[nodiscard]] bool isInstantiated() const { return _device != VK_NULL_HANDLE; }
 

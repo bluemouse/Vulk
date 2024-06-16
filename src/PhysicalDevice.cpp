@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
 
 #include <Vulk/Instance.h>
 #include <Vulk/Surface.h>
@@ -11,7 +11,13 @@ NAMESPACE_BEGIN(Vulk)
 
 PhysicalDevice::PhysicalDevice(const Instance& instance,
                                const IsDeviceSuitableFunc& isDeviceSuitable) {
-  instantiate(instance, isDeviceSuitable);
+  instantiate(instance, nullptr, isDeviceSuitable);
+}
+
+PhysicalDevice::PhysicalDevice(const Instance& instance,
+                               const Surface* surface,
+                               const IsDeviceSuitableFunc& isDeviceSuitable) {
+  instantiate(instance, surface, isDeviceSuitable);
 }
 
 PhysicalDevice::~PhysicalDevice() {
@@ -19,6 +25,7 @@ PhysicalDevice::~PhysicalDevice() {
 }
 
 void PhysicalDevice::instantiate(const Instance& instance,
+                                 const Surface* surface,
                                  const IsDeviceSuitableFunc& isDeviceSuitable) {
   MI_VERIFY(!isInstantiated());
 
@@ -33,7 +40,7 @@ void PhysicalDevice::instantiate(const Instance& instance,
   vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
   for (const auto& device : devices) {
-    if (isDeviceSuitable(device)) {
+    if (isDeviceSuitable(device, surface)) {
       _device = device;
       break;
     }
@@ -50,6 +57,9 @@ void PhysicalDevice::reset() {
 
 void PhysicalDevice::initQueueFamilies(const Surface& surface) {
   _queueFamilies = findQueueFamilies(_device, surface);
+}
+void PhysicalDevice::initQueueFamilies() {
+  _queueFamilies = findQueueFamilies(_device, VK_NULL_HANDLE);
 }
 
 PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice device,
@@ -73,7 +83,7 @@ PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice
         queueFamilies.transfer = i;
       }
 
-      if (!queueFamilies.present) {
+      if (surface != VK_NULL_HANDLE && !queueFamilies.present) {
         VkBool32 presentSupport = 0U;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
         if (presentSupport != 0U) {

@@ -106,11 +106,11 @@ void MainWindow::mainLoop() {
   }
 }
 
-MainWindow::Extensions MainWindow::getRequiredInstanceExtensions() {
+std::vector<const char*> MainWindow::getRequiredInstanceExtensions() {
   uint32_t count          = 0;
   const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 
-  return {count, extensions};
+  return {extensions, extensions + count};
 }
 
 VkSurfaceKHR MainWindow::createWindowSurface(const Vulk::Instance& instance) {

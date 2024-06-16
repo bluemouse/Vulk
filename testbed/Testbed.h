@@ -39,12 +39,8 @@ class Testbed : public MainWindow {
   [[nodiscard]] const Vulk::Context& context() const { return _context; }
 
   // Callbacks to support creating Context
-  [[nodiscard]] VkSurfaceKHR createWindowSurface(const Vulk::Instance& instance) {
-    return MainWindow::createWindowSurface(instance);
-  }
-
   [[nodiscard]] static bool isPhysicalDeviceSuitable(VkPhysicalDevice device,
-                                                     const Vulk::Surface& surface);
+                                                     const Vulk::Surface* surface);
   [[nodiscard]] static VkExtent2D chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                                uint32_t windowWidth,
                                                                uint32_t windowHeight);
@@ -120,8 +116,8 @@ class Testbed : public MainWindow {
   std::vector<Frame> _frames;
   Frame* _currentFrame = nullptr;
 
+  constexpr static uint32_t _maxFramesInFlight = 2;
   uint32_t _currentFrameIdx  = 0;
-  uint32_t _maxFrameInFlight = 2;
 
   // Settings of the Testbed execution
   static ValidationLevel _validationLevel;

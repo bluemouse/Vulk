@@ -1,6 +1,7 @@
 #include <Vulk/Surface.h>
 
 #include <Vulk/Instance.h>
+#include <Vulk/internal/debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

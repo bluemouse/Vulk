@@ -3,7 +3,7 @@
 #include <Vulk/DescriptorPool.h>
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/Device.h>
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 

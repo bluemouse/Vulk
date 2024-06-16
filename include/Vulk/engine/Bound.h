@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Vulk/internal/debug.h>
 #include <Vulk/internal/base.h>
 
 #include <glm/glm.hpp>
@@ -74,6 +73,8 @@ class Bound {
   [[nodiscard]] value_type near() const { return _lower.z; }
   [[nodiscard]] value_type far() const { return _upper.z; }
 
+  bool isValid() const { return glm::all(glm::lessThan(_lower, _upper)); }
+
  protected:
   T _lower{};
   T _upper{};
@@ -85,7 +86,6 @@ class Bound {
 
 template <typename T>
 void Bound<T>::set(const T& lower, const T& upper) {
-  MI_ASSERT(glm::all(glm::lessThan(lower, upper)));
   _lower = lower;
   _upper = upper;
 }
@@ -130,7 +130,6 @@ auto Bound<T>::farZ() const -> Face {
 
 template <typename T>
 void Bound<T>::scale(value_type multiplier) {
-  MI_ASSERT(multiplier > 0.0F);
   auto center = this->center();
   auto extent = this->extent();
   auto offset = extent * multiplier * 0.5F;

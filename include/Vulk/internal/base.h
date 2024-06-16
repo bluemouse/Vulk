@@ -2,16 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Vulk/internal/debug.h>
-
 #include <memory>
 
 #define NAMESPACE_BEGIN(name) namespace name {
 #define NAMESPACE_END(name) }
-
-#define MI_INIT_VKPROC(cmd)                                                       \
-  auto cmd = reinterpret_cast<PFN_##cmd>(vkGetInstanceProcAddr(_instance, #cmd)); \
-  MI_VERIFY(cmd != nullptr);
 
 NAMESPACE_BEGIN(Vulk)
 

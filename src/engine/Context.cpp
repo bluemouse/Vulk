@@ -1,5 +1,7 @@
 #include <Vulk/engine/Context.h>
 
+#include <Vulk/internal/debug.h>
+
 #include <set>
 
 namespace {
@@ -41,7 +43,7 @@ void Context::create(const CreateInfo& createInfo) {
                  createInfo.extensions,
                  createInfo.validationLevel);
   createSurface(createInfo.createWindowSurface);
-  pickPhysicalDevice(createInfo.isDeviceSuitable);
+  pickPhysicalDevice(createInfo.isPhysicalDeviceSuitable);
   createLogicalDevice();
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
@@ -81,18 +83,19 @@ void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) 
 
 void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
   if (isDeviceSuitable) {
-    _instance->pickPhysicalDevice(surface(), [this, &isDeviceSuitable](VkPhysicalDevice device) {
-      if (!isDeviceSuitable(device)) {
-        return false;
+    _instance->pickPhysicalDevice(surface(), isDeviceSuitable);
+  } else {
+    _instance->pickPhysicalDevice(surface(), [](VkPhysicalDevice device,
+                                                const Surface* surface) {
+      if (surface) {
+        auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
+        bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
+
+        if (!isQueueFamiliesComplete || !surface->isAdequate(device)) {
+          return false;
+        }
       }
 
-      const auto& surface          = this->surface();
-      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
-      bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-      return isQueueFamiliesComplete && surface.isAdequate(device);
-    });
-  } else {
-    _instance->pickPhysicalDevice(surface(), [this](VkPhysicalDevice device) {
       uint32_t extensionCount = 0;
       vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
       std::vector<VkExtensionProperties> availableExtensions{extensionCount};
@@ -107,14 +110,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isD
       VkPhysicalDeviceFeatures supportedFeatures;
       vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-      if (!extensionsSupported || supportedFeatures.samplerAnisotropy == 0U) {
-        return false;
-      }
-
-      const auto& surface          = this->surface();
-      auto queueFamilies           = Vulk::PhysicalDevice::findQueueFamilies(device, surface);
-      bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-      return isQueueFamiliesComplete && surface.isAdequate(device);
+      return extensionsSupported && (supportedFeatures.samplerAnisotropy != 0U);
     });
   }
 }

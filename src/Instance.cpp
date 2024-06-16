@@ -9,7 +9,8 @@
 #include <string>
 
 #include <Vulk/internal/base.h>
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
+#include <Vulk/internal/helpers.h>
 
 #include <Vulk/Surface.h>
 
@@ -156,8 +157,13 @@ void Instance::destroy() {
 
 void Instance::pickPhysicalDevice(const Surface& surface,
                                   const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
-  _physicalDevice = PhysicalDevice::make_shared(*this, isDeviceSuitable);
+  _physicalDevice = PhysicalDevice::make_shared(*this, &surface, isDeviceSuitable);
   _physicalDevice->initQueueFamilies(surface);
+}
+
+void Instance::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
+  _physicalDevice = PhysicalDevice::make_shared(*this, nullptr, isDeviceSuitable);
+  _physicalDevice->initQueueFamilies();
 }
 
 bool Instance::checkLayerSupport(const std::vector<const char*>& layers) {

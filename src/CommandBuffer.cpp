@@ -1,6 +1,6 @@
 #include <Vulk/CommandBuffer.h>
 
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
 
 #include <Vulk/CommandPool.h>
 #include <Vulk/Device.h>

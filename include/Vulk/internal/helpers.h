@@ -4,6 +4,10 @@
 
 #include <Vulk/internal/base.h>
 
+#define MI_INIT_VKPROC(cmd)                                                       \
+  auto cmd = reinterpret_cast<PFN_##cmd>(vkGetInstanceProcAddr(_instance, #cmd)); \
+  MI_VERIFY(cmd != nullptr);
+
 NAMESPACE_BEGIN(Vulk)
 
 inline bool operator==(const VkExtent2D& lhs, const VkExtent2D& rhs) {

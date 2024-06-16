@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include <Vulk/internal/vulkan_debug.h>
+#include <Vulk/internal/debug.h>
 #include <Vulk/internal/helpers.h>
 
 #include <Vulk/Device.h>

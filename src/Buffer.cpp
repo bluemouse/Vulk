@@ -2,12 +2,11 @@
 
 #include <cstring>
 
-#include <Vulk/internal/vulkan_debug.h>
-
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/StagingBuffer.h>
+#include <Vulk/internal/debug.h>
 
 NAMESPACE_BEGIN(Vulk)
 
