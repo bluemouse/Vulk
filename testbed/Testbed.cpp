@@ -92,6 +92,19 @@ struct Checkerboard : public std::vector<uint8_t> {
   uint8_t* at(uint32_t x, uint32_t y) { return data() + (x + y * extent.x) * kNumColorChannels; }
 };
 
+struct Uniforms {
+  alignas(sizeof(glm::vec4)) glm::mat4 model;
+  alignas(sizeof(glm::vec4)) glm::mat4 view;
+  alignas(sizeof(glm::vec4)) glm::mat4 proj;
+
+  static Vulk::UniformBuffer::shared_ptr allocateBuffer(const Vulk::Device& device) {
+    return Vulk::UniformBuffer::make_shared(device, sizeof(Uniforms));
+  }
+
+  static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
+    return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
+  }
+};
 } // namespace
 
 void Testbed::init(int width, int height) {
@@ -362,7 +375,7 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
     frame.fence                   = Vulk::Fence::make_shared(device, true);
 
-    frame.uniformBuffer       = Vulk::UniformBuffer::make_shared(device, sizeof(Transformation));
+    frame.uniformBuffer       = Uniforms::allocateBuffer(device);
     frame.uniformBufferMapped = frame.uniformBuffer->map();
 
     transformationBufferInfo.buffer = *frame.uniformBuffer;
@@ -415,37 +428,37 @@ void Testbed::updateUniformBuffer() {
 #if defined(USE_ARC_CAMERA)
   _camera.update();
 
-  Transformation xform{};
+  Uniforms uniforms{};
 
-  xform.model = glm::mat4{1.0F};
-  xform.view  = _camera.viewMatrix();
-  xform.proj  = _camera.projectionMatrix();
+  uniforms.model = glm::mat4{1.0F};
+  uniforms.view  = _camera.viewMatrix();
+  uniforms.proj  = _camera.projectionMatrix();
 
-  memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));
+  memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
 #else
   using glm::vec3;
   using glm::vec4;
   using glm::mat4;
 
-  auto [textureW, textureH] = _texture.extent();
+  auto [textureW, textureH] = _texture->extent();
   float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
 
-  Transformation xform{};
+  Uniforms uniforms{};
 
   // Make the aspect ratio of the rendered texture match the physical texture.
-  xform.model = mat4{1.0F};
+  uniforms.model = mat4{1.0F};
   if (textureAspect > 1.0F) {
-    xform.model[1][1] = 1.0F / textureAspect;
+    uniforms.model[1][1] = 1.0F / textureAspect;
   } else {
-    xform.model[0][0] = 1.0F / textureAspect;
+    uniforms.model[0][0] = 1.0F / textureAspect;
   }
 
   vec3 cameraPos{0.0F, 0.0F, -1.0F};
   vec3 cameraLookAt{0.0F, 0.0F, 0.0F};
   vec3 cameraUp{0.0F, -1.0F, 0.0F};
 
-  xform.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
-  std::cout << "view: " << glm::to_string(xform.view) << std::endl;
+  uniforms.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
+  std::cout << "view: " << glm::to_string(uniforms.view) << std::endl;
 
   auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
   float surfaceAspect       = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
@@ -459,14 +472,14 @@ void Testbed::updateUniformBuffer() {
 // #define USE_PERSPECTIVE_PROJECTION
 #  if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
-  xform.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
-  xform.proj[1][1] *= -1;
+  uniforms.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
+  uniforms.proj[1][1] *= -1;
 #  else
-  xform.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
-  std::cout << "projection: " << glm::to_string(xform.proj) << std::endl;
+  uniforms.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
+  std::cout << "projection: " << glm::to_string(uniforms.proj) << std::endl;
 #  endif
 
-  memcpy(_currentFrame->uniformBufferMapped, &xform, sizeof(xform));
+  memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
 #endif // USE_ARC_CAMERA
 }
 

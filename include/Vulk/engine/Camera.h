@@ -39,8 +39,6 @@ class Camera {
   // Orbit the camera around `center` by `angle` radians along the view space vertical axis.
   void orbitVertical(float angle);
 
-  [[nodiscard]] glm::mat4 mvpMatrix() const { return _mvp; }
-  [[nodiscard]] glm::mat4 modelMatrix() const { return _model2World; }
   [[nodiscard]] glm::mat4 viewMatrix() const { return _world2View; }
   [[nodiscard]] glm::mat4 projectionMatrix() const { return _projection; }
 
@@ -50,12 +48,10 @@ class Camera {
   // Coordinate conversion functions
   [[nodiscard]] glm::vec3 screen2view(glm::vec2 p) const;
   [[nodiscard]] glm::vec3 screen2world(glm::vec2 p) const;
-  [[nodiscard]] glm::vec3 screen2model(glm::vec2 p) const;
   [[nodiscard]] glm::vec2 screen2ndc(glm::vec2 p) const;
   [[nodiscard]] glm::vec3 ndc2view(glm::vec3 p) const;
   [[nodiscard]] glm::vec3 ndc2world(glm::vec3 p) const;
   [[nodiscard]] glm::vec3 view2world(glm::vec3 p) const;
-  [[nodiscard]] glm::vec3 world2model(glm::vec3 p) const;
 
  private:
   void init() { init(glm::vec2{1.0f}, BBox::unit()); }
@@ -82,10 +78,8 @@ class Camera {
   BBox _viewVolume; // view volume in view space
   float _zoomScale{1.0F};
 
-  glm::mat4 _model2World, _world2Model;
   glm::mat4 _world2View, _view2World;
   glm::mat4 _projection, _invProjection;
-  glm::mat4 _mvp;
 };
 
 NAMESPACE_END(Vulk)

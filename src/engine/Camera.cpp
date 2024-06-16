@@ -43,7 +43,6 @@ void Camera::init(const glm::vec2& frameSize,
 }
 
 void Camera::update() {
-  _model2World = glm::mat4{1.0f};
   _world2View  = glm::lookAt(_eye, _lookAt, _up);
 
   // Convert _roi to view-space volume
@@ -61,7 +60,6 @@ void Camera::update() {
   _projection = glm::ortho(
       _viewVolume.left(), _viewVolume.right(), _viewVolume.top(), _viewVolume.bottom(), near, far);
 
-  _world2Model   = glm::inverse(_model2World);
   _view2World    = glm::inverse(_world2View);
   _invProjection = glm::inverse(_projection);
 }
@@ -77,10 +75,6 @@ glm::vec3 Camera::screen2view(glm::vec2 p) const {
 
 glm::vec3 Camera::screen2world(glm::vec2 p) const {
   return ndc2world(glm::vec3(screen2ndc(p), _viewVolume.near()));
-}
-
-glm::vec3 Camera::screen2model(glm::vec2 p) const {
-  return world2model(screen2world(p));
 }
 
 glm::vec2 Camera::screen2ndc(glm::vec2 p) const {
@@ -100,10 +94,6 @@ glm::vec3 Camera::ndc2world(glm::vec3 p) const {
 
 glm::vec3 Camera::view2world(glm::vec3 p) const {
   return _view2World * glm::vec4{p, 1.0f};
-}
-
-glm::vec3 Camera::world2model(glm::vec3 p) const {
-  return _world2Model * glm::vec4{p, 1.0f};
 }
 
 void Camera::move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) {

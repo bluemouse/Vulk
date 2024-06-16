@@ -14,6 +14,7 @@
 class Testbed : public MainWindow {
  public:
   using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
+
  public:
   void init(int width, int height) override;
   void cleanup() override;
@@ -92,15 +93,6 @@ class Testbed : public MainWindow {
 
   uint32_t _vertexBufferBinding = 0U;
 
-  struct Transformation {
-    alignas(sizeof(glm::vec4)) glm::mat4 model;
-    alignas(sizeof(glm::vec4)) glm::mat4 view;
-    alignas(sizeof(glm::vec4)) glm::mat4 proj;
-
-    static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
-      return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
-    }
-  };
   Vulk::Camera _camera;
 
   Vulk::Drawable<Vertex, uint32_t> _drawable;
