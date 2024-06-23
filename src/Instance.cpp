@@ -156,13 +156,23 @@ void Instance::destroy() {
 }
 
 void Instance::pickPhysicalDevice(const Surface& surface,
-                                  const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
-  _physicalDevice = PhysicalDevice::make_shared(*this, &surface, isDeviceSuitable);
+                                  const PhysicalDevice::QueueFamilies& queueFamilies,
+                                  const std::vector<const char*>& deviceExtensions,
+                                  const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
+  _physicalDevice = PhysicalDevice::make_shared(*this, &surface,
+                                                queueFamilies,
+                                                deviceExtensions,
+                                                hasDeviceFeatures);
   _physicalDevice->initQueueFamilies(surface);
 }
 
-void Instance::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
-  _physicalDevice = PhysicalDevice::make_shared(*this, nullptr, isDeviceSuitable);
+void Instance::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
+                                  const std::vector<const char*>& deviceExtensions,
+                                  const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
+  _physicalDevice = PhysicalDevice::make_shared(*this, nullptr,
+                                                queueFamilies,
+                                                deviceExtensions,
+                                                hasDeviceFeatures);
   _physicalDevice->initQueueFamilies();
 }
 

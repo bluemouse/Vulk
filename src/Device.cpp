@@ -71,16 +71,16 @@ void Device::create(const PhysicalDevice& physicalDevice,
   MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
 }
 
-void Device::initQueue(const std::string& queueName, uint32_t queueFamilyIndex) {
+void Device::initQueue(QueueFamilyName queueFamilyName, uint32_t queueFamilyIndex) {
   MI_VERIFY(isCreated());
   VkQueue queue = VK_NULL_HANDLE;
   vkGetDeviceQueue(_device, queueFamilyIndex, 0, &queue);
-  _queues[queueName] = queue;
+  _queues[queueFamilyName] = queue;
 }
 
-VkQueue Device::queue(const std::string& queueName) const {
+VkQueue Device::queue(QueueFamilyName queueFamilyName) const {
   MI_VERIFY(isCreated());
-  return _queues.at(queueName);
+  return _queues.at(queueFamilyName);
 }
 
 void Device::destroy() {

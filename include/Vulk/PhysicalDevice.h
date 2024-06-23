@@ -29,14 +29,23 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
     uint32_t presentIndex() const { return present.value(); }
   };
 
-  using IsDeviceSuitableFunc = std::function<bool(VkPhysicalDevice, const Surface*)>;
+  using HasDeviceFeaturesFunc = std::function<bool(const VkPhysicalDeviceFeatures& supportedFeatures)>;
 
  public:
-  PhysicalDevice(const Instance& instance, const IsDeviceSuitableFunc& isDeviceSuitable);
-  PhysicalDevice(const Instance& instance, const Surface* surface, const IsDeviceSuitableFunc& isDeviceSuitable);
+  PhysicalDevice(const Instance& instance,
+                 const QueueFamilies& queueFamilies,
+                 const std::vector<const char*>& deviceExtensions,
+                 const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
+  PhysicalDevice(const Instance& instance, const Surface* surface,
+                 const QueueFamilies& queueFamilies,
+                 const std::vector<const char*>& deviceExtensions,
+                 const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
   ~PhysicalDevice() override;
 
-  void instantiate(const Instance& instance, const Surface* surface, const IsDeviceSuitableFunc& isDeviceSuitable);
+  void instantiate(const Instance& instance, const Surface* surface,
+                   const QueueFamilies& requiredQueueFamilies,
+                   const std::vector<const char*>& requiredDeviceExtensions,
+                   const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
   void reset();
 
   void initQueueFamilies(const Surface& surface);
@@ -60,9 +69,6 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
   bool isFormatSupported(VkFormat format,
                          VkImageTiling tiling,
                          VkFormatFeatureFlags features) const;
-
- private:
-  [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device);
 
  private:
   VkPhysicalDevice _device = VK_NULL_HANDLE;

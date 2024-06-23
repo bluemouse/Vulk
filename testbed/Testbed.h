@@ -39,8 +39,6 @@ class Testbed : public MainWindow {
   [[nodiscard]] const Vulk::Context& context() const { return _context; }
 
   // Callbacks to support creating Context
-  [[nodiscard]] static bool isPhysicalDeviceSuitable(VkPhysicalDevice device,
-                                                     const Vulk::Surface* surface);
   [[nodiscard]] static VkExtent2D chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                                uint32_t windowWidth,
                                                                uint32_t windowHeight);

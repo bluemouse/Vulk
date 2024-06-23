@@ -221,13 +221,19 @@ void Testbed::createContext() {
   Vulk::Context::CreateInfo createInfo;
   createInfo.versionMajor    = 1;
   createInfo.versionMinor    = 0;
-  createInfo.extensions      = getRequiredInstanceExtensions();
+  createInfo.instanceExtensions = getRequiredInstanceExtensions();
   createInfo.validationLevel = _validationLevel;
 
   createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {
     return MainWindow::createWindowSurface(instance);
   };
-  createInfo.isPhysicalDeviceSuitable = &Testbed::isPhysicalDeviceSuitable;
+
+  createInfo.queueFamilies.graphics = true;
+  createInfo.queueFamilies.present = true;
+  createInfo.deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+  createInfo.hasPhysicalDeviceFeatures = [] (VkPhysicalDeviceFeatures supportedFeatures) {
+    return supportedFeatures.samplerAnisotropy != 0U;
+  };
 
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
   createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
@@ -482,33 +488,6 @@ void Testbed::updateUniformBuffer() {
 
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
 #endif // USE_ARC_CAMERA
-}
-
-bool Testbed::isPhysicalDeviceSuitable(VkPhysicalDevice device, const Vulk::Surface* surface) {
-  if (surface) {
-    auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
-    bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-
-    if (!isQueueFamiliesComplete || !surface->isAdequate(device)) {
-      return false;
-    }
-  }
-
-  uint32_t extensionCount = 0;
-  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-  std::vector<VkExtensionProperties> availableExtensions{extensionCount};
-  vkEnumerateDeviceExtensionProperties(
-      device, nullptr, &extensionCount, availableExtensions.data());
-  std::set<std::string> requiredExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-  for (const auto& ext : availableExtensions) {
-    requiredExtensions.erase(ext.extensionName);
-  }
-  bool extensionsSupported = requiredExtensions.empty();
-
-  VkPhysicalDeviceFeatures supportedFeatures;
-  vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-
-  return extensionsSupported && (supportedFeatures.samplerAnisotropy != 0U);
 }
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,

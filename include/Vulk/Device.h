@@ -19,6 +19,8 @@ class Device : public Sharable<Device>, private NotCopyable {
   using DeviceCreateInfoOverride = std::function<
       void(VkDeviceCreateInfo*, VkPhysicalDeviceFeatures*, std::vector<VkDeviceQueueCreateInfo>*)>;
 
+  enum QueueFamilyName { Graphics, Compute, Transfer, Present };
+
  public:
   Device(const PhysicalDevice& physicalDevice,
          const std::vector<uint32_t>& queueFamilies,
@@ -39,15 +41,15 @@ class Device : public Sharable<Device>, private NotCopyable {
   [[nodiscard]] const Instance& instance() const;
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice.lock(); }
 
-  void initQueue(const std::string& queueName, uint32_t queueFamilyIndex);
-  [[nodiscard]] VkQueue queue(const std::string& queueName) const;
+  void initQueue(QueueFamilyName queueFamilyName, uint32_t queueFamilyIndex);
+  [[nodiscard]] VkQueue queue(QueueFamilyName queueFamilyName) const;
 
   [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
 
  private:
   VkDevice _device = VK_NULL_HANDLE;
 
-  std::map<std::string /*queueName*/, VkQueue> _queues;
+  std::map<QueueFamilyName, VkQueue> _queues;
 
   std::weak_ptr<const PhysicalDevice> _physicalDevice;
 };

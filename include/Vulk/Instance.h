@@ -49,8 +49,12 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   void destroy();
 
   void pickPhysicalDevice(const Surface& surface,
-                          const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
-  void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
+                          const PhysicalDevice::QueueFamilies& queueFamilies,
+                          const std::vector<const char*>& deviceExtensions,
+                          const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
+  void pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
+                          const std::vector<const char*>& deviceExtensions,
+                          const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
 
   operator VkInstance() const { return _instance; }
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice; }

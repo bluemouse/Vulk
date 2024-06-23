@@ -222,7 +222,7 @@ VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
 
   presentInfo.pImageIndices = &_activeImageIndex;
 
-  return vkQueuePresentKHR(device().queue("present"), &presentInfo);
+  return vkQueuePresentKHR(device().queue(Device::QueueFamilyName::Present), &presentInfo);
 }
 
 VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight) {

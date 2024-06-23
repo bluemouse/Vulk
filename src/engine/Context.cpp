@@ -2,8 +2,6 @@
 
 #include <Vulk/internal/debug.h>
 
-#include <set>
-
 namespace {
 VkExtent2D chooseDefaultSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps) {
   if (caps.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
@@ -40,11 +38,13 @@ NAMESPACE_BEGIN(Vulk)
 void Context::create(const CreateInfo& createInfo) {
   createInstance(createInfo.versionMajor,
                  createInfo.versionMinor,
-                 createInfo.extensions,
+                 createInfo.instanceExtensions,
                  createInfo.validationLevel);
   createSurface(createInfo.createWindowSurface);
-  pickPhysicalDevice(createInfo.isPhysicalDeviceSuitable);
-  createLogicalDevice();
+  pickPhysicalDevice(createInfo.queueFamilies,
+                     createInfo.deviceExtensions,
+                     createInfo.hasPhysicalDeviceFeatures);
+  createLogicalDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
   createSwapchain(
@@ -81,50 +81,40 @@ void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) 
   _surface = Vulk::Surface::make_shared(instance(), createWindowSurface(instance()));
 }
 
-void Context::pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable) {
-  if (isDeviceSuitable) {
-    _instance->pickPhysicalDevice(surface(), isDeviceSuitable);
-  } else {
-    _instance->pickPhysicalDevice(surface(), [](VkPhysicalDevice device,
-                                                const Surface* surface) {
-      if (surface) {
-        auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
-        bool isQueueFamiliesComplete = queueFamilies.graphics && queueFamilies.present;
-
-        if (!isQueueFamiliesComplete || !surface->isAdequate(device)) {
-          return false;
-        }
-      }
-
-      uint32_t extensionCount = 0;
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-      std::vector<VkExtensionProperties> availableExtensions{extensionCount};
-      vkEnumerateDeviceExtensionProperties(
-          device, nullptr, &extensionCount, availableExtensions.data());
-      std::set<std::string> requiredExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-      for (const auto& ext : availableExtensions) {
-        requiredExtensions.erase(ext.extensionName);
-      }
-      bool extensionsSupported = requiredExtensions.empty();
-
-      VkPhysicalDeviceFeatures supportedFeatures;
-      vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-
-      return extensionsSupported && (supportedFeatures.samplerAnisotropy != 0U);
-    });
-  }
+void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
+                                 const std::vector<const char*>& deviceExtensions,
+                                 const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
+  _instance->pickPhysicalDevice(surface(), queueFamilies, deviceExtensions, hasDeviceFeatures);
 }
 
-void Context::createLogicalDevice() {
-  const auto& queueFamilies = _instance->physicalDevice().queueFamilies();
+void Context::createLogicalDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
+                                  const std::vector<const char*>& deviceExtensions) {
+  const auto& supportedQueueFamilies = _instance->physicalDevice().queueFamilies();
 
-  _device = Vulk::Device::make_shared(
-      _instance->physicalDevice(),
-      std::vector<uint32_t>{queueFamilies.graphicsIndex(), queueFamilies.presentIndex()},
-      std::vector<const char*>{VK_KHR_SWAPCHAIN_EXTENSION_NAME});
+  std::vector<uint32_t> queueFamilies;
+  std::vector<Device::QueueFamilyName> queueFamilyNames;
+  if (requiredQueueFamilies.graphics) {
+    queueFamilies.push_back(supportedQueueFamilies.graphicsIndex());
+    queueFamilyNames.push_back(Device::QueueFamilyName::Graphics);
+  }
+  if (requiredQueueFamilies.compute) {
+    queueFamilies.push_back(supportedQueueFamilies.computeIndex());
+    queueFamilyNames.push_back(Device::QueueFamilyName::Compute);
+  }
+  if (requiredQueueFamilies.transfer) {
+    queueFamilies.push_back(supportedQueueFamilies.transferIndex());
+    queueFamilyNames.push_back(Device::QueueFamilyName::Transfer);
+  }
+  if (requiredQueueFamilies.present) {
+    queueFamilies.push_back(supportedQueueFamilies.presentIndex());
+    queueFamilyNames.push_back(Device::QueueFamilyName::Present);
+  }
 
-  _device->initQueue("graphics", queueFamilies.graphicsIndex());
-  _device->initQueue("present", queueFamilies.presentIndex());
+  _device = Vulk::Device::make_shared(_instance->physicalDevice(), queueFamilies, deviceExtensions);
+
+  for(size_t i = 0; i < queueFamilies.size(); ++i) {
+    _device->initQueue(queueFamilyNames[i], queueFamilies[i]);
+  }
 }
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,

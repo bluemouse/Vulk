@@ -40,12 +40,14 @@ class Context {
     // The info in CreateInfo is used to create the Vulkan context and listed in the usage order.
     int versionMajor = 1;
     int versionMinor = 0;
-    std::vector<const char*> extensions;
+    std::vector<const char*> instanceExtensions;
     ValidationLevel validationLevel = ValidationLevel::kNone;
 
     CreateWindowSurfaceFunc createWindowSurface;
 
-    PhysicalDevice::IsDeviceSuitableFunc isPhysicalDeviceSuitable;
+    PhysicalDevice::QueueFamilies queueFamilies; // To specify the queue families to be created
+    std::vector<const char*> deviceExtensions;   // To specify the required device extensions
+    PhysicalDevice::HasDeviceFeaturesFunc hasPhysicalDeviceFeatures;
 
     Swapchain::ChooseSurfaceFormatFunc chooseSurfaceFormat;
     ChooseDepthFormatFunc chooseDepthFormat;
@@ -98,8 +100,11 @@ class Context {
                               const std::vector<const char*>& extensions,
                               ValidationLevel validation = ValidationLevel::kNone);
   virtual void createSurface(const CreateWindowSurfaceFunc& createWindowSurface);
-  virtual void pickPhysicalDevice(const PhysicalDevice::IsDeviceSuitableFunc& isDeviceSuitable);
-  virtual void createLogicalDevice();
+  virtual void pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
+                                  const std::vector<const char*>& deviceExtensions,
+                                  const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
+  virtual void createLogicalDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
+                                   const std::vector<const char*>& deviceExtensions);
   virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                 const ChooseDepthFormatFunc& chooseDepthFormat = {});
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
