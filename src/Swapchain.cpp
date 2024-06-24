@@ -93,6 +93,7 @@ void Swapchain::create(const Device& device,
 
   create(device, surface, extent, format, presentMode);
 }
+
 void Swapchain::createFramebuffers(const RenderPass& renderPass) {
   MI_VERIFY(isCreated());
   MI_VERIFY(renderPass.colorFormat() == _surfaceFormat.format);
@@ -101,7 +102,7 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
 
   uint32_t imageCount = 0;
   vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, nullptr);
-  std::vector<VkImage> imgs(imageCount);
+  std::vector<VkImage> imgs{imageCount};
   vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
 
   _depthImage = DepthImage::make_shared(device, _surfaceExtent, renderPass.depthStencilFormat());
@@ -116,10 +117,10 @@ void Swapchain::createFramebuffers(const RenderPass& renderPass) {
     auto img2d = Vulk::Image2D::make_shared(img, renderPass.colorFormat(), _surfaceExtent);
     _images.push_back(img2d);
 
-    auto view = Vulk::ImageView::make_shared(device, *img2d);
-    _imageViews.push_back(view);
+    auto imgView = Vulk::ImageView::make_shared(device, *img2d);
+    _imageViews.push_back(imgView);
 
-    auto framebuffer = Vulk::Framebuffer::make_shared(device, renderPass, *view, *_depthImageView);
+    auto framebuffer = Vulk::Framebuffer::make_shared(device, renderPass, *imgView, *_depthImageView);
     _framebuffers.push_back(framebuffer);
   }
 

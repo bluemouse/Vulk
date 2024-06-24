@@ -45,10 +45,12 @@ void Context::create(const CreateInfo& createInfo) {
                      createInfo.deviceExtensions,
                      createInfo.hasPhysicalDeviceFeatures);
   createLogicalDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
+  createSwapchain(createInfo.chooseSurfaceExtent,
+                  createInfo.chooseSurfaceFormat,
+                  createInfo.choosePresentMode);
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
-  createSwapchain(
-      createInfo.chooseSurfaceExtent, createInfo.chooseSurfaceFormat, createInfo.choosePresentMode);
+  createFramebuffers();
 
   createPipeline(createInfo.createVertShader, createInfo.createFragShader);
 
@@ -137,6 +139,10 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
   _renderPass = Vulk::RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
 }
 
+void Context::createFramebuffers() {
+  _swapchain->createFramebuffers(renderPass());
+}
+
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                               const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                               const Swapchain::ChoosePresentModeFunc& choosePresentMode) {
@@ -166,7 +172,6 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
   }
 
   _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
-  _swapchain->createFramebuffers(renderPass());
 }
 
 void Context::createPipeline(const CreateVertShaderFunc& createVertShader,

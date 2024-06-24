@@ -105,11 +105,12 @@ class Context {
                                   const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
   virtual void createLogicalDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                                    const std::vector<const char*>& deviceExtensions);
-  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
-                                const ChooseDepthFormatFunc& chooseDepthFormat = {});
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                                const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);
+  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                                const ChooseDepthFormatFunc& chooseDepthFormat = {});
+  virtual void createFramebuffers();
 
   virtual void createPipeline(const CreateVertShaderFunc& createVertShader,
                               const CreateFragShaderFunc& createFragShader);

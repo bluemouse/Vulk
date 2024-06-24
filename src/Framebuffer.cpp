@@ -75,7 +75,7 @@ void Framebuffer::destroy() {
   MI_VERIFY(isCreated());
   vkDestroyFramebuffer(device(), _buffer, nullptr);
 
-  _buffer                 = VK_NULL_HANDLE;
+  _buffer = VK_NULL_HANDLE;
 
   _device.reset();
   _renderPass.reset();

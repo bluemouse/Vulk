@@ -41,6 +41,7 @@ void RenderPass::create(const Device& device,
   _depthStencilFormat = depthStencilFormat;
 
   VkAttachmentDescription colorAttachment{};
+  VkAttachmentReference colorAttachmentRef{};
   colorAttachment.format         = colorFormat;
   colorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -49,19 +50,12 @@ void RenderPass::create(const Device& device,
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
   colorAttachment.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
   if (colorAttachmentOverride) {
     colorAttachmentOverride(colorAttachment);
   }
 
-  VkAttachmentReference colorAttachmentRef{};
   colorAttachmentRef.attachment = 0;
   colorAttachmentRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkSubpassDescription subpass{};
-  subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments    = &colorAttachmentRef;
 
   VkAttachmentDescription depthStencilAttachment{};
   VkAttachmentReference depthStencilAttachmentRef{};
@@ -74,41 +68,45 @@ void RenderPass::create(const Device& device,
     depthStencilAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthStencilAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
     depthStencilAttachment.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
     if (depthStencilAttachmentOverride) {
       depthStencilAttachmentOverride(depthStencilAttachment);
     }
 
     depthStencilAttachmentRef.attachment = 1;
     depthStencilAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    subpass.pDepthStencilAttachment = &depthStencilAttachmentRef;
   }
 
+  VkSubpassDescription subpass{};
+  subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS; //TODO to support VK_PIPELINE_BIND_POINT_COMPUTE
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments    = &colorAttachmentRef;
+  subpass.pDepthStencilAttachment = depthStencilFormat != VK_FORMAT_UNDEFINED
+                                  ? &depthStencilAttachmentRef
+                                  : nullptr;
   if (subpassOverride) {
     subpassOverride(subpass);
   }
 
-  VkSubpassDependency dependency{};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-
-  if (depthStencilFormat == VK_FORMAT_UNDEFINED) {
-    dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  } else {
-    dependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask =
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  VkSubpassDependency subpassDependency{};
+  subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  subpassDependency.dstSubpass = 0;
+  subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.srcAccessMask = 0;
+  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
+    subpassDependency.srcStageMask  |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    subpassDependency.srcAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    subpassDependency.dstStageMask  |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpassDependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
   }
   if (dependencyOverride) {
-    dependencyOverride(dependency);
+    dependencyOverride(subpassDependency);
+  }
+
+  std::vector<VkAttachmentDescription> attachments{{colorAttachment}};
+  if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
+    attachments.push_back(depthStencilAttachment);
   }
 
   VkRenderPassCreateInfo renderPassInfo{};
@@ -116,12 +114,7 @@ void RenderPass::create(const Device& device,
   renderPassInfo.subpassCount    = 1;
   renderPassInfo.pSubpasses      = &subpass;
   renderPassInfo.dependencyCount = 1;
-  renderPassInfo.pDependencies   = &dependency;
-
-  std::vector<VkAttachmentDescription> attachments{{colorAttachment}};
-  if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
-    attachments.push_back(depthStencilAttachment);
-  }
+  renderPassInfo.pDependencies   = &subpassDependency;
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments    = attachments.data();
 
