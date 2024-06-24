@@ -75,12 +75,32 @@ void Device::initQueue(QueueFamilyName queueFamilyName, uint32_t queueFamilyInde
   MI_VERIFY(isCreated());
   VkQueue queue = VK_NULL_HANDLE;
   vkGetDeviceQueue(_device, queueFamilyIndex, 0, &queue);
-  _queues[queueFamilyName] = queue;
+  _queues[queueFamilyName] = {queueFamilyIndex, queue};
 }
 
 VkQueue Device::queue(QueueFamilyName queueFamilyName) const {
   MI_VERIFY(isCreated());
-  return _queues.at(queueFamilyName);
+  if (_queues.find(queueFamilyName) == _queues.end()) {
+    return VK_NULL_HANDLE;
+  }
+  return _queues.at(queueFamilyName).queue;
+}
+
+std::optional<uint32_t> Device::queueIndex(QueueFamilyName queueFamilyName) const {
+  MI_VERIFY(isCreated());
+  if (_queues.find(queueFamilyName) == _queues.end()) {
+    return std::nullopt;
+  }
+  return _queues.at(queueFamilyName).index;
+}
+
+std::vector<uint32_t> Device::queueIndices() const {
+  MI_VERIFY(isCreated());
+  std::set<uint32_t> indices;
+  for (const auto& [_, queue] : _queues) {
+    indices.insert(queue.index);
+  }
+  return {indices.begin(), indices.end()};
 }
 
 void Device::destroy() {

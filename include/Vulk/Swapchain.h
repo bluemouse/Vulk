@@ -36,7 +36,7 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
             const Surface& surface,
             const VkExtent2D& surfaceExtent,
             const VkSurfaceFormatKHR& surfaceFormat,
-            VkPresentModeKHR presentMode);
+            const VkPresentModeKHR& presentMode);
   // TODO: I need to add noexcept for the destructor to avoid the error of "exception specification
   // of overriding function is more lax than base version". Don't know why!!??
   ~Swapchain() noexcept override;
@@ -45,7 +45,7 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
               const Surface& surface,
               const VkExtent2D& surfaceExtent,
               const VkSurfaceFormatKHR& surfaceFormat,
-              VkPresentModeKHR presentMode);
+              const VkPresentModeKHR& presentMode);
   void create(const Device& device,
               const Surface& surface,
               const ChooseSurfaceExtentFunc& chooseSurfaceExtent,

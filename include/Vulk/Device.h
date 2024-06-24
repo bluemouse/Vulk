@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <optional>
 
 #include <Vulk/internal/base.h>
 
@@ -43,13 +44,19 @@ class Device : public Sharable<Device>, private NotCopyable {
 
   void initQueue(QueueFamilyName queueFamilyName, uint32_t queueFamilyIndex);
   [[nodiscard]] VkQueue queue(QueueFamilyName queueFamilyName) const;
+  [[nodiscard]] std::optional<uint32_t> queueIndex(QueueFamilyName queueFamilyName) const;
+  [[nodiscard]] std::vector<uint32_t> queueIndices() const;
 
   [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
 
  private:
   VkDevice _device = VK_NULL_HANDLE;
 
-  std::map<QueueFamilyName, VkQueue> _queues;
+  struct QueueFamily {
+    uint32_t index;
+    VkQueue queue;
+  };
+  std::map<QueueFamilyName, QueueFamily> _queues;
 
   std::weak_ptr<const PhysicalDevice> _physicalDevice;
 };

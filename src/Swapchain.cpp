@@ -17,7 +17,7 @@ Swapchain::Swapchain(const Device& device,
                      const Surface& surface,
                      const VkExtent2D& surfaceExtent,
                      const VkSurfaceFormatKHR& surfaceFormat,
-                     VkPresentModeKHR presentMode) {
+                     const VkPresentModeKHR& presentMode) {
   create(device, surface, surfaceExtent, surfaceFormat, presentMode);
 }
 
@@ -31,12 +31,11 @@ void Swapchain::create(const Device& device,
                        const Surface& surface,
                        const VkExtent2D& surfaceExtent,
                        const VkSurfaceFormatKHR& surfaceFormat,
-                       VkPresentModeKHR presentMode) {
+                       const VkPresentModeKHR& presentMode) {
   MI_VERIFY(!isCreated());
   _device  = device.get_weak();
   _surface = surface.get_weak();
 
-  const auto& physicalDevice = device.physicalDevice();
   const auto capabilities    = surface.querySupports().capabilities;
 
   _surfaceExtent = surfaceExtent;
@@ -58,17 +57,15 @@ void Swapchain::create(const Device& device,
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-  uint32_t queueFamilyIndices[] = {physicalDevice.queueFamilies().graphicsIndex(),
-                                   physicalDevice.queueFamilies().presentIndex()};
-
-  if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
-    createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-    createInfo.queueFamilyIndexCount = 2;
-    createInfo.pQueueFamilyIndices   = queueFamilyIndices;
-  } else {
+  auto queueFamilyIndices = device.queueIndices();
+  if (queueFamilyIndices.size() == 1) {
     createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     createInfo.queueFamilyIndexCount = 0;       // Optional
     createInfo.pQueueFamilyIndices   = nullptr; // Optional
+  } else {
+    createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+    createInfo.queueFamilyIndexCount = static_cast<uint32_t>(queueFamilyIndices.size());
+    createInfo.pQueueFamilyIndices   = queueFamilyIndices.data();
   }
 
   createInfo.preTransform   = capabilities.currentTransform;
