@@ -3,7 +3,10 @@
 2. cmake --build _build -j 16
 
 ### Run Testbed
-1. _build/bin/Testbed
+- _build/bin/Testbed --help
+- _build/bin/Testbed
+- _build/bin/Testbed --model path_to_your_obj_file --texture path_to_your_texture_file
+
 
 
 ### References

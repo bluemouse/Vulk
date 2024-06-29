@@ -142,13 +142,13 @@ void Testbed::run() {
 
 void Testbed::mainLoop() {
   MainWindow::mainLoop();
-  _context.waitIdle();
+  _context.waitIdle(); // Before we end the loop, we need to wait for the device to be idle.
 }
 
 void Testbed::drawFrame() {
-  nextFrame();
+  nextFrame(); // Move to the next frame. The new current frame may be in use.
 
-  _currentFrame->fence->wait();
+  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
 
   if (_context.swapchain().acquireNextImage(*_currentFrame->imageAvailableSemaphore) ==
       VK_ERROR_OUT_OF_DATE_KHR) {
@@ -168,7 +168,7 @@ void Testbed::drawFrame() {
               *_currentFrame->fence);
 
   presentFrame(*_currentFrame->commandBuffer,
-               *_currentFrame->framebuffer,
+               _currentFrame->framebuffer->image(),
                {_currentFrame->renderFinishedSemaphore.get()});
 }
 
@@ -203,11 +203,11 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   _currentFrame->commandBuffer->waitIdle();
 }
 void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
-                           Vulk::Framebuffer& framebuffer,
+                           Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
-  auto& swapchainFramebuffer = _context.swapchain().activeFramebuffer();
-  swapchainFramebuffer.image().blitFrom(commandBuffer, framebuffer.image());
-  swapchainFramebuffer.image().transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  auto& swapchainFrame = _context.swapchain().activeImage();
+  swapchainFrame.blitFrom(commandBuffer, frame);
+  swapchainFrame.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
   auto result = _context.swapchain().present(waits);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
@@ -219,32 +219,31 @@ void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
 
 void Testbed::createContext() {
   Vulk::Context::CreateInfo createInfo;
-  createInfo.versionMajor    = 1;
-  createInfo.versionMinor    = 0;
+  createInfo.versionMajor       = 1;
+  createInfo.versionMinor       = 0;
   createInfo.instanceExtensions = getRequiredInstanceExtensions();
-  createInfo.validationLevel = _validationLevel;
+  createInfo.validationLevel    = _validationLevel;
 
   createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {
     return MainWindow::createWindowSurface(instance);
   };
 
-  createInfo.queueFamilies.graphics = true;
-  createInfo.queueFamilies.present = true;
-  createInfo.deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-  createInfo.hasPhysicalDeviceFeatures = [] (VkPhysicalDeviceFeatures supportedFeatures) {
+  createInfo.queueFamilies.graphics    = true;
+  createInfo.queueFamilies.present     = true;
+  createInfo.deviceExtensions          = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+  createInfo.hasPhysicalDeviceFeatures = [](VkPhysicalDeviceFeatures supportedFeatures) {
     return supportedFeatures.samplerAnisotropy != 0U;
   };
 
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
-  createInfo.chooseDepthFormat = &Testbed::chooseDepthFormat;
+  createInfo.chooseDepthFormat   = &Testbed::chooseDepthFormat;
   createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
-  createInfo.choosePresentMode   = &Testbed::chooseSwapchainPresentMode;
+  createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
 
-
-  createInfo.createVertShader  = &Testbed::createVertexShader;
-  createInfo.createFragShader  = &Testbed::createFragmentShader;
+  createInfo.createVertShader = &Testbed::createVertexShader;
+  createInfo.createFragShader = &Testbed::createFragmentShader;
 
   createInfo.maxDescriptorSets = _maxFramesInFlight;
 
@@ -303,7 +302,11 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
 
 void Testbed::createDrawable() {
   if (_textureFile.empty()) {
-    Checkerboard checkerboard{{4, 4}, {128, 128}, {60, 60, 60, 255}};
+    const glm::uvec2 numBlocks{4, 4};
+    const glm::uvec2 blockSize{128, 128};
+    const glm::uvec4 black{60, 60, 60, 255};
+    const glm::uvec4 white{255, 255, 255, 255};
+    Checkerboard checkerboard{numBlocks, blockSize, black, white};
     _texture = Vulk::Toolbox(_context).createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
                                                        checkerboard.data(),
                                                        checkerboard.extent.x,
@@ -312,13 +315,18 @@ void Testbed::createDrawable() {
     _texture = Vulk::Toolbox(_context).createTexture2D(_textureFile.c_str());
   }
 
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
   if (_modelFile.empty()) {
-    float left{-1.0F}, right{1.0F}, bottom{-1.0F}, top{1.0F};
+    float left{-1.0F};
+    float right{1.0F};
+    float bottom{-1.0F};
+    float top{1.0F};
 
     if (_texture->isValid()) {
       // to make sure the texture and the quad has the same aspect ratio
       auto [textureW, textureH] = _texture->extent();
-      float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
+      const float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
 
       if (textureAspect > 1.0F) {
         left  = -textureAspect;
@@ -328,26 +336,17 @@ void Testbed::createDrawable() {
         top    = 1.0F / textureAspect;
       }
     }
-    const std::vector<Vertex> vertices = {
-        {{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-        {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-        {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-        {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+    vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
+                {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
+                {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
+                {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+    indices  = {0, 1, 2, 2, 3, 0};
 
-    const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
-
-    _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
-
-    initCamera(vertices);
   } else {
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
     loadModel(_modelFile, vertices, indices);
-
-    _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
-
-    initCamera(vertices);
   }
+  _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
+  initCamera(vertices);
 }
 
 void Testbed::createFrames() {
@@ -391,7 +390,8 @@ void Testbed::createFrames() {
     // to match them in the shader as well.
     std::vector<Vulk::DescriptorSet::Binding> bindings = {
         {"xform", "Transformation", &transformationBufferInfo},
-        {"texSampler", "sampler2D", &textureImageInfo}};
+        {"texSampler", "sampler2D", &textureImageInfo}
+    };
     frame.descriptorSet = Vulk::DescriptorSet::make_shared(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
@@ -478,7 +478,7 @@ void Testbed::updateUniformBuffer() {
   auto zFar  = zNear + dist * 10.0F;
 // #define USE_PERSPECTIVE_PROJECTION
 #  if defined(USE_PERSPECTIVE_PROJECTION)
-  float fovy = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
+  float fovy    = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
   uniforms.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
   uniforms.proj[1][1] *= -1;
 #  else

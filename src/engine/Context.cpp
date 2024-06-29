@@ -48,13 +48,12 @@ void Context::create(const CreateInfo& createInfo) {
   createSwapchain(createInfo.chooseSurfaceExtent,
                   createInfo.chooseSurfaceFormat,
                   createInfo.choosePresentMode);
+  createCommandPool();
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
   createFramebuffers();
 
   createPipeline(createInfo.createVertShader, createInfo.createFragShader);
-
-  createCommandPool();
   createDescriptorPool(createInfo.maxDescriptorSets);
 }
 

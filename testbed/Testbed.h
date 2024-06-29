@@ -79,7 +79,7 @@ class Testbed : public MainWindow {
                            const std::vector<Vulk::Semaphore*> signals,
                            Vulk::Fence& fence);
   virtual void presentFrame(Vulk::CommandBuffer& commandBuffer,
-                            Vulk::Framebuffer& framebuffer,
+                            Vulk::Image& frame,
                             const std::vector<Vulk::Semaphore*> waits);
 
  private:

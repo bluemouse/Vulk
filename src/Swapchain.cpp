@@ -212,7 +212,7 @@ VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.waitSemaphoreCount = semaphores.size();
   presentInfo.pWaitSemaphores    = semaphores.data();
 
   presentInfo.swapchainCount = 1;
