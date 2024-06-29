@@ -51,7 +51,6 @@ void Context::create(const CreateInfo& createInfo) {
   createCommandPool();
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
-  createFramebuffers();
 
   createPipeline(createInfo.createVertShader, createInfo.createFragShader);
   createDescriptorPool(createInfo.maxDescriptorSets);
@@ -136,10 +135,6 @@ void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseS
   }
 
   _renderPass = Vulk::RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
-}
-
-void Context::createFramebuffers() {
-  _swapchain->createFramebuffers(renderPass());
 }
 
 void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,

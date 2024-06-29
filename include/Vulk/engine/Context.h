@@ -110,7 +110,6 @@ class Context {
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);
   virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                 const ChooseDepthFormatFunc& chooseDepthFormat = {});
-  virtual void createFramebuffers();
 
   virtual void createPipeline(const CreateVertShaderFunc& createVertShader,
                               const CreateFragShaderFunc& createFragShader);

@@ -79,6 +79,25 @@ void Swapchain::create(const Device& device,
   createInfo.imageExtent = _surfaceExtent;
 
   MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
+
+  // Initialize the swapchain images.
+  uint32_t imageCount = 0;
+  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, nullptr);
+  std::vector<VkImage> imgs{imageCount};
+  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
+
+  // We need to reserve the space first to avoid resizing (which triggers the destructor)
+  _images.reserve(imageCount);
+  _imageViews.reserve(imageCount);
+  for (auto& img : imgs) {
+    auto img2d = Vulk::Image2D::make_shared(img, _surfaceFormat.format, _surfaceExtent);
+    _images.push_back(img2d);
+
+    auto imgView = Vulk::ImageView::make_shared(device, *img2d);
+    _imageViews.push_back(imgView);
+  }
+
+  deactivateActiveImage();
 }
 
 void Swapchain::create(const Device& device,
@@ -94,50 +113,14 @@ void Swapchain::create(const Device& device,
   create(device, surface, extent, format, presentMode);
 }
 
-void Swapchain::createFramebuffers(const RenderPass& renderPass) {
-  MI_VERIFY(isCreated());
-  MI_VERIFY(renderPass.colorFormat() == _surfaceFormat.format);
-
-  const auto& device = this->device();
-
-  uint32_t imageCount = 0;
-  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, nullptr);
-  std::vector<VkImage> imgs{imageCount};
-  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
-
-  _depthImage = DepthImage::make_shared(device, _surfaceExtent, renderPass.depthStencilFormat());
-  _depthImage->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  _depthImageView = ImageView::make_shared(device, *_depthImage);
-
-  // We need to reserve the space first to avoid resizing (which triggers the destructor)
-  _images.reserve(imageCount);
-  _imageViews.reserve(imageCount);
-  _framebuffers.reserve(_imageViews.size());
-  for (auto& img : imgs) {
-    auto img2d = Vulk::Image2D::make_shared(img, renderPass.colorFormat(), _surfaceExtent);
-    _images.push_back(img2d);
-
-    auto imgView = Vulk::ImageView::make_shared(device, *img2d);
-    _imageViews.push_back(imgView);
-
-    auto framebuffer = Vulk::Framebuffer::make_shared(device, renderPass, *imgView, *_depthImageView);
-    _framebuffers.push_back(framebuffer);
-  }
-
-  deactivateActiveImage();
-}
-
 void Swapchain::destroy() {
   MI_VERIFY(isCreated());
 
   deactivateActiveImage();
 
   // Be careful about changing the destroying order.
-  _framebuffers.clear();
   _imageViews.clear();
   _images.clear();
-  _depthImageView.reset();
-  _depthImage.reset();
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
 
@@ -156,29 +139,14 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   if (width == _surfaceExtent.width && height == _surfaceExtent.height) {
     return;
   }
-  RenderPass::shared_const_ptr renderPass;
-  if (!_framebuffers.empty()) {
-    renderPass = _framebuffers[0]->renderPass().get_shared();
-
-    // Be careful about changing the destroying order.
-    _framebuffers.clear();
-    _imageViews.clear();
-    _images.clear();
-
-    _depthImageView.reset();
-    _depthImage.reset();
-  }
+  _imageViews.clear();
+  _images.clear();
 
   vkDestroySwapchainKHR(device(), _swapchain, nullptr);
   _swapchain = VK_NULL_HANDLE;
 
   const auto surfaceExtent = chooseSurfaceExtent(width, height);
-
   create(device(), surface(), surfaceExtent, _surfaceFormat, _presentMode);
-
-  if (renderPass) {
-    createFramebuffers(*renderPass);
-  }
 }
 
 VkResult Swapchain::acquireNextImage(const Semaphore& signal) const {

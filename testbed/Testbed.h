@@ -4,6 +4,8 @@
 
 #include <Vulk/Framebuffer.h>
 #include <Vulk/Fence.h>
+#include <Vulk/Image2D.h>
+#include <Vulk/DepthImage.h>
 
 #include <Vulk/engine/Context.h>
 #include <Vulk/engine/Drawable.h>
