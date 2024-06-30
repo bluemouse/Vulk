@@ -103,7 +103,7 @@ class Context {
   virtual void pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
                                   const std::vector<const char*>& deviceExtensions,
                                   const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
-  virtual void createLogicalDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
+  virtual void createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                                    const std::vector<const char*>& deviceExtensions);
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                                const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
@@ -124,11 +124,12 @@ class Context {
   Vulk::Device::shared_ptr _device;
   Vulk::Swapchain::shared_ptr _swapchain;
 
-  Vulk::RenderPass::shared_ptr _renderPass;
-  Vulk::Pipeline::shared_ptr _pipeline;
-
   Vulk::DescriptorPool::shared_ptr _descriptorPool;
   Vulk::CommandPool::shared_ptr _commandPool;
+
+  //TODO those should be moved out from Context as they should be part of the rendering frame pass.
+  Vulk::RenderPass::shared_ptr _renderPass;
+  Vulk::Pipeline::shared_ptr _pipeline;
 };
 
 NAMESPACE_END(Vulk)

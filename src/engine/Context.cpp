@@ -44,11 +44,11 @@ void Context::create(const CreateInfo& createInfo) {
   pickPhysicalDevice(createInfo.queueFamilies,
                      createInfo.deviceExtensions,
                      createInfo.hasPhysicalDeviceFeatures);
-  createLogicalDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
+  createDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
+  createCommandPool();
   createSwapchain(createInfo.chooseSurfaceExtent,
                   createInfo.chooseSurfaceFormat,
                   createInfo.choosePresentMode);
-  createCommandPool();
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
 
@@ -87,34 +87,9 @@ void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamil
   _instance->pickPhysicalDevice(surface(), queueFamilies, deviceExtensions, hasDeviceFeatures);
 }
 
-void Context::createLogicalDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
-                                  const std::vector<const char*>& deviceExtensions) {
-  const auto& supportedQueueFamilies = _instance->physicalDevice().queueFamilies();
-
-  std::vector<uint32_t> queueFamilies;
-  std::vector<Device::QueueFamilyName> queueFamilyNames;
-  if (requiredQueueFamilies.graphics) {
-    queueFamilies.push_back(supportedQueueFamilies.graphicsIndex());
-    queueFamilyNames.push_back(Device::QueueFamilyName::Graphics);
-  }
-  if (requiredQueueFamilies.compute) {
-    queueFamilies.push_back(supportedQueueFamilies.computeIndex());
-    queueFamilyNames.push_back(Device::QueueFamilyName::Compute);
-  }
-  if (requiredQueueFamilies.transfer) {
-    queueFamilies.push_back(supportedQueueFamilies.transferIndex());
-    queueFamilyNames.push_back(Device::QueueFamilyName::Transfer);
-  }
-  if (requiredQueueFamilies.present) {
-    queueFamilies.push_back(supportedQueueFamilies.presentIndex());
-    queueFamilyNames.push_back(Device::QueueFamilyName::Present);
-  }
-
-  _device = Vulk::Device::make_shared(_instance->physicalDevice(), queueFamilies, deviceExtensions);
-
-  for(size_t i = 0; i < queueFamilies.size(); ++i) {
-    _device->initQueue(queueFamilyNames[i], queueFamilies[i]);
-  }
+void Context::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
+                           const std::vector<const char*>& deviceExtensions) {
+  _device = Vulk::Device::make_shared(_instance->physicalDevice(), requiredQueueFamilies, deviceExtensions);
 }
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
@@ -178,6 +153,7 @@ void Context::createPipeline(const CreateVertShaderFunc& createVertShader,
 }
 
 void Context::createCommandPool() {
+  //TODO We hard coded graphics queue. Need to make it customizable.
   _commandPool = Vulk::CommandPool::make_shared(
       device(), _instance->physicalDevice().queueFamilies().graphicsIndex());
 }

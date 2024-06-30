@@ -57,7 +57,7 @@ void Swapchain::create(const Device& device,
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-  auto queueFamilyIndices = device.queueIndices();
+  auto queueFamilyIndices = device.queueFamilyIndices();
   if (queueFamilyIndices.size() == 1) {
     createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     createInfo.queueFamilyIndexCount = 0;       // Optional
@@ -188,7 +188,7 @@ VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
 
   presentInfo.pImageIndices = &_activeImageIndex;
 
-  return vkQueuePresentKHR(device().queue(Device::QueueFamilyName::Present), &presentInfo);
+  return vkQueuePresentKHR(device().queue(Device::QueueFamilyType::Present), &presentInfo);
 }
 
 VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight) {

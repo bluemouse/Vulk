@@ -41,6 +41,7 @@ set(SRC_FILES
     src/VertexShader.cpp
     src/FragmentShader.cpp
     src/Pipeline.cpp
+    src/Queue.cpp
     src/CommandPool.cpp
     src/CommandBuffer.cpp
     src/DescriptorPool.cpp
@@ -84,6 +85,7 @@ set(HEADER_FILES
     include/Vulk/VertexShader.h
     include/Vulk/FragmentShader.h
     include/Vulk/Pipeline.h
+    include/Vulk/Queue.h
     include/Vulk/CommandPool.h
     include/Vulk/CommandBuffer.h
     include/Vulk/DescriptorPool.h

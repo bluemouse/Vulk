@@ -12,10 +12,15 @@ class Device;
 
 class CommandPool : public Sharable<CommandPool>, private NotCopyable {
  public:
-  CommandPool(const Device& device, uint32_t queueFamilyIndex);
+  CommandPool(const Device& device,
+              uint32_t queueFamilyIndex,
+              VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
   ~CommandPool() override;
 
-  void create(const Device& device, uint32_t queueFamilyIndex);
+  void create(const Device& device,
+              uint32_t queueFamilyIndex,
+              VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
   void destroy();
 
   operator VkCommandPool() const { return _pool; }

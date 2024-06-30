@@ -7,14 +7,15 @@
 
 #include <Vulk/Instance.h>
 #include <Vulk/PhysicalDevice.h>
+#include <Vulk/Queue.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 Device::Device(const PhysicalDevice& physicalDevice,
-               const std::vector<uint32_t>& queueFamilies,
+               const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                const std::vector<const char*>& extensions,
                const DeviceCreateInfoOverride& override) {
-  create(physicalDevice, queueFamilies, extensions, override);
+  create(physicalDevice, requiredQueueFamilies, extensions, override);
 }
 
 Device::~Device() {
@@ -24,21 +25,53 @@ Device::~Device() {
 }
 
 void Device::create(const PhysicalDevice& physicalDevice,
-                    const std::vector<uint32_t>& queueFamilies,
+                    const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                     const std::vector<const char*>& extensions,
                     const DeviceCreateInfoOverride& override) {
   MI_VERIFY(!isCreated());
   _physicalDevice = physicalDevice.get_weak();
 
+  const auto& supportedQueueFamilies = physicalDevice.queueFamilies();
+
+  // Extract the queue family indices and names.
+  std::vector<uint32_t> queueFamilyIndices;
+  std::vector<Device::QueueFamilyType> queueFamilyTypes;
+  if (requiredQueueFamilies.graphics) {
+    MI_VERIFY_MSG(supportedQueueFamilies.graphics,
+                  "Required graphics queue family is not supported by the physical device.");
+    queueFamilyIndices.push_back(supportedQueueFamilies.graphicsIndex());
+    queueFamilyTypes.push_back(Device::QueueFamilyType::Graphics);
+  }
+  if (requiredQueueFamilies.compute) {
+    MI_VERIFY_MSG(supportedQueueFamilies.compute,
+                  "Required compute queue family is not supported by the physical device.");
+    queueFamilyIndices.push_back(supportedQueueFamilies.computeIndex());
+    queueFamilyTypes.push_back(Device::QueueFamilyType::Compute);
+  }
+  if (requiredQueueFamilies.transfer) {
+    MI_VERIFY_MSG(supportedQueueFamilies.transfer,
+                  "Required transfer queue family is not supported by the physical device.");
+    queueFamilyIndices.push_back(supportedQueueFamilies.transferIndex());
+    queueFamilyTypes.push_back(Device::QueueFamilyType::Transfer);
+  }
+  if (requiredQueueFamilies.present) {
+    MI_VERIFY_MSG(supportedQueueFamilies.present,
+                  "Required present queue family is not supported by the physical device.");
+    queueFamilyIndices.push_back(supportedQueueFamilies.presentIndex());
+    queueFamilyTypes.push_back(Device::QueueFamilyType::Present);
+  }
+
+  // Create the device.
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   float queuePriority = 1.0F;
-  std::set<uint32_t> uniqueQueueFamilies{queueFamilies.begin(), queueFamilies.end()};
+  std::set<uint32_t> uniqueQueueFamilies{queueFamilyIndices.begin(), queueFamilyIndices.end()};
   for (uint32_t queueFamily : uniqueQueueFamilies) {
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfo.queueFamilyIndex = queueFamily;
-    queueCreateInfo.queueCount       = 1;
+    queueCreateInfo.queueCount       = 1; // TODO For now we only allow one queue per family.
     queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfo.flags            = 0; // We have to set it to 0 for now.
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
@@ -69,36 +102,39 @@ void Device::create(const PhysicalDevice& physicalDevice,
   }
 
   MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
+
+  for(size_t i = 0; i < queueFamilyIndices.size(); ++i) {
+    _queues[queueFamilyTypes[i]] = getQueue(queueFamilyIndices[i]);
+  }
 }
 
-void Device::initQueue(QueueFamilyName queueFamilyName, uint32_t queueFamilyIndex) {
-  MI_VERIFY(isCreated());
-  VkQueue queue = VK_NULL_HANDLE;
-  vkGetDeviceQueue(_device, queueFamilyIndex, 0, &queue);
-  _queues[queueFamilyName] = {queueFamilyIndex, queue};
+std::shared_ptr<Queue> Device::getQueue(uint32_t queueFamilyIndex) {
+  return std::make_shared<Queue>(*this, queueFamilyIndex);
 }
 
-VkQueue Device::queue(QueueFamilyName queueFamilyName) const {
+VkQueue Device::queue(QueueFamilyType queueFamilyType) const {
   MI_VERIFY(isCreated());
-  if (_queues.find(queueFamilyName) == _queues.end()) {
+  if (!_queues[queueFamilyType]) {
     return VK_NULL_HANDLE;
   }
-  return _queues.at(queueFamilyName).queue;
+  return *_queues[queueFamilyType];
 }
 
-std::optional<uint32_t> Device::queueIndex(QueueFamilyName queueFamilyName) const {
+std::optional<uint32_t> Device::queueFamilyIndex(QueueFamilyType queueFamilyType) const {
   MI_VERIFY(isCreated());
-  if (_queues.find(queueFamilyName) == _queues.end()) {
+  if (!_queues[queueFamilyType]) {
     return std::nullopt;
   }
-  return _queues.at(queueFamilyName).index;
+  return _queues[queueFamilyType]->queueFamilyIndex();
 }
 
-std::vector<uint32_t> Device::queueIndices() const {
+std::vector<uint32_t> Device::queueFamilyIndices() const {
   MI_VERIFY(isCreated());
   std::set<uint32_t> indices;
-  for (const auto& [_, queue] : _queues) {
-    indices.insert(queue.index);
+  for (const auto& queue : _queues) {
+    if (queue) {
+      indices.insert(queue->queueFamilyIndex());
+    }
   }
   return {indices.begin(), indices.end()};
 }

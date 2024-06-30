@@ -5,8 +5,8 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-CommandPool::CommandPool(const Device& device, uint32_t queueFamilyIndex) {
-  create(device, queueFamilyIndex);
+CommandPool::CommandPool(const Device& device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
+  create(device, queueFamilyIndex, flags);
 }
 
 CommandPool::~CommandPool() {
@@ -15,14 +15,14 @@ CommandPool::~CommandPool() {
   }
 }
 
-void CommandPool::create(const Device& device, uint32_t queueFamilyIndex) {
+void CommandPool::create(const Device& device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
   MI_VERIFY(!isCreated());
 
   _device = device.get_weak();
 
   VkCommandPoolCreateInfo poolInfo{};
   poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  poolInfo.flags            = flags;
   poolInfo.queueFamilyIndex = queueFamilyIndex;
 
   MI_VERIFY_VKCMD(vkCreateCommandPool(device, &poolInfo, nullptr, &_pool));
