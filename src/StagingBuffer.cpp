@@ -35,7 +35,7 @@ void StagingBuffer::copyToBuffer(const Queue& queue,
                                  Buffer& dst,
                                  const VkBufferCopy& roi,
                                  bool waitForFinish) const {
-  commandBuffer.beginRecording(true);
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
   vkCmdCopyBuffer(commandBuffer, *this, dst, 1, &roi);
   commandBuffer.endRecording();
 
@@ -59,7 +59,7 @@ void StagingBuffer::copyToImage(const Queue& queue,
                                 Image& dst,
                                 const VkBufferImageCopy& roi,
                                 bool waitForFinish) const {
-  commandBuffer.beginRecording(true);
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
   vkCmdCopyBufferToImage(commandBuffer,
                          *this,
                          dst,

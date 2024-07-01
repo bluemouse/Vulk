@@ -50,18 +50,16 @@ void CommandBuffer::free() {
   _pool.reset();
 }
 
-void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) const {
-  beginRecording(singleTime);
+void CommandBuffer::recordCommands(const Recorder& recorder, Usage usage) const {
+  beginRecording(usage);
   recorder(*this);
   endRecording();
 }
 
-void CommandBuffer::beginRecording(bool singleTime) const {
+void CommandBuffer::beginRecording(Usage usage) const {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  if (singleTime) {
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-  }
+  beginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
 
   MI_VERIFY_VKCMD(vkBeginCommandBuffer(_buffer, &beginInfo));
 }

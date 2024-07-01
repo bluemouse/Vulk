@@ -27,6 +27,14 @@ class DescriptorSet;
 
 class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
+  enum class Usage {
+    OneTimeSubmit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    RenderPassContinue = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
+    SimultaneousUse = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+    Default = 0
+  };
+
+ public:
   CommandBuffer() = default;
   CommandBuffer(const CommandPool& commandPool);
   ~CommandBuffer() override;
@@ -36,10 +44,9 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
 
   using Recorder = std::function<void(const CommandBuffer& buffer)>;
   // Record the commands played by `recorder` into this command buffer
-  void recordCommands(const Recorder& recorder) const { recordCommands(recorder, false); }
-  void recordSingleTimeCommand(const Recorder& recorder) const { recordCommands(recorder, true); }
+  void recordCommands(const Recorder& recorder, Usage usage = Usage::Default) const;
 
-  void beginRecording(bool singleTime = false) const;
+  void beginRecording(Usage usage = Usage::Default) const;
   void endRecording() const;
 
   void beginRenderPass(const RenderPass& renderPass,
@@ -69,9 +76,6 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   [[nodiscard]] bool isAllocated() const { return _buffer != VK_NULL_HANDLE; }
 
   [[nodiscard]] const CommandPool& pool() const { return *_pool.lock(); }
-
- private:
-  void recordCommands(const Recorder& recorder, bool singleTime) const;
 
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;

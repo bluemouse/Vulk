@@ -171,26 +171,26 @@ void Image::unmap() {
 }
 
 void Image::copyFrom(const Queue& queue,
-                     const CommandBuffer& cmdBuffer,
+                     const CommandBuffer& commandBuffer,
                      const StagingBuffer& stagingBuffer) {
-  transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  stagingBuffer.copyToImage(queue, cmdBuffer, *this, width(), height());
+  transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  stagingBuffer.copyToImage(queue, commandBuffer, *this, width(), height());
 }
 
 // copy the image data from `srcImage` to this image
 void Image::copyFrom(const Queue& queue,
-                     const CommandBuffer& cmdBuffer, const Image& srcImage) {
+                     const CommandBuffer& commandBuffer, const Image& srcImage) {
   // TODO should we execute transit and copy in one command buffer execution?
 
   auto& dstImage = *this;
   MI_VERIFY(srcImage.extent() == dstImage.extent());
 
-  dstImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  dstImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  srcImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  cmdBuffer.recordSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+  auto commands = [&srcImage, &dstImage](const CommandBuffer& commandBuffer) {
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -209,29 +209,30 @@ void Image::copyFrom(const Queue& queue,
     copyRegion.dstOffset = {0, 0, 0};
     copyRegion.extent    = {srcImage.width(), srcImage.height(), srcImage.depth()};
 
-    vkCmdCopyImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &copyRegion);
-  });
+    vkCmdCopyImage(commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &copyRegion);
+  };
+  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
-  queue.submitCommands(cmdBuffer);
+  queue.submitCommands(commandBuffer);
 
   queue.waitIdle();
 
-  srcImage.transitToNewLayout(queue, cmdBuffer, prevSrcLayout);
+  srcImage.transitToNewLayout(queue, commandBuffer, prevSrcLayout);
 }
 
 // blit the image data from `srcImage` to this image
 void Image::blitFrom(const Queue& queue,
-                     const CommandBuffer& cmdBuffer, const Image& srcImage) {
+                     const CommandBuffer& commandBuffer, const Image& srcImage) {
   // TODO should we execute transit and blit in one command buffer execution?
 
   auto& dstImage = *this;
 
-  dstImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  dstImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  srcImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  cmdBuffer.recordSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+  auto commands = [&srcImage, &dstImage](const CommandBuffer& commandBuffer) {
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -254,14 +255,15 @@ void Image::blitFrom(const Queue& queue,
     blit.dstOffsets[0]             = {0, 0, 0};
     blit.dstOffsets[1]             = {dstW, dstH, dstD};
 
-    vkCmdBlitImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
-  });
+    vkCmdBlitImage(commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
+  };
+  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
-  queue.submitCommands(cmdBuffer);
+  queue.submitCommands(commandBuffer);
 
   queue.waitIdle();
 
-  srcImage.transitToNewLayout(queue, cmdBuffer, prevSrcLayout);
+  srcImage.transitToNewLayout(queue, commandBuffer, prevSrcLayout);
 }
 
 void Image::transitToNewLayout(const Queue& queue,
@@ -272,7 +274,7 @@ void Image::transitToNewLayout(const Queue& queue,
     return;
   }
 
-  commandBuffer.recordSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
+  auto commands = [this, newLayout](const CommandBuffer& buffer) {
     auto oldLayout = _layout;
 
     VkImageMemoryBarrier barrier{};
@@ -294,7 +296,8 @@ void Image::transitToNewLayout(const Queue& queue,
     selectStageAccess(newLayout, dstStage, barrier.dstAccessMask);
 
     vkCmdPipelineBarrier(buffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  });
+  };
+  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
   queue.submitCommands(commandBuffer);
 
@@ -307,8 +310,8 @@ void Image::transitToNewLayout(const Queue& queue,
   _layout = newLayout;
 }
 
-void Image::makeShaderReadable(const Queue& queue, const CommandBuffer& cmdBuffer) const {
-  transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+void Image::makeShaderReadable(const Queue& queue, const CommandBuffer& commandBuffer) const {
+  transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 VkImageViewType Image::imageViewType() const {
