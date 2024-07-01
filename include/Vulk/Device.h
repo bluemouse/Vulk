@@ -50,7 +50,7 @@ class Device : public Sharable<Device>, private NotCopyable {
   [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
 
  private:
-  std::shared_ptr<Queue> getQueue(uint32_t queueFamilyIndex);
+  std::shared_ptr<Queue> getQueue(QueueFamilyType queueFamily, uint32_t queueFamilyIndex);
 
  private:
   VkDevice _device = VK_NULL_HANDLE;

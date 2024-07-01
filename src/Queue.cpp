@@ -8,8 +8,8 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-Queue::Queue(const Device& device, uint32_t queueFamilyIndex)
-: _queueFamilyIndex(queueFamilyIndex) {
+Queue::Queue(const Device& device, Device::QueueFamilyType queueFamily, uint32_t queueFamilyIndex)
+: _queueFamily(queueFamily), _queueFamilyIndex(queueFamilyIndex) {
   // According to doc: vkGetDeviceQueue must only be used to get queues that
   // were created with the flags parameter of VkDeviceQueueCreateInfo set to
   // zero. To get queues that were created with a non-zero flags parameter use

@@ -114,7 +114,6 @@ class Context {
   virtual void createPipeline(const CreateVertShaderFunc& createVertShader,
                               const CreateFragShaderFunc& createFragShader);
 
-  virtual void createCommandPool();
   virtual void createDescriptorPool(uint32_t maxSets);
 
  protected:

@@ -45,7 +45,6 @@ void Context::create(const CreateInfo& createInfo) {
                      createInfo.deviceExtensions,
                      createInfo.hasPhysicalDeviceFeatures);
   createDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
-  createCommandPool();
   createSwapchain(createInfo.chooseSurfaceExtent,
                   createInfo.chooseSurfaceFormat,
                   createInfo.choosePresentMode);
@@ -87,6 +86,9 @@ void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamil
 void Context::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                            const std::vector<const char*>& deviceExtensions) {
   _device = Vulk::Device::make_shared(_instance->physicalDevice(), requiredQueueFamilies, deviceExtensions);
+  //TODO We hard coded graphics queue. Need to make it customizable.
+  _commandPool = Vulk::CommandPool::make_shared(device(), Device::QueueFamilyType::Graphics);
+
 }
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
@@ -147,11 +149,6 @@ void Context::createPipeline(const CreateVertShaderFunc& createVertShader,
   auto fragShader      = createFragShader(device);
 
   _pipeline = Vulk::Pipeline::make_shared(device, renderPass(), vertShader, fragShader);
-}
-
-void Context::createCommandPool() {
-  //TODO We hard coded graphics queue. Need to make it customizable.
-  _commandPool = Vulk::CommandPool::make_shared(device(), Device::Graphics);
 }
 
 void Context::createDescriptorPool(uint32_t maxSets) {

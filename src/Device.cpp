@@ -33,7 +33,7 @@ void Device::create(const PhysicalDevice& physicalDevice,
 
   const auto& supportedQueueFamilies = physicalDevice.queueFamilies();
 
-  // Extract the queue family indices and names.
+  // Extract the queue family indices and types.
   std::vector<uint32_t> queueFamilyIndices;
   std::vector<Device::QueueFamilyType> queueFamilyTypes;
   if (requiredQueueFamilies.graphics) {
@@ -103,13 +103,14 @@ void Device::create(const PhysicalDevice& physicalDevice,
 
   MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
 
+  // Get the queues of the required queue families.
   for(size_t i = 0; i < queueFamilyIndices.size(); ++i) {
-    _queues[queueFamilyTypes[i]] = getQueue(queueFamilyIndices[i]);
+    _queues[queueFamilyTypes[i]] = getQueue(queueFamilyTypes[i], queueFamilyIndices[i]);
   }
 }
 
-std::shared_ptr<Queue> Device::getQueue(uint32_t queueFamilyIndex) {
-  return std::make_shared<Queue>(*this, queueFamilyIndex);
+std::shared_ptr<Queue> Device::getQueue(QueueFamilyType queueFamily, uint32_t queueFamilyIndex) {
+  return std::make_shared<Queue>(*this, queueFamily, queueFamilyIndex);
 }
 
 const Queue& Device::queue(QueueFamilyType queueFamilyType) const {
