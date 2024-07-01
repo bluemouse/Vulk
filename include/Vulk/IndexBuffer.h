@@ -4,6 +4,8 @@
 
 #include <Vulk/internal/base.h>
 
+#include <Vulk/Device.h>
+#include <Vulk/Queue.h>
 #include <Vulk/Buffer.h>
 #include <Vulk/engine/TypeTraits.h>
 
@@ -64,7 +66,9 @@ inline void IndexBuffer::create(const Device& device,
   _indexType        = IndexTrait<Index>::type;
   VkDeviceSize size = sizeof(Index) * indices.size();
   create(device, size);
-  load(stagingCommandBuffer, indices.data(), size);
+
+  const auto& queue = device.queue(Vulk::Device::QueueFamilyType::Graphics);
+  load(queue, stagingCommandBuffer, indices.data(), size);
 }
 
 NAMESPACE_END(Vulk)

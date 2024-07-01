@@ -1,8 +1,10 @@
 #include "Testbed.h"
 
+#include <Vulk/Device.h>
 #include <Vulk/ShaderModule.h>
 #include <Vulk/DepthImage.h>
 #include <Vulk/Framebuffer.h>
+#include <Vulk/Queue.h>
 
 #include <Vulk/engine/Toolbox.h>
 #include <Vulk/internal/debug.h>
@@ -198,16 +200,18 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   }
   commandBuffer.endRecording();
 
-  commandBuffer.executeRecordedCommands(waits, signals, fence);
+  const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+  queue.submitCommands(commandBuffer, waits, signals, fence);
 
-  _currentFrame->commandBuffer->waitIdle();
+  queue.waitIdle();
 }
 void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
                            Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
   auto& swapchainFrame = _context.swapchain().activeImage();
-  swapchainFrame.blitFrom(commandBuffer, frame);
-  swapchainFrame.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+  swapchainFrame.blitFrom(queue, commandBuffer, frame);
+  swapchainFrame.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
   auto result = _context.swapchain().present(waits);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
@@ -395,7 +399,9 @@ void Testbed::createFrames() {
     frame.descriptorSet = Vulk::DescriptorSet::make_shared(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
-    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer,
+    const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+    frame.colorBuffer->transitToNewLayout(queue,
+                                          *frame.commandBuffer,
                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 

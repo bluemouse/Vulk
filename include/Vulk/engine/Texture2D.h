@@ -11,6 +11,7 @@
 NAMESPACE_BEGIN(Vulk)
 
 class Device;
+class Queue;
 
 class Texture2D : public Sharable<Texture2D>, private NotCopyable {
  public:
@@ -35,11 +36,11 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();
 
-  void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
-  void copyFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage);
-  void copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
-  void blitFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage);
-  void blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
+  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);
+  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
+  void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);
+  void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
 
   const Image2D& image() const { return *_image; }
   const ImageView& view() const { return *_view; }

@@ -5,8 +5,10 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-CommandPool::CommandPool(const Device& device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
-  create(device, queueFamilyIndex, flags);
+CommandPool::CommandPool(const Device& device,
+                         Device::QueueFamilyType queueFamilyType,
+                         VkCommandPoolCreateFlags flags) {
+  create(device, queueFamilyType, flags);
 }
 
 CommandPool::~CommandPool() {
@@ -15,19 +17,20 @@ CommandPool::~CommandPool() {
   }
 }
 
-void CommandPool::create(const Device& device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
+void CommandPool::create(const Device& device,
+                         Device::QueueFamilyType queueFamilyType,
+                         VkCommandPoolCreateFlags flags) {
   MI_VERIFY(!isCreated());
 
   _device = device.get_weak();
+  _queueFamilyType = queueFamilyType;
 
   VkCommandPoolCreateInfo poolInfo{};
   poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   poolInfo.flags            = flags;
-  poolInfo.queueFamilyIndex = queueFamilyIndex;
+  poolInfo.queueFamilyIndex = device.queueFamilyIndex(queueFamilyType).value();
 
   MI_VERIFY_VKCMD(vkCreateCommandPool(device, &poolInfo, nullptr, &_pool));
-
-  vkGetDeviceQueue(device, queueFamilyIndex, 0, &_queue);
 }
 
 void CommandPool::destroy() {
@@ -36,7 +39,6 @@ void CommandPool::destroy() {
   vkDestroyCommandPool(device(), _pool, nullptr);
 
   _pool   = VK_NULL_HANDLE;
-  _queue  = VK_NULL_HANDLE;
   _device.reset();
 }
 

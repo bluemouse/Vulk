@@ -5,6 +5,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/CommandBuffer.h>
+#include <Vulk/Queue.h>
 #include <Vulk/StagingBuffer.h>
 #include <Vulk/internal/debug.h>
 
@@ -92,7 +93,8 @@ void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
   unmap();
 }
 
-void Buffer::load(const CommandBuffer& stagingCommandBuffer,
+void Buffer::load(const Queue& queue,
+                  const CommandBuffer& stagingCommandBuffer,
                   const void* data,
                   VkDeviceSize size,
                   VkDeviceSize offset) {
@@ -100,7 +102,7 @@ void Buffer::load(const CommandBuffer& stagingCommandBuffer,
   MI_VERIFY(offset + size <= _size);
   StagingBuffer stagingBuffer(device(), size);
   stagingBuffer.copyFromHost(data, size);
-  stagingBuffer.copyToBuffer(stagingCommandBuffer, *this, {0, offset, size});
+  stagingBuffer.copyToBuffer(queue, stagingCommandBuffer, *this, {0, offset, size});
 }
 
 void Buffer::free() {

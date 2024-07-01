@@ -43,7 +43,7 @@ class Device : public Sharable<Device>, private NotCopyable {
   [[nodiscard]] const Instance& instance() const;
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice.lock(); }
 
-  [[nodiscard]] VkQueue queue(QueueFamilyType queueFamilyType) const;
+  [[nodiscard]] const Queue& queue(QueueFamilyType queueFamilyType) const;
   [[nodiscard]] std::optional<uint32_t> queueFamilyIndex(QueueFamilyType queueFamilyType) const;
   [[nodiscard]] std::vector<uint32_t> queueFamilyIndices() const;
 

@@ -25,8 +25,9 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
 
   image->allocate();
   CommandBuffer cmdBuffer{_context.commandPool()};
-  image->copyFrom(cmdBuffer, *stagingBuffer);
-  image->makeShaderReadable(cmdBuffer);
+  const Queue& queue = _context.device().queue(Device::QueueFamilyType::Graphics);
+  image->copyFrom(queue, cmdBuffer, *stagingBuffer);
+  image->makeShaderReadable(queue, cmdBuffer);
 
   return image;
 }
@@ -37,7 +38,9 @@ Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
   const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   auto texture     = Texture2D::make_shared(
       _context.device(), VK_FORMAT_R8G8B8A8_SRGB, VkExtent2D{width, height}, usage);
-  texture->copyFrom(CommandBuffer{_context.commandPool()}, *stagingBuffer);
+
+  const Queue& queue = _context.device().queue(Device::QueueFamilyType::Graphics);
+  texture->copyFrom(queue, CommandBuffer{_context.commandPool()}, *stagingBuffer);
 
   return texture;
 }
@@ -54,7 +57,9 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
   const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   auto texture =
       Texture2D::make_shared(_context.device(), vkFormat, VkExtent2D{width, height}, usage);
-  texture->copyFrom(CommandBuffer{_context.commandPool()}, *stagingBuffer);
+
+  const Queue& queue = _context.device().queue(Device::QueueFamilyType::Graphics);
+  texture->copyFrom(queue, CommandBuffer{_context.commandPool()}, *stagingBuffer);
 
   return texture;
 }

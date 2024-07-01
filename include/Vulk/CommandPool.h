@@ -5,27 +5,26 @@
 #include <memory>
 
 #include <Vulk/internal/base.h>
+#include <Vulk/Device.h>
 
 NAMESPACE_BEGIN(Vulk)
-
-class Device;
 
 class CommandPool : public Sharable<CommandPool>, private NotCopyable {
  public:
   CommandPool(const Device& device,
-              uint32_t queueFamilyIndex,
+              Device::QueueFamilyType queueFamilyType,
               VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
   ~CommandPool() override;
 
   void create(const Device& device,
-              uint32_t queueFamilyIndex,
+              Device::QueueFamilyType queueFamilyType,
               VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
   void destroy();
 
   operator VkCommandPool() const { return _pool; }
-  [[nodiscard]] VkQueue queue() const { return _queue; }
 
+  [[nodiscard]] Device::QueueFamilyType queueFamilyType() const { return _queueFamilyType; }
   [[nodiscard]] bool isCreated() const { return _pool != VK_NULL_HANDLE; }
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
@@ -35,7 +34,7 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
 
  private:
   VkCommandPool _pool = VK_NULL_HANDLE;
-  VkQueue _queue      = VK_NULL_HANDLE;
+  Device::QueueFamilyType _queueFamilyType;
 
   std::weak_ptr<const Device> _device;
 };

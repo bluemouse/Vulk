@@ -10,6 +10,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
+class Queue;
 class Image;
 
 class StagingBuffer : public Buffer {
@@ -21,20 +22,24 @@ class StagingBuffer : public Buffer {
   void copyFromHost(const void* src, VkDeviceSize size) { copyFromHost(src, 0, size); }
   void copyFromHost(const void* src, VkDeviceSize offset, VkDeviceSize size);
 
-  void copyToBuffer(const CommandBuffer& commandBuffer,
+  void copyToBuffer(const Queue& queue,
+                    const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     const VkBufferCopy& roi,
                     bool waitForFinish = true) const;
-  void copyToBuffer(const CommandBuffer& commandBuffer,
+  void copyToBuffer(const Queue& queue,
+                    const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     VkDeviceSize size,
                     bool waitForFinish = true) const;
 
-  void copyToImage(const CommandBuffer& commandBuffer,
+  void copyToImage(const Queue& queue,
+                   const CommandBuffer& commandBuffer,
                    Image& dst,
                    const VkBufferImageCopy& roi,
                    bool waitForFinish = true) const;
-  void copyToImage(const CommandBuffer& commandBuffer,
+  void copyToImage(const Queue& queue,
+                   const CommandBuffer& commandBuffer,
                    Image& dst,
                    uint32_t width,
                    uint32_t height,

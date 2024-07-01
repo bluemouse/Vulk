@@ -50,26 +50,6 @@ void CommandBuffer::free() {
   _pool.reset();
 }
 
-void CommandBuffer::executeCommands(const Recorder& recorder,
-                                    const std::vector<Semaphore*>& waits,
-                                    const std::vector<Semaphore*>& signals,
-                                    const Fence& fence) const {
-  recordCommands(recorder);
-  executeRecordedCommands(waits, signals, fence);
-}
-
-void CommandBuffer::executeSingleTimeCommand(const Recorder& recorder,
-                                             const std::vector<Semaphore*>& waits,
-                                             const std::vector<Semaphore*>& signals,
-                                             const Fence& fence) const {
-  recordSingleTimeCommand(recorder);
-  executeRecordedCommands(waits, signals, fence);
-}
-
-void CommandBuffer::waitIdle() const {
-  vkQueueWaitIdle(pool().queue());
-}
-
 void CommandBuffer::recordCommands(const Recorder& recorder, bool singleTime) const {
   beginRecording(singleTime);
   recorder(*this);
@@ -88,40 +68,6 @@ void CommandBuffer::beginRecording(bool singleTime) const {
 
 void CommandBuffer::endRecording() const {
   MI_VERIFY_VKCMD(vkEndCommandBuffer(_buffer));
-}
-
-void CommandBuffer::executeRecordedCommands(const std::vector<Semaphore*>& waits,
-                                            const std::vector<Semaphore*>& signals,
-                                            const Fence& fence) const {
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers    = &_buffer;
-
-  std::vector<VkSemaphore> waitSemaphores;
-  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  if (!waits.empty()) {
-    waitSemaphores.reserve(waits.size());
-    for (const auto& wait : waits) {
-      waitSemaphores.push_back(*wait);
-    }
-
-    submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
-    submitInfo.pWaitSemaphores    = waitSemaphores.data();
-    submitInfo.pWaitDstStageMask  = static_cast<VkPipelineStageFlags*>(waitStages);
-  }
-  std::vector<VkSemaphore> signalSemaphores;
-  if (!signals.empty()) {
-    signalSemaphores.reserve(signals.size());
-    for (const auto& signal : signals) {
-      signalSemaphores.push_back(*signal);
-    }
-
-    submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
-    submitInfo.pSignalSemaphores    = signalSemaphores.data();
-  }
-  VkQueue queue = pool().queue();
-  MI_VERIFY_VKCMD(vkQueueSubmit(queue, 1, &submitInfo, fence));
 }
 
 void CommandBuffer::beginRenderPass(const RenderPass& renderPass,

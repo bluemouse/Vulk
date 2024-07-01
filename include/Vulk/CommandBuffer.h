@@ -37,25 +37,10 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   using Recorder = std::function<void(const CommandBuffer& buffer)>;
   // Record the commands played by `recorder` into this command buffer
   void recordCommands(const Recorder& recorder) const { recordCommands(recorder, false); }
-  // Record the commands played by `recorder` into this command buffer and then execute them
-  void executeCommands(const Recorder& recorder,
-                       const std::vector<Semaphore*>& waits   = {},
-                       const std::vector<Semaphore*>& signals = {},
-                       const Fence& fence                     = {}) const;
-
   void recordSingleTimeCommand(const Recorder& recorder) const { recordCommands(recorder, true); }
-  void executeSingleTimeCommand(const Recorder& recorder,
-                                const std::vector<Semaphore*>& waits   = {},
-                                const std::vector<Semaphore*>& signals = {},
-                                const Fence& fence                     = {}) const;
 
   void beginRecording(bool singleTime = false) const;
   void endRecording() const;
-
-  // Execute the commands currently recorded in this command buffer
-  void executeRecordedCommands(const std::vector<Semaphore*>& waits   = {},
-                               const std::vector<Semaphore*>& signals = {},
-                               const Fence& fence                     = {}) const;
 
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,
@@ -75,8 +60,6 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   void bindDescriptorSet(const Pipeline& pipeline, const DescriptorSet& descriptorSet) const;
 
   void drawIndexed(uint32_t indexCount) const;
-
-  void waitIdle() const;
 
   void reset();
 

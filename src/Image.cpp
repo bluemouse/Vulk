@@ -7,6 +7,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
+#include <Vulk/Queue.h>
 #include <Vulk/StagingBuffer.h>
 
 namespace {
@@ -169,24 +170,27 @@ void Image::unmap() {
   _memory->unmap();
 }
 
-void Image::copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
-  transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  stagingBuffer.copyToImage(cmdBuffer, *this, width(), height());
+void Image::copyFrom(const Queue& queue,
+                     const CommandBuffer& cmdBuffer,
+                     const StagingBuffer& stagingBuffer) {
+  transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  stagingBuffer.copyToImage(queue, cmdBuffer, *this, width(), height());
 }
 
 // copy the image data from `srcImage` to this image
-void Image::copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
+void Image::copyFrom(const Queue& queue,
+                     const CommandBuffer& cmdBuffer, const Image& srcImage) {
   // TODO should we execute transit and copy in one command buffer execution?
 
   auto& dstImage = *this;
   MI_VERIFY(srcImage.extent() == dstImage.extent());
 
-  dstImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  dstImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  srcImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  cmdBuffer.executeSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+  cmdBuffer.recordSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -208,23 +212,26 @@ void Image::copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
     vkCmdCopyImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &copyRegion);
   });
 
-  cmdBuffer.waitIdle();
+  queue.submitCommands(cmdBuffer);
 
-  srcImage.transitToNewLayout(cmdBuffer, prevSrcLayout);
+  queue.waitIdle();
+
+  srcImage.transitToNewLayout(queue, cmdBuffer, prevSrcLayout);
 }
 
 // blit the image data from `srcImage` to this image
-void Image::blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
+void Image::blitFrom(const Queue& queue,
+                     const CommandBuffer& cmdBuffer, const Image& srcImage) {
   // TODO should we execute transit and blit in one command buffer execution?
 
   auto& dstImage = *this;
 
-  dstImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  dstImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  srcImage.transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  cmdBuffer.executeSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
+  cmdBuffer.recordSingleTimeCommand([&srcImage, &dstImage](const CommandBuffer& cmdBuffer) {
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -250,19 +257,22 @@ void Image::blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage) {
     vkCmdBlitImage(cmdBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
   });
 
-  cmdBuffer.waitIdle();
+  queue.submitCommands(cmdBuffer);
 
-  srcImage.transitToNewLayout(cmdBuffer, prevSrcLayout);
+  queue.waitIdle();
+
+  srcImage.transitToNewLayout(queue, cmdBuffer, prevSrcLayout);
 }
 
-void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
+void Image::transitToNewLayout(const Queue& queue,
+                               const CommandBuffer& commandBuffer,
                                VkImageLayout newLayout,
                                bool waitForFinish) const {
   if (_layout == newLayout) {
     return;
   }
 
-  commandBuffer.executeSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
+  commandBuffer.recordSingleTimeCommand([this, newLayout](const CommandBuffer& buffer) {
     auto oldLayout = _layout;
 
     VkImageMemoryBarrier barrier{};
@@ -286,13 +296,19 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
     vkCmdPipelineBarrier(buffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
   });
 
+  queue.submitCommands(commandBuffer);
+
   if (waitForFinish) {
-    commandBuffer.waitIdle();
+    queue.waitIdle();
   }
 
   // TODO there could be sync issue here. We should update the layout after the command buffer is
   // executed.
   _layout = newLayout;
+}
+
+void Image::makeShaderReadable(const Queue& queue, const CommandBuffer& cmdBuffer) const {
+  transitToNewLayout(queue, cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 VkImageViewType Image::imageViewType() const {
@@ -302,10 +318,6 @@ VkImageViewType Image::imageViewType() const {
     case VK_IMAGE_TYPE_3D: return VK_IMAGE_VIEW_TYPE_3D;
     default: MI_ASSERT(!"Invalid image type (VkImageType)"); return VK_IMAGE_VIEW_TYPE_2D;
   }
-}
-
-void Image::makeShaderReadable(const CommandBuffer& cmdBuffer) const {
-  transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 NAMESPACE_END(Vulk)

@@ -112,11 +112,9 @@ std::shared_ptr<Queue> Device::getQueue(uint32_t queueFamilyIndex) {
   return std::make_shared<Queue>(*this, queueFamilyIndex);
 }
 
-VkQueue Device::queue(QueueFamilyType queueFamilyType) const {
+const Queue& Device::queue(QueueFamilyType queueFamilyType) const {
   MI_VERIFY(isCreated());
-  if (!_queues[queueFamilyType]) {
-    return VK_NULL_HANDLE;
-  }
+  MI_VERIFY(_queues[queueFamilyType]);
   return *_queues[queueFamilyType];
 }
 

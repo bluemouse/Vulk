@@ -10,6 +10,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/RenderPass.h>
 #include <Vulk/Semaphore.h>
+#include <Vulk/Queue.h>
 
 NAMESPACE_BEGIN(Vulk)
 

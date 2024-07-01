@@ -11,6 +11,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
+class Queue;
 class DeviceMemory;
 
 class Buffer : public Sharable<Buffer>, private NotCopyable {
@@ -41,7 +42,8 @@ class Buffer : public Sharable<Buffer>, private NotCopyable {
   void free();
 
   void load(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
-  void load(const CommandBuffer& stagingCommandBuffer,
+  void load(const Queue& queue,
+            const CommandBuffer& stagingCommandBuffer,
             const void* data,
             VkDeviceSize size,
             VkDeviceSize offset = 0);

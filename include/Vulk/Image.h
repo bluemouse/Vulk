@@ -10,6 +10,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
+class Queue;
 class StagingBuffer;
 class DeviceMemory;
 
@@ -29,11 +30,16 @@ class Image : public Sharable<Image>, private NotCopyable {
   virtual void* map(VkDeviceSize offset, VkDeviceSize size);
   virtual void unmap();
 
-  virtual void copyFrom(const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
-  virtual void copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage);
-  virtual void blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage);
+  virtual void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  virtual void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
+  virtual void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
 
-  void makeShaderReadable(const CommandBuffer& cmdBuffer) const;
+  void transitToNewLayout(const Queue& queue,
+                          const CommandBuffer& commandBuffer,
+                          VkImageLayout newLayout,
+                          bool waitForFinish = true) const;
+
+  void makeShaderReadable(const Queue& queue, const CommandBuffer& cmdBuffer) const;
 
   operator VkImage() const { return _image; }
 
@@ -52,10 +58,6 @@ class Image : public Sharable<Image>, private NotCopyable {
   [[nodiscard]] bool isMapped() const { return isAllocated() && _memory->isMapped(); }
 
   [[nodiscard]] VkImageViewType imageViewType() const;
-
-  void transitToNewLayout(const CommandBuffer& commandBuffer,
-                          VkImageLayout newLayout,
-                          bool waitForFinish = true) const;
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
 

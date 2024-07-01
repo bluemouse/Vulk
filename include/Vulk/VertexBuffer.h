@@ -4,6 +4,8 @@
 
 #include <Vulk/internal/base.h>
 
+#include <Vulk/Device.h>
+#include <Vulk/Queue.h>
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/Buffer.h>
 
@@ -57,7 +59,9 @@ inline void VertexBuffer::create(const Device& device,
                                  const std::vector<Vertex>& vertices) {
   VkDeviceSize size = sizeof(Vertex) * vertices.size();
   create(device, size);
-  load(stagingCommandBuffer, vertices.data(), size);
+
+  const auto& queue = device.queue(Vulk::Device::QueueFamilyType::Graphics);
+  load(queue, stagingCommandBuffer, vertices.data(), size);
 }
 
 NAMESPACE_END(Vulk)

@@ -51,20 +51,17 @@ void Context::create(const CreateInfo& createInfo) {
                   createInfo.choosePresentMode);
 
   createRenderPass(createInfo.chooseSurfaceFormat, createInfo.chooseDepthFormat);
-
   createPipeline(createInfo.createVertShader, createInfo.createFragShader);
   createDescriptorPool(createInfo.maxDescriptorSets);
 }
 
 void Context::destroy() {
   _descriptorPool->destroy();
-  _commandPool->destroy();
-
   _pipeline->destroy();
-
-  _swapchain->destroy();
   _renderPass->destroy();
 
+  _swapchain->destroy();
+  _commandPool->destroy();
   _device->destroy();
   _surface->destroy();
   _instance->destroy();
@@ -154,8 +151,7 @@ void Context::createPipeline(const CreateVertShaderFunc& createVertShader,
 
 void Context::createCommandPool() {
   //TODO We hard coded graphics queue. Need to make it customizable.
-  _commandPool = Vulk::CommandPool::make_shared(
-      device(), _instance->physicalDevice().queueFamilies().graphicsIndex());
+  _commandPool = Vulk::CommandPool::make_shared(device(), Device::Graphics);
 }
 
 void Context::createDescriptorPool(uint32_t maxSets) {
