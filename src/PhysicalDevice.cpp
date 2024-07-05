@@ -7,6 +7,7 @@
 
 #include <Vulk/Instance.h>
 #include <Vulk/Surface.h>
+#include <Vulk/Device.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -100,6 +101,11 @@ void PhysicalDevice::reset() {
   _device        = VK_NULL_HANDLE;
   _queueFamilies = {};
   _instance.reset();
+}
+
+std::shared_ptr<Device> PhysicalDevice::createDevice(const QueueFamilies& requiredQueueFamilies,
+                                                     const std::vector<const char*>& extensions) const {
+  return Vulk::Device::make_shared(*this, requiredQueueFamilies, extensions);
 }
 
 void PhysicalDevice::initQueueFamilies(const Surface& surface) {

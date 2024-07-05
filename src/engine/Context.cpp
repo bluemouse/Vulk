@@ -84,7 +84,7 @@ void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamil
 
 void Context::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                            const std::vector<const char*>& deviceExtensions) {
-  _device = Vulk::Device::make_shared(_instance->physicalDevice(), requiredQueueFamilies, deviceExtensions);
+  _device = _instance->physicalDevice().createDevice(requiredQueueFamilies, deviceExtensions);
   _device->initQueues();
   _device->initCommandPools();
 }
@@ -114,28 +114,16 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
                               const Swapchain::ChoosePresentModeFunc& choosePresentMode) {
   const auto [capabilities, formats, presentModes] = surface().querySupports();
 
-  VkExtent2D extent;
-  if (chooseSurfaceExtent) {
-    extent = chooseSurfaceExtent(capabilities);
-  } else {
-    extent = chooseDefaultSurfaceExtent(capabilities);
-  }
+  VkExtent2D extent = chooseSurfaceExtent ? chooseSurfaceExtent(capabilities)
+                                          : chooseDefaultSurfaceExtent(capabilities);
 
   // TODO should use RenderPass.colorFormat() instead of choosing a format. RenderPass also call
   // chooseSurfaceFormat() to find the format which should be the same one to use.
-  VkSurfaceFormatKHR format;
-  if (chooseSurfaceFormat) {
-    format = chooseSurfaceFormat(formats);
-  } else {
-    format = chooseDefaultSurfaceFormat(formats);
-  }
+  VkSurfaceFormatKHR format = chooseSurfaceFormat ? chooseSurfaceFormat(formats)
+                                                  : chooseDefaultSurfaceFormat(formats);
 
-  VkPresentModeKHR presentMode;
-  if (choosePresentMode) {
-    presentMode = choosePresentMode(presentModes);
-  } else {
-    presentMode = chooseDefaultPresentMode(presentModes);
-  }
+  VkPresentModeKHR presentMode = choosePresentMode ? choosePresentMode(presentModes)
+                                                   : chooseDefaultPresentMode(presentModes);
 
   _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
 }

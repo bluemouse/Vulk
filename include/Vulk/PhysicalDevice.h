@@ -13,7 +13,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 class Surface;
-
+class Device;
 
 class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
  public:
@@ -47,6 +47,9 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
                    const std::vector<const char*>& requiredDeviceExtensions,
                    const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
   void reset();
+
+  std::shared_ptr<Device> createDevice(const QueueFamilies& requiredQueueFamilies,
+                                       const std::vector<const char*>& extensions = {}) const;
 
   void initQueueFamilies(const Surface& surface);
   void initQueueFamilies();

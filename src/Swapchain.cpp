@@ -43,10 +43,10 @@ void Swapchain::create(const Device& device,
   _surfaceFormat = surfaceFormat;
   _presentMode   = presentMode;
 
-  uint32_t minImageCount = capabilities.minImageCount + 1;
-  if (capabilities.maxImageCount > 0 && minImageCount > capabilities.maxImageCount) {
-    minImageCount = capabilities.maxImageCount;
-  }
+  constexpr uint32_t PREFERRED_IMAGE_COUNT = 3; // Triple buffering
+  uint32_t minImageCount = std::min(std::max(PREFERRED_IMAGE_COUNT,
+                                             capabilities.minImageCount),
+                                             capabilities.maxImageCount);
 
   VkSwapchainCreateInfoKHR createInfo{};
   createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -82,14 +82,12 @@ void Swapchain::create(const Device& device,
   MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
 
   // Initialize the swapchain images.
-  uint32_t imageCount = 0;
-  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, nullptr);
-  std::vector<VkImage> imgs{imageCount};
-  vkGetSwapchainImagesKHR(device, _swapchain, &imageCount, imgs.data());
+  std::vector<VkImage> imgs{minImageCount};
+  MI_VERIFY_VKCMD(vkGetSwapchainImagesKHR(device, _swapchain, &minImageCount, imgs.data()));
 
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
-  _images.reserve(imageCount);
-  _imageViews.reserve(imageCount);
+  _images.reserve(minImageCount);
+  _imageViews.reserve(minImageCount);
   for (auto& img : imgs) {
     auto img2d = Vulk::Image2D::make_shared(img, _surfaceFormat.format, _surfaceExtent);
     _images.push_back(img2d);
@@ -151,8 +149,6 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
 }
 
 VkResult Swapchain::acquireNextImage(const Semaphore& signal) const {
-  deactivateActiveImage();
-
   auto result = vkAcquireNextImageKHR(device(),
                                       _swapchain,
                                       std::numeric_limits<uint64_t>::max(),
@@ -173,10 +169,9 @@ VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
   MI_VERIFY(hasActiveImage());
 
   std::vector<VkSemaphore> semaphores;
-  std::transform(
-      waits.begin(), waits.end(), std::back_inserter(semaphores), [](Semaphore* semaphore) -> VkSemaphore {
-        return *semaphore;
-      });
+  for (auto wait : waits) {
+    semaphores.push_back(*wait);
+  }
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
