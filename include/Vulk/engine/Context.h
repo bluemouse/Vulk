@@ -83,7 +83,8 @@ class Context {
   [[nodiscard]] RenderPass& renderPass() { return *_renderPass; }
   [[nodiscard]] Pipeline& pipeline() { return *_pipeline; }
   [[nodiscard]] DescriptorPool& descriptorPool() { return *_descriptorPool; }
-  [[nodiscard]] CommandPool& commandPool() { return *_commandPool; }
+  [[nodiscard]] Queue& queue(Device::QueueFamilyType queueFamily);
+  [[nodiscard]] CommandPool& commandPool(Device::QueueFamilyType queueFamily);
 
   [[nodiscard]] const Instance& instance() const { return *_instance; }
   [[nodiscard]] const Surface& surface() const { return *_surface; }
@@ -92,7 +93,8 @@ class Context {
   [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass; }
   [[nodiscard]] const Pipeline& pipeline() const { return *_pipeline; }
   [[nodiscard]] const DescriptorPool& descriptorPool() const { return *_descriptorPool; }
-  [[nodiscard]] const CommandPool& commandPool() const { return *_commandPool; }
+  [[nodiscard]] const Queue& queue(Device::QueueFamilyType queueFamily) const;
+  [[nodiscard]] const CommandPool& commandPool(Device::QueueFamilyType queueFamily) const;
 
  protected:
   virtual void createInstance(int versionMajor,
@@ -124,7 +126,6 @@ class Context {
   Vulk::Swapchain::shared_ptr _swapchain;
 
   Vulk::DescriptorPool::shared_ptr _descriptorPool;
-  Vulk::CommandPool::shared_ptr _commandPool;
 
   //TODO those should be moved out from Context as they should be part of the rendering frame pass.
   Vulk::RenderPass::shared_ptr _renderPass;

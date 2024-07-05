@@ -13,8 +13,8 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-CommandBuffer::CommandBuffer(const CommandPool& commandPool) {
-  allocate(commandPool);
+CommandBuffer::CommandBuffer(const CommandPool& commandPool, Level level) {
+  allocate(commandPool, level);
 }
 
 CommandBuffer::~CommandBuffer() {
@@ -23,14 +23,14 @@ CommandBuffer::~CommandBuffer() {
   }
 }
 
-void CommandBuffer::allocate(const CommandPool& commandPool) {
+void CommandBuffer::allocate(const CommandPool& commandPool, Level level) {
   MI_VERIFY(!isAllocated());
   _pool = commandPool.get_weak();
 
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool        = commandPool;
-  allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.level              = static_cast<VkCommandBufferLevel>(level);
   allocInfo.commandBufferCount = 1;
 
   MI_VERIFY_VKCMD(vkAllocateCommandBuffers(commandPool.device(), &allocInfo, &_buffer));

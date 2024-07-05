@@ -60,7 +60,6 @@ void Context::destroy() {
   _renderPass->destroy();
 
   _swapchain->destroy();
-  _commandPool->destroy();
   _device->destroy();
   _surface->destroy();
   _instance->destroy();
@@ -86,9 +85,8 @@ void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamil
 void Context::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
                            const std::vector<const char*>& deviceExtensions) {
   _device = Vulk::Device::make_shared(_instance->physicalDevice(), requiredQueueFamilies, deviceExtensions);
-  //TODO We hard coded graphics queue. Need to make it customizable.
-  _commandPool = Vulk::CommandPool::make_shared(device(), Device::QueueFamilyType::Graphics);
-
+  _device->initQueues();
+  _device->initCommandPools();
 }
 
 void Context::createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
@@ -162,6 +160,22 @@ void Context::waitIdle() const {
 bool Context::isComplete() const {
   // TODO: Implement this
   return true;
+}
+
+Queue& Context::queue(Device::QueueFamilyType queueFamily) {
+  return _device->queue(queueFamily);
+}
+
+const Queue& Context::queue(Device::QueueFamilyType queueFamily) const {
+  return _device->queue(queueFamily);
+}
+
+CommandPool& Context::commandPool(Device::QueueFamilyType queueFamily) {
+  return _device->commandPool(queueFamily);
+}
+
+const CommandPool& Context::commandPool(Device::QueueFamilyType queueFamily) const {
+  return _device->commandPool(queueFamily);
 }
 
 NAMESPACE_END(Vulk)

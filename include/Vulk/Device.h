@@ -15,6 +15,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 class Queue;
+class CommandPool;
 
 class Device : public Sharable<Device>, private NotCopyable {
  public:
@@ -34,6 +35,8 @@ class Device : public Sharable<Device>, private NotCopyable {
               const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
               const std::vector<const char*>& extensions = {},
               const DeviceCreateInfoOverride& override   = {});
+  void initQueues();
+  void initCommandPools();
   void destroy();
 
   void waitIdle() const;
@@ -43,19 +46,27 @@ class Device : public Sharable<Device>, private NotCopyable {
   [[nodiscard]] const Instance& instance() const;
   [[nodiscard]] const PhysicalDevice& physicalDevice() const { return *_physicalDevice.lock(); }
 
+  [[nodiscard]] Queue& queue(QueueFamilyType queueFamilyType);
   [[nodiscard]] const Queue& queue(QueueFamilyType queueFamilyType) const;
   [[nodiscard]] std::optional<uint32_t> queueFamilyIndex(QueueFamilyType queueFamilyType) const;
   [[nodiscard]] std::vector<uint32_t> queueFamilyIndices() const;
 
-  [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
+  [[nodiscard]] CommandPool& commandPool(QueueFamilyType queueFamilyType);
+  [[nodiscard]] const CommandPool& commandPool(QueueFamilyType queueFamilyType) const;
 
- private:
-  std::shared_ptr<Queue> getQueue(QueueFamilyType queueFamily, uint32_t queueFamilyIndex);
+  [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
 
  private:
   VkDevice _device = VK_NULL_HANDLE;
 
+  struct QueueFamily {
+    QueueFamilyType type;
+    uint32_t index;
+  };
+  std::vector<QueueFamily> _queueFamilies;
+
   std::vector<std::shared_ptr<Queue>> _queues{NUM_QUEUE_FAMILY_TYPES};
+  std::vector<std::shared_ptr<CommandPool>> _commandPools{NUM_QUEUE_FAMILY_TYPES};
 
   std::weak_ptr<const PhysicalDevice> _physicalDevice;
 };

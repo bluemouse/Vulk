@@ -27,6 +27,11 @@ class DescriptorSet;
 
 class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
+  enum class Level {
+    Primary = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+    Secondary = VK_COMMAND_BUFFER_LEVEL_SECONDARY
+  };
+
   enum class Usage {
     OneTimeSubmit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     RenderPassContinue = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
@@ -36,10 +41,10 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
 
  public:
   CommandBuffer() = default;
-  CommandBuffer(const CommandPool& commandPool);
+  CommandBuffer(const CommandPool& commandPool, Level level = Level::Primary);
   ~CommandBuffer() override;
 
-  void allocate(const CommandPool& commandPool);
+  void allocate(const CommandPool& commandPool, Level level = Level::Primary);
   void free();
 
   using Recorder = std::function<void(const CommandBuffer& buffer)>;

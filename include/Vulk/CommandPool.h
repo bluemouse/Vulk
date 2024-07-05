@@ -9,16 +9,25 @@
 
 NAMESPACE_BEGIN(Vulk)
 
+class CommandBuffer;
+
 class CommandPool : public Sharable<CommandPool>, private NotCopyable {
+ public:
+  enum class Mode {
+    Transient = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+    ResetCommandBuffer =  VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+    Default = 0
+  };
+
  public:
   CommandPool(const Device& device,
               Device::QueueFamilyType queueFamilyType,
-              VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+              Mode modes = Mode::ResetCommandBuffer);
   ~CommandPool() override;
 
   void create(const Device& device,
               Device::QueueFamilyType queueFamilyType,
-              VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+              Mode modes = Mode::ResetCommandBuffer);
 
   void destroy();
 
@@ -29,8 +38,15 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
 
+  std::shared_ptr<CommandBuffer> allocatePrimary() const;
+  std::shared_ptr<CommandBuffer> allocateSecondary() const;
+
  private:
   void moveFrom(CommandPool& rhs);
+
+  // Device needs to access this special destroy function to destroy the pools it owns.
+  friend class Device;
+  void destroy(VkDevice device);
 
  private:
   VkCommandPool _pool = VK_NULL_HANDLE;

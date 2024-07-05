@@ -22,8 +22,8 @@ class Sharable : public std::enable_shared_from_this<T> {
   using shared_ptr = std::shared_ptr<T>;
   using weak_ptr   = std::weak_ptr<T>;
 
-  using shared_const_ptr = std::shared_ptr<const T>;
-  using weak_const_ptr   = std::weak_ptr<const T>;
+  using shared_ptr_const = std::shared_ptr<const T>;
+  using weak_ptr_const   = std::weak_ptr<const T>;
 
   using unique_ptr = std::unique_ptr<T>;
 
@@ -42,10 +42,10 @@ class Sharable : public std::enable_shared_from_this<T> {
   shared_ptr get_shared() { return std::enable_shared_from_this<T>::shared_from_this(); }
   weak_ptr get_weak() { return std::enable_shared_from_this<T>::weak_from_this(); }
 
-  shared_const_ptr get_shared() const {
+  shared_ptr_const get_shared() const {
     return std::enable_shared_from_this<T>::shared_from_this();
   }
-  weak_const_ptr get_weak() const { return std::enable_shared_from_this<T>::weak_from_this(); }
+  weak_ptr_const get_weak() const { return std::enable_shared_from_this<T>::weak_from_this(); }
 };
 
 // Create a macro to define the following codes

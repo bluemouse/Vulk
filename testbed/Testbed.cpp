@@ -200,7 +200,7 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   }
   commandBuffer.endRecording();
 
-  const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+  const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
   queue.submitCommands(commandBuffer, waits, signals, fence);
 
   queue.waitIdle();
@@ -209,7 +209,7 @@ void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
                            Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
   auto& swapchainFrame = _context.swapchain().activeImage();
-  const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+  const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
   swapchainFrame.blitFrom(queue, commandBuffer, frame);
   swapchainFrame.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
@@ -349,7 +349,8 @@ void Testbed::createDrawable() {
   } else {
     loadModel(_modelFile, vertices, indices);
   }
-  _drawable.create(_context.device(), {_context.commandPool()}, vertices, indices);
+  Vulk::CommandBuffer cmdBuffer{_context.commandPool(Vulk::Device::QueueFamilyType::Graphics)};
+  _drawable.create(_context.device(), cmdBuffer, vertices, indices);
   initCamera(vertices);
 }
 
@@ -367,8 +368,10 @@ void Testbed::createFrames() {
 
   const auto& device = _context.device();
   const auto& extent = _context.swapchain().surfaceExtent();
+
+  const auto& cmdPool = _context.commandPool(Vulk::Device::QueueFamilyType::Graphics);
   for (auto& frame : _frames) {
-    frame.commandBuffer = Vulk::CommandBuffer::make_shared(_context.commandPool());
+    frame.commandBuffer = Vulk::CommandBuffer::make_shared(cmdPool);
 
     const auto usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -399,7 +402,7 @@ void Testbed::createFrames() {
     frame.descriptorSet = Vulk::DescriptorSet::make_shared(
         _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
 
-    const auto& queue = _context.device().queue(Vulk::Device::QueueFamilyType::Graphics);
+    const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
     frame.colorBuffer->transitToNewLayout(queue,
                                           *frame.commandBuffer,
                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
