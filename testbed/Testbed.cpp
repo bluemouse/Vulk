@@ -150,28 +150,25 @@ void Testbed::mainLoop() {
 void Testbed::drawFrame() {
   nextFrame(); // Move to the next frame. The new current frame may be in use.
 
-  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
-
   if (_context.swapchain().acquireNextImage(*_currentFrame->imageAvailableSemaphore) ==
       VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
     return;
   }
-  // Need to reset the fence after the potential swapchain resize. Otherwise, there will be no
-  // fence signal command submitted and we could have a dead lock.
-  _currentFrame->fence->reset();
 
   updateUniformBuffer();
 
+  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
+  _currentFrame->fence->reset();
   renderFrame(*_currentFrame->commandBuffer,
               *_currentFrame->framebuffer,
-              {_currentFrame->imageAvailableSemaphore.get()},
+              {},
               {_currentFrame->renderFinishedSemaphore.get()},
               *_currentFrame->fence);
 
   presentFrame(*_currentFrame->commandBuffer,
                _currentFrame->framebuffer->image(),
-               {_currentFrame->renderFinishedSemaphore.get()});
+               {_currentFrame->imageAvailableSemaphore.get(), _currentFrame->renderFinishedSemaphore.get()});
 }
 
 void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
