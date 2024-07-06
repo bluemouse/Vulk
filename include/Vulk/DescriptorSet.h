@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include <Vulk/internal/base.h>
 

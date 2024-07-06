@@ -6,6 +6,13 @@
 #include <Vulk/Fence.h>
 #include <Vulk/Image2D.h>
 #include <Vulk/DepthImage.h>
+#include <Vulk/RenderPass.h>
+#include <Vulk/Pipeline.h>
+#include <Vulk/VertexShader.h>
+#include <Vulk/FragmentShader.h>
+#include <Vulk/DescriptorSet.h>
+#include <Vulk/DescriptorPool.h>
+#include <Vulk/UniformBuffer.h>
 
 #include <Vulk/engine/Context.h>
 #include <Vulk/engine/Drawable.h>
@@ -86,6 +93,9 @@ class Testbed : public MainWindow {
 
  private:
   Vulk::Context _context;
+  Vulk::RenderPass::shared_ptr _renderPass;
+  Vulk::Pipeline::shared_ptr _pipeline;
+  Vulk::DescriptorPool::shared_ptr _descriptorPool;
 
   uint32_t _vertexBufferBinding = 0U;
 

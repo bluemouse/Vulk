@@ -5,37 +5,15 @@
 #include <Vulk/Surface.h>
 #include <Vulk/Swapchain.h>
 #include <Vulk/Device.h>
-#include <Vulk/Pipeline.h>
-#include <Vulk/RenderPass.h>
-#include <Vulk/CommandBuffer.h>
-#include <Vulk/CommandPool.h>
-#include <Vulk/VertexShader.h>
-#include <Vulk/FragmentShader.h>
-#include <Vulk/DescriptorPool.h>
-#include <Vulk/DescriptorSet.h>
-#include <Vulk/DescriptorSetLayout.h>
-#include <Vulk/Buffer.h>
-#include <Vulk/UniformBuffer.h>
-#include <Vulk/VertexBuffer.h>
-#include <Vulk/IndexBuffer.h>
-#include <Vulk/StagingBuffer.h>
-#include <Vulk/Image.h>
-#include <Vulk/ImageView.h>
-#include <Vulk/Sampler.h>
-#include <Vulk/Semaphore.h>
-#include <Vulk/Fence.h>
 
 NAMESPACE_BEGIN(Vulk)
 
 class Context {
  public:
   using ValidationLevel       = Instance::ValidationLevel;
-  using ChooseDepthFormatFunc = std::function<VkFormat()>;
+  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
 
  public:
-  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
-  using CreateVertShaderFunc    = std::function<Vulk::VertexShader(const Vulk::Device& device)>;
-  using CreateFragShaderFunc    = std::function<Vulk::FragmentShader(const Vulk::Device& device)>;
   struct CreateInfo {
     // The info in CreateInfo is used to create the Vulkan context and listed in the usage order.
     int versionMajor = 1;
@@ -50,15 +28,8 @@ class Context {
     PhysicalDevice::HasDeviceFeaturesFunc hasPhysicalDeviceFeatures;
 
     Swapchain::ChooseSurfaceFormatFunc chooseSurfaceFormat;
-    ChooseDepthFormatFunc chooseDepthFormat;
     Swapchain::ChooseSurfaceExtentFunc chooseSurfaceExtent;
     Swapchain::ChoosePresentModeFunc choosePresentMode;
-
-
-    CreateVertShaderFunc createVertShader;
-    CreateFragShaderFunc createFragShader;
-
-    uint32_t maxDescriptorSets;
   };
 
  public:
@@ -80,9 +51,6 @@ class Context {
   [[nodiscard]] Surface& surface() { return *_surface; }
   [[nodiscard]] Device& device() { return *_device; }
   [[nodiscard]] Swapchain& swapchain() { return *_swapchain; }
-  [[nodiscard]] RenderPass& renderPass() { return *_renderPass; }
-  [[nodiscard]] Pipeline& pipeline() { return *_pipeline; }
-  [[nodiscard]] DescriptorPool& descriptorPool() { return *_descriptorPool; }
   [[nodiscard]] Queue& queue(Device::QueueFamilyType queueFamily);
   [[nodiscard]] CommandPool& commandPool(Device::QueueFamilyType queueFamily);
 
@@ -90,9 +58,6 @@ class Context {
   [[nodiscard]] const Surface& surface() const { return *_surface; }
   [[nodiscard]] const Device& device() const { return *_device; }
   [[nodiscard]] const Swapchain& swapchain() const { return *_swapchain; }
-  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass; }
-  [[nodiscard]] const Pipeline& pipeline() const { return *_pipeline; }
-  [[nodiscard]] const DescriptorPool& descriptorPool() const { return *_descriptorPool; }
   [[nodiscard]] const Queue& queue(Device::QueueFamilyType queueFamily) const;
   [[nodiscard]] const CommandPool& commandPool(Device::QueueFamilyType queueFamily) const;
 
@@ -110,13 +75,6 @@ class Context {
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                                const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);
-  virtual void createRenderPass(const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
-                                const ChooseDepthFormatFunc& chooseDepthFormat = {});
-
-  virtual void createPipeline(const CreateVertShaderFunc& createVertShader,
-                              const CreateFragShaderFunc& createFragShader);
-
-  virtual void createDescriptorPool(uint32_t maxSets);
 
  protected:
   Vulk::Instance::shared_ptr _instance;
@@ -124,12 +82,6 @@ class Context {
   Vulk::Surface::shared_ptr _surface;
   Vulk::Device::shared_ptr _device;
   Vulk::Swapchain::shared_ptr _swapchain;
-
-  Vulk::DescriptorPool::shared_ptr _descriptorPool;
-
-  //TODO those should be moved out from Context as they should be part of the rendering frame pass.
-  Vulk::RenderPass::shared_ptr _renderPass;
-  Vulk::Pipeline::shared_ptr _pipeline;
 };
 
 NAMESPACE_END(Vulk)

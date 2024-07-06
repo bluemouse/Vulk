@@ -131,8 +131,11 @@ void Testbed::cleanup() {
   _frames.clear();
 
   _texture->destroy();
-
   _drawable.destroy();
+  _descriptorPool->destroy();
+  _pipeline->destroy();
+  _renderPass->destroy();
+
   _context.destroy();
 
   MainWindow::cleanup();
@@ -180,16 +183,16 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
 
   commandBuffer.beginRecording();
   {
-    commandBuffer.beginRenderPass(_context.renderPass(), framebuffer);
+    commandBuffer.beginRenderPass(*_renderPass, framebuffer);
 
-    commandBuffer.bindPipeline(_context.pipeline());
+    commandBuffer.bindPipeline(*_pipeline);
 
     auto extent = framebuffer.extent();
     commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
     commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
     commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
-    commandBuffer.bindDescriptorSet(_context.pipeline(), *_currentFrame->descriptorSet);
+    commandBuffer.bindDescriptorSet(*_pipeline, *_currentFrame->descriptorSet);
 
     commandBuffer.drawIndexed(_drawable.numIndices());
 
@@ -237,21 +240,39 @@ void Testbed::createContext() {
   };
 
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
-  createInfo.chooseDepthFormat   = &Testbed::chooseDepthFormat;
+  // createInfo.chooseDepthFormat   = &Testbed::chooseDepthFormat; //DELME
   createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
   createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
 
-  createInfo.createVertShader = &Testbed::createVertexShader;
-  createInfo.createFragShader = &Testbed::createFragmentShader;
-
-  createInfo.maxDescriptorSets = _maxFramesInFlight;
-
   _context.create(createInfo);
 
-  _vertexBufferBinding = _context.pipeline().findBinding<Vertex>();
+
+  //
+  // Create render pass
+  //
+  const auto [_, formats, __] = _context.surface().querySupports();
+
+  VkFormat colorFormat = chooseSwapchainSurfaceFormat(formats).format; //TODO This should be decided by the render task
+  VkFormat depthStencilFormat = chooseDepthFormat();
+
+  _renderPass = Vulk::RenderPass::make_shared(_context.device(), colorFormat, depthStencilFormat);
+
+  //
+  // Create pipeline
+  //
+  auto vertShader = createVertexShader(_context.device());
+  auto fragShader = createFragmentShader(_context.device());
+
+  _pipeline = Vulk::Pipeline::make_shared(_context.device(), *_renderPass, vertShader, fragShader);
+  _descriptorPool = Vulk::DescriptorPool::make_shared(_pipeline->descriptorSetLayout(), _maxFramesInFlight); //TODO This should be decided by the render task
+
+  _vertexBufferBinding = _pipeline->findBinding<Vertex>();
   MI_VERIFY(_vertexBufferBinding != std::numeric_limits<uint32_t>::max());
+
+
+
 }
 
 void Testbed::loadModel(const std::string& modelFile,
@@ -379,7 +400,7 @@ void Testbed::createFrames() {
     frame.depthBuffer->allocate();
     frame.depthAttachment = Vulk::ImageView::make_shared(device, *frame.depthBuffer);
     frame.framebuffer     = Vulk::Framebuffer::make_shared(
-        device, _context.renderPass(), *frame.colorAttachment, *frame.depthAttachment);
+        device, *_renderPass, *frame.colorAttachment, *frame.depthAttachment);
 
     frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
@@ -397,7 +418,7 @@ void Testbed::createFrames() {
         {"texSampler", "sampler2D", &textureImageInfo}
     };
     frame.descriptorSet = Vulk::DescriptorSet::make_shared(
-        _context.descriptorPool(), _context.pipeline().descriptorSetLayout(), bindings);
+        *_descriptorPool, _pipeline->descriptorSetLayout(), bindings);
 
     const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
     frame.colorBuffer->transitToNewLayout(queue,
