@@ -7,10 +7,15 @@
 
 NAMESPACE_BEGIN(Vulk)
 
+DescriptorSet::DescriptorSet(const DescriptorPool& pool, const DescriptorSetLayout& layout) {
+  allocate(pool, layout);
+}
+
 DescriptorSet::DescriptorSet(const DescriptorPool& pool,
                              const DescriptorSetLayout& layout,
-                             const std::vector<Binding>& bindings) {
-  allocate(pool, layout, bindings);
+                             const std::vector<Binding>& bindings)
+                             : DescriptorSet(pool, layout) {
+  bind(bindings);
 }
 
 DescriptorSet::~DescriptorSet() {
@@ -19,10 +24,10 @@ DescriptorSet::~DescriptorSet() {
   }
 }
 
-void DescriptorSet::allocate(const DescriptorPool& pool,
-                             const DescriptorSetLayout& layout,
-                             const std::vector<Binding>& bindings) {
+void DescriptorSet::allocate(const DescriptorPool& pool, const DescriptorSetLayout& layout) {
   MI_VERIFY(!isAllocated());
+
+  _layout = layout.get_weak();
   _pool = pool.get_weak();
 
   VkDescriptorSetAllocateInfo allocInfo{};
@@ -32,8 +37,26 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
   allocInfo.pSetLayouts        = layout;
 
   MI_VERIFY_VKCMD(vkAllocateDescriptorSets(pool.device(), &allocInfo, &_set));
+}
 
-  const auto& layoutBindings = layout.bindings();
+void DescriptorSet::free() {
+  MI_VERIFY(isAllocated());
+
+  // TODO: Can only call free() if _pool is created with
+  // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
+  //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
+
+  _set  = VK_NULL_HANDLE;
+  _pool.reset();
+}
+
+void DescriptorSet::bind(const std::vector<Binding>& bindings) {
+  MI_VERIFY(isAllocated());
+
+  const auto& pool   = _pool.lock();
+  const auto& layout = _layout.lock();
+
+  const auto& layoutBindings = layout->bindings();
   MI_VERIFY(bindings.size() == layoutBindings.size());
 
   std::vector<VkWriteDescriptorSet> writes{bindings.size()};
@@ -63,18 +86,7 @@ void DescriptorSet::allocate(const DescriptorPool& pool,
               layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
   }
 
-  vkUpdateDescriptorSets(pool.device(), writes.size(), writes.data(), 0, nullptr);
-}
-
-void DescriptorSet::free() {
-  MI_VERIFY(isAllocated());
-
-  // TODO: Can only call free() if _pool is created with
-  // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
-  //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
-
-  _set  = VK_NULL_HANDLE;
-  _pool.reset();
+  vkUpdateDescriptorSets(pool->device(), writes.size(), writes.data(), 0, nullptr);
 }
 
 NAMESPACE_END(Vulk)

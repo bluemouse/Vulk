@@ -16,11 +16,13 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
+  RenderTask.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
+  RenderTask.h
 )
 
 set(SHADER_FILES

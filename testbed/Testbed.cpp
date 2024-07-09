@@ -57,7 +57,7 @@ std::filesystem::path executablePath() {
   return std::filesystem::canonical("/proc/self/exe").parent_path();
 }
 #else
-std::filesystem::path getExecutablePath() {
+std::filesystem::path executablePath() {
   return std::filesystem::path{};
 }
 #endif
@@ -114,6 +114,7 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createContext();
+  createRenderTask();
   createDrawable();
   createFrames();
 
@@ -164,7 +165,15 @@ void Testbed::drawFrame() {
   _currentFrame->fence->wait(); // To make sure the current frame is not in use.
   _currentFrame->fence->reset();
   renderFrame(*_currentFrame->commandBuffer,
+              // Inputs
+              _drawable.vertexBuffer(),
+              _drawable.indexBuffer(),
+              _drawable.numIndices(),
+              *_currentFrame->uniformBuffer,
+              *_texture,
+              // Outputs
               *_currentFrame->framebuffer,
+              // Synchronization
               {},
               {_currentFrame->renderFinishedSemaphore.get()},
               *_currentFrame->fence);
@@ -175,10 +184,36 @@ void Testbed::drawFrame() {
 }
 
 void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
-                          Vulk::Framebuffer& framebuffer,
+                          // Inputs
+                          const Vulk::VertexBuffer& vertexBuffer,
+                          const Vulk::IndexBuffer& indexBuffer,
+                          size_t numIndices,
+                          const Vulk::UniformBuffer& uniforms,
+                          const Vulk::Texture2D& texture,
+                          // Outputs
+                          Vulk::Framebuffer & framebuffer,
+                          // Synchronization
                           const std::vector<Vulk::Semaphore*> waits,
                           const std::vector<Vulk::Semaphore*> signals,
                           Vulk::Fence& fence) {
+  VkDescriptorImageInfo textureImageInfo{};
+  textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  textureImageInfo.imageView   = texture.view();
+  textureImageInfo.sampler     = texture.sampler();
+
+  VkDescriptorBufferInfo transformationBufferInfo{};
+  transformationBufferInfo.offset = 0;
+  transformationBufferInfo.range  = VK_WHOLE_SIZE;
+  transformationBufferInfo.buffer = uniforms;
+
+  // The order of bindings must match the order of bindings in shaders. The name and the type need
+  // to match them in the shader as well.
+  std::vector<Vulk::DescriptorSet::Binding> bindings = {
+      {"xform", "Transformation", &transformationBufferInfo},
+      {"texSampler", "sampler2D", &textureImageInfo}
+  };
+  _currentFrame->descriptorSet->bind(bindings);
+
   commandBuffer.reset();
 
   commandBuffer.beginRecording();
@@ -190,11 +225,11 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
     auto extent = framebuffer.extent();
     commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-    commandBuffer.bindVertexBuffer(_drawable.vertexBuffer(), _vertexBufferBinding);
-    commandBuffer.bindIndexBuffer(_drawable.indexBuffer());
+    commandBuffer.bindVertexBuffer(vertexBuffer, _vertexBufferBinding);
+    commandBuffer.bindIndexBuffer(indexBuffer);
     commandBuffer.bindDescriptorSet(*_pipeline, *_currentFrame->descriptorSet);
 
-    commandBuffer.drawIndexed(_drawable.numIndices());
+    commandBuffer.drawIndexed(numIndices);
 
     commandBuffer.endRenderpass();
   }
@@ -247,8 +282,9 @@ void Testbed::createContext() {
   createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
 
   _context.create(createInfo);
+}
 
-
+void Testbed::createRenderTask() {
   //
   // Create render pass
   //
@@ -268,12 +304,10 @@ void Testbed::createContext() {
   _pipeline = Vulk::Pipeline::make_shared(_context.device(), *_renderPass, vertShader, fragShader);
   _descriptorPool = Vulk::DescriptorPool::make_shared(_pipeline->descriptorSetLayout(), _maxFramesInFlight); //TODO This should be decided by the render task
 
-  _vertexBufferBinding = _pipeline->findBinding<Vertex>();
+  _vertexBufferBinding = _pipeline->findBinding<Vertex>();// It is the location of this attachment in the `attachments` array
   MI_VERIFY(_vertexBufferBinding != std::numeric_limits<uint32_t>::max());
-
-
-
 }
+
 
 void Testbed::loadModel(const std::string& modelFile,
                         std::vector<Vertex>& vertices,
@@ -375,15 +409,6 @@ void Testbed::createDrawable() {
 void Testbed::createFrames() {
   _frames.resize(_maxFramesInFlight);
 
-  VkDescriptorImageInfo textureImageInfo{};
-  textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  textureImageInfo.imageView   = _texture->view();
-  textureImageInfo.sampler     = _texture->sampler();
-
-  VkDescriptorBufferInfo transformationBufferInfo{};
-  transformationBufferInfo.offset = 0;
-  transformationBufferInfo.range  = VK_WHOLE_SIZE;
-
   const auto& device = _context.device();
   const auto& extent = _context.swapchain().surfaceExtent();
 
@@ -409,16 +434,8 @@ void Testbed::createFrames() {
     frame.uniformBuffer       = Uniforms::allocateBuffer(device);
     frame.uniformBufferMapped = frame.uniformBuffer->map();
 
-    transformationBufferInfo.buffer = *frame.uniformBuffer;
-
-    // The order of bindings must match the order of bindings in shaders. The name and the type need
-    // to match them in the shader as well.
-    std::vector<Vulk::DescriptorSet::Binding> bindings = {
-        {"xform", "Transformation", &transformationBufferInfo},
-        {"texSampler", "sampler2D", &textureImageInfo}
-    };
-    frame.descriptorSet = Vulk::DescriptorSet::make_shared(
-        *_descriptorPool, _pipeline->descriptorSetLayout(), bindings);
+    frame.descriptorSet = Vulk::DescriptorSet::make_shared(*_descriptorPool,
+                                                           _pipeline->descriptorSetLayout());
 
     const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
     frame.colorBuffer->transitToNewLayout(queue,

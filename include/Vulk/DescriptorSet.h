@@ -30,15 +30,16 @@ class DescriptorSet : public Sharable<DescriptorSet>, private NotCopyable {
 
  public:
   DescriptorSet() = default;
+  DescriptorSet(const DescriptorPool& pool, const DescriptorSetLayout& layout);
   DescriptorSet(const DescriptorPool& pool,
                 const DescriptorSetLayout& layout,
                 const std::vector<Binding>& bindings);
   ~DescriptorSet();
 
-  void allocate(const DescriptorPool& pool,
-                const DescriptorSetLayout& layout,
-                const std::vector<Binding>& bindings);
+  void allocate(const DescriptorPool& pool, const DescriptorSetLayout& layout);
   void free();
+
+  void bind(const std::vector<Binding>& bindings);
 
   operator VkDescriptorSet() const { return _set; }
   operator const VkDescriptorSet*() const { return &_set; }
@@ -49,6 +50,7 @@ class DescriptorSet : public Sharable<DescriptorSet>, private NotCopyable {
 
  private:
   VkDescriptorSet _set = VK_NULL_HANDLE;
+  std::weak_ptr<const DescriptorSetLayout> _layout;
 
   std::weak_ptr<const DescriptorPool> _pool;
 };

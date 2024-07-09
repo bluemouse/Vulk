@@ -71,6 +71,7 @@ class Testbed : public MainWindow {
  private:
   void createContext();
   void createDrawable();
+  void createRenderTask();
   void createFrames();
 
   void updateUniformBuffer();
@@ -83,7 +84,15 @@ class Testbed : public MainWindow {
   void initCamera(const std::vector<Vertex>& vertices);
 
   virtual void renderFrame(Vulk::CommandBuffer& commandBuffer,
+                           // Inputs
+                           const Vulk::VertexBuffer& vertexBuffer,
+                           const Vulk::IndexBuffer& indexBuffer,
+                           size_t numIndices,
+                           const Vulk::UniformBuffer& uniforms,
+                           const Vulk::Texture2D& texture,
+                           // Outputs
                            Vulk::Framebuffer& framebuffer,
+                           // Synchronization
                            const std::vector<Vulk::Semaphore*> waits,
                            const std::vector<Vulk::Semaphore*> signals,
                            Vulk::Fence& fence);
@@ -93,6 +102,7 @@ class Testbed : public MainWindow {
 
  private:
   Vulk::Context _context;
+
   Vulk::RenderPass::shared_ptr _renderPass;
   Vulk::Pipeline::shared_ptr _pipeline;
   Vulk::DescriptorPool::shared_ptr _descriptorPool;
@@ -126,7 +136,7 @@ class Testbed : public MainWindow {
   std::vector<Frame> _frames;
   Frame* _currentFrame = nullptr;
 
-  constexpr static uint32_t _maxFramesInFlight = 2;
+  constexpr static uint32_t _maxFramesInFlight = 3;
   uint32_t _currentFrameIdx  = 0;
 
   // Settings of the Testbed execution

@@ -40,25 +40,25 @@ void RenderPass::create(const Device& device,
   _colorFormat        = colorFormat;
   _depthStencilFormat = depthStencilFormat;
 
+  std::vector<VkAttachmentDescription> attachments{};
+
   VkAttachmentDescription colorAttachment{};
-  VkAttachmentReference colorAttachmentRef{};
   colorAttachment.format         = colorFormat;
   colorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
   colorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   colorAttachment.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   if (colorAttachmentOverride) {
     colorAttachmentOverride(colorAttachment);
   }
-
-  colorAttachmentRef.attachment = 0;
-  colorAttachmentRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachments.push_back(colorAttachment);
+  constexpr uint32_t colorAttachmentIndex = 0; // It is the location of this attachment in the `attachments` array
 
   VkAttachmentDescription depthStencilAttachment{};
-  VkAttachmentReference depthStencilAttachmentRef{};
+  constexpr uint32_t depthStencilAttachmentIndex = 1; // It is the location of this attachment in the `attachments` array
   if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
     depthStencilAttachment.format         = depthStencilFormat;
     depthStencilAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -72,9 +72,11 @@ void RenderPass::create(const Device& device,
       depthStencilAttachmentOverride(depthStencilAttachment);
     }
 
-    depthStencilAttachmentRef.attachment = 1;
-    depthStencilAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments.push_back(depthStencilAttachment);
   }
+
+  VkAttachmentReference colorAttachmentRef{colorAttachmentIndex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+  VkAttachmentReference depthStencilAttachmentRef{depthStencilAttachmentIndex, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS; //TODO to support VK_PIPELINE_BIND_POINT_COMPUTE
@@ -104,10 +106,6 @@ void RenderPass::create(const Device& device,
     dependencyOverride(subpassDependency);
   }
 
-  std::vector<VkAttachmentDescription> attachments{{colorAttachment}};
-  if (depthStencilFormat != VK_FORMAT_UNDEFINED) {
-    attachments.push_back(depthStencilAttachment);
-  }
 
   VkRenderPassCreateInfo renderPassInfo{};
   renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

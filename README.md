@@ -1,11 +1,11 @@
 ### Build Steps
-1. cmake -S . -B _build -G "Ninja" -D CMAKE_BUILD_TYPE=debug|release
-2. cmake --build _build -j 16
+1. cmake -S . -B build -G "Ninja" -D CMAKE_BUILD_TYPE=debug|release
+2. cmake --build build -j 16
 
 ### Run Testbed
-- _build/bin/Testbed --help
-- _build/bin/Testbed
-- _build/bin/Testbed --model path_to_your_obj_file --texture path_to_your_texture_file
+- build/bin/Testbed --help
+- build/bin/Testbed
+- build/bin/Testbed --model path_to_your_obj_file --texture path_to_your_texture_file
 
 
 
