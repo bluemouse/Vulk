@@ -11,14 +11,14 @@ NAMESPACE_BEGIN(Vulk)
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
-                         ImageView& colorAttachment) {
+                         const ImageView& colorAttachment) {
   create(device, renderPass, colorAttachment);
 }
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
-                         ImageView& colorAttachment,
-                         ImageView& depthStencilAttachment) {
+                         const ImageView& colorAttachment,
+                         const ImageView& depthStencilAttachment) {
   create(device, renderPass, colorAttachment, depthStencilAttachment);
 }
 
@@ -30,7 +30,7 @@ Framebuffer::~Framebuffer() {
 
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
-                         ImageView& colorAttachment) {
+                         const ImageView& colorAttachment) {
   _device          = device.get_weak();
   _renderPass      = renderPass.get_weak();
   _colorAttachment = colorAttachment.get_weak();
@@ -41,8 +41,8 @@ void Framebuffer::create(const Device& device,
 
 void Framebuffer::create(const Device& device,
                          const RenderPass& renderPass,
-                         ImageView& colorAttachment,
-                         ImageView& depthStencilAttachment) {
+                         const ImageView& colorAttachment,
+                         const ImageView& depthStencilAttachment) {
   _device                 = device.get_weak();
   _renderPass             = renderPass.get_weak();
   _colorAttachment        = colorAttachment.get_weak();
@@ -64,8 +64,8 @@ void Framebuffer::create() {
   framebufferInfo.renderPass      = renderPass(); //TODO use RenderPass to assert the matching of the attachments
   framebufferInfo.attachmentCount = attachments.size();
   framebufferInfo.pAttachments    = attachments.data();
-  framebufferInfo.width           = image().width();
-  framebufferInfo.height          = image().height();
+  framebufferInfo.width           = colorBuffer().width();
+  framebufferInfo.height          = colorBuffer().height();
   framebufferInfo.layers          = 1; //TODO should be a parameter
 
   MI_VERIFY_VKCMD(vkCreateFramebuffer(device(), &framebufferInfo, nullptr, &_buffer));
@@ -84,15 +84,11 @@ void Framebuffer::destroy() {
 }
 
 VkExtent2D Framebuffer::extent() const {
-  auto imageExtent = image().extent();
+  auto imageExtent = colorBuffer().extent();
   return {imageExtent.width, imageExtent.height};
 }
 
-Image& Framebuffer::image() {
-  return _colorAttachment.lock()->image();
-}
-
-const Image& Framebuffer::image() const {
+const Image& Framebuffer::colorBuffer() const {
   return _colorAttachment.lock()->image();
 }
 

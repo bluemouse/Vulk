@@ -172,14 +172,15 @@ void Testbed::drawFrame() {
               *_currentFrame->uniformBuffer,
               *_texture,
               // Outputs
-              *_currentFrame->framebuffer,
+              *_currentFrame->colorAttachment,
+              *_currentFrame->depthAttachment,
               // Synchronization
               {},
               {_currentFrame->renderFinishedSemaphore.get()},
               *_currentFrame->fence);
 
   presentFrame(*_currentFrame->commandBuffer,
-               _currentFrame->framebuffer->image(),
+               _currentFrame->framebuffer->colorBuffer(),
                {_currentFrame->imageAvailableSemaphore.get(), _currentFrame->renderFinishedSemaphore.get()});
 }
 
@@ -191,7 +192,8 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
                           const Vulk::UniformBuffer& uniforms,
                           const Vulk::Texture2D& texture,
                           // Outputs
-                          Vulk::Framebuffer & framebuffer,
+                          const Vulk::ImageView& colorBuffer,
+                          const Vulk::ImageView& depthStencilBuffer,
                           // Synchronization
                           const std::vector<Vulk::Semaphore*> waits,
                           const std::vector<Vulk::Semaphore*> signals,
@@ -212,7 +214,11 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
       {"xform", "Transformation", &transformationBufferInfo},
       {"texSampler", "sampler2D", &textureImageInfo}
   };
-  _currentFrame->descriptorSet->bind(bindings);
+
+  auto descriptorSet = _currentFrame->descriptorSet;
+  descriptorSet->bind(bindings);
+
+  Vulk::Framebuffer framebuffer{_context.device(), *_renderPass, colorBuffer, depthStencilBuffer};
 
   commandBuffer.reset();
 
@@ -227,7 +233,7 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
 
     commandBuffer.bindVertexBuffer(vertexBuffer, _vertexBufferBinding);
     commandBuffer.bindIndexBuffer(indexBuffer);
-    commandBuffer.bindDescriptorSet(*_pipeline, *_currentFrame->descriptorSet);
+    commandBuffer.bindDescriptorSet(*_pipeline, *descriptorSet);
 
     commandBuffer.drawIndexed(numIndices);
 
@@ -241,7 +247,7 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   queue.waitIdle();
 }
 void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
-                           Vulk::Image& frame,
+                           const Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
   auto& swapchainFrame = _context.swapchain().activeImage();
   const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
@@ -424,6 +430,7 @@ void Testbed::createFrames() {
     frame.depthBuffer     = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
     frame.depthAttachment = Vulk::ImageView::make_shared(device, *frame.depthBuffer);
+
     frame.framebuffer     = Vulk::Framebuffer::make_shared(
         device, *_renderPass, *frame.colorAttachment, *frame.depthAttachment);
 

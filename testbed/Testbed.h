@@ -91,13 +91,14 @@ class Testbed : public MainWindow {
                            const Vulk::UniformBuffer& uniforms,
                            const Vulk::Texture2D& texture,
                            // Outputs
-                           Vulk::Framebuffer& framebuffer,
+                           const Vulk::ImageView& colorBuffer,
+                           const Vulk::ImageView& depthStencilBuffer,
                            // Synchronization
                            const std::vector<Vulk::Semaphore*> waits,
                            const std::vector<Vulk::Semaphore*> signals,
                            Vulk::Fence& fence);
   virtual void presentFrame(Vulk::CommandBuffer& commandBuffer,
-                            Vulk::Image& frame,
+                            const Vulk::Image& frame,
                             const std::vector<Vulk::Semaphore*> waits);
 
  private:
@@ -121,6 +122,7 @@ class Testbed : public MainWindow {
     Vulk::ImageView::shared_ptr colorAttachment;
     Vulk::DepthImage::shared_ptr depthBuffer;
     Vulk::ImageView::shared_ptr depthAttachment;
+
     Vulk::Framebuffer::shared_ptr framebuffer;
 
     Vulk::UniformBuffer::shared_ptr uniformBuffer;
