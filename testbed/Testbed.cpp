@@ -124,10 +124,7 @@ void Testbed::init(int width, int height) {
 void Testbed::cleanup() {
   for (auto& frame : _frames) {
     frame.colorBuffer->destroy();
-    frame.colorAttachment->destroy();
     frame.depthBuffer->destroy();
-    frame.depthAttachment->destroy();
-    frame.framebuffer->destroy();
   }
   _frames.clear();
 
@@ -172,16 +169,17 @@ void Testbed::drawFrame() {
               *_currentFrame->uniformBuffer,
               *_texture,
               // Outputs
-              *_currentFrame->colorAttachment,
-              *_currentFrame->depthAttachment,
+              *_currentFrame->colorBuffer,
+              *_currentFrame->depthBuffer,
               // Synchronization
               {},
               {_currentFrame->renderFinishedSemaphore.get()},
               *_currentFrame->fence);
 
   presentFrame(*_currentFrame->commandBuffer,
-               _currentFrame->framebuffer->colorBuffer(),
-               {_currentFrame->imageAvailableSemaphore.get(), _currentFrame->renderFinishedSemaphore.get()});
+               *_currentFrame->colorBuffer,
+               {_currentFrame->imageAvailableSemaphore.get(),
+                _currentFrame->renderFinishedSemaphore.get()});
 }
 
 void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
@@ -192,8 +190,8 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
                           const Vulk::UniformBuffer& uniforms,
                           const Vulk::Texture2D& texture,
                           // Outputs
-                          const Vulk::ImageView& colorBuffer,
-                          const Vulk::ImageView& depthStencilBuffer,
+                          const Vulk::Image2D& colorBuffer,
+                          const Vulk::DepthImage& depthStencilBuffer,
                           // Synchronization
                           const std::vector<Vulk::Semaphore*> waits,
                           const std::vector<Vulk::Semaphore*> signals,
@@ -218,7 +216,11 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   auto descriptorSet = _currentFrame->descriptorSet;
   descriptorSet->bind(bindings);
 
-  Vulk::Framebuffer framebuffer{_context.device(), *_renderPass, colorBuffer, depthStencilBuffer};
+
+  auto colorAttachment = Vulk::ImageView::make_shared(_context.device(), colorBuffer);
+  auto depthStencilAttachment = Vulk::ImageView::make_shared(_context.device(), depthStencilBuffer);
+
+  Vulk::Framebuffer framebuffer{_context.device(), *_renderPass, *colorAttachment, *depthStencilAttachment};
 
   commandBuffer.reset();
 
@@ -426,13 +428,8 @@ void Testbed::createFrames() {
                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
-    frame.colorAttachment = Vulk::ImageView::make_shared(device, *frame.colorBuffer);
-    frame.depthBuffer     = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
+    frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
-    frame.depthAttachment = Vulk::ImageView::make_shared(device, *frame.depthBuffer);
-
-    frame.framebuffer     = Vulk::Framebuffer::make_shared(
-        device, *_renderPass, *frame.colorAttachment, *frame.depthAttachment);
 
     frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);

@@ -91,8 +91,8 @@ class Testbed : public MainWindow {
                            const Vulk::UniformBuffer& uniforms,
                            const Vulk::Texture2D& texture,
                            // Outputs
-                           const Vulk::ImageView& colorBuffer,
-                           const Vulk::ImageView& depthStencilBuffer,
+                           const Vulk::Image2D& colorBuffer,
+                           const Vulk::DepthImage& depthStencilBuffer,
                            // Synchronization
                            const std::vector<Vulk::Semaphore*> waits,
                            const std::vector<Vulk::Semaphore*> signals,
@@ -119,11 +119,7 @@ class Testbed : public MainWindow {
     Vulk::CommandBuffer::shared_ptr commandBuffer;
 
     Vulk::Image2D::shared_ptr colorBuffer;
-    Vulk::ImageView::shared_ptr colorAttachment;
     Vulk::DepthImage::shared_ptr depthBuffer;
-    Vulk::ImageView::shared_ptr depthAttachment;
-
-    Vulk::Framebuffer::shared_ptr framebuffer;
 
     Vulk::UniformBuffer::shared_ptr uniformBuffer;
     void* uniformBufferMapped;

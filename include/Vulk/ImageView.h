@@ -21,24 +21,23 @@ class ImageView : public Sharable<ImageView>, private NotCopyable {
  public:
   ImageView() = default;
   ImageView(const Device& device,
-            Image2D& image,
+            const Image2D& image,
             ImageViewCreateInfoOverride createInfoOverride = {});
   ImageView(const Device& device,
-            DepthImage& image,
+            const DepthImage& image,
             ImageViewCreateInfoOverride createInfoOverride = {});
   ~ImageView();
 
   void create(const Device& device,
-              Image2D& image,
+              const Image2D& image,
               ImageViewCreateInfoOverride createInfoOverride = {});
   void create(const Device& device,
-              DepthImage& image,
+              const DepthImage& image,
               ImageViewCreateInfoOverride createInfoOverride = {});
   void destroy();
 
   operator VkImageView() const { return _view; }
 
-  [[nodiscard]] Image& image() { return *_image.lock(); }
   [[nodiscard]] const Image& image() const { return *_image.lock(); }
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
@@ -47,7 +46,7 @@ class ImageView : public Sharable<ImageView>, private NotCopyable {
 
  private:
   void create(const Device& device,
-              Image& image,
+              const Image& image,
               VkImageAspectFlags aspectMask,
               ImageViewCreateInfoOverride createInfoOverride);
 
@@ -55,7 +54,7 @@ class ImageView : public Sharable<ImageView>, private NotCopyable {
   VkImageView _view = VK_NULL_HANDLE;
 
   std::weak_ptr<const Device> _device;
-  std::weak_ptr<Image> _image;
+  std::weak_ptr<const Image> _image;
 };
 
 NAMESPACE_END(Vulk)
