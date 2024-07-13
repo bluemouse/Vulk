@@ -10,6 +10,7 @@
 NAMESPACE_BEGIN(Vulk)
 
 class CommandBuffer;
+class Queue;
 
 class CommandPool : public Sharable<CommandPool>, private NotCopyable {
  public:
@@ -33,10 +34,10 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
 
   operator VkCommandPool() const { return _pool; }
 
-  [[nodiscard]] Device::QueueFamilyType queueFamilyType() const { return _queueFamilyType; }
   [[nodiscard]] bool isCreated() const { return _pool != VK_NULL_HANDLE; }
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
+  [[nodiscard]] const Queue& queue() const { return *_queue.lock(); }
 
   std::shared_ptr<CommandBuffer> allocatePrimary() const;
   std::shared_ptr<CommandBuffer> allocateSecondary() const;
@@ -50,9 +51,9 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
 
  private:
   VkCommandPool _pool = VK_NULL_HANDLE;
-  Device::QueueFamilyType _queueFamilyType;
 
   std::weak_ptr<const Device> _device;
+  std::weak_ptr<const Queue> _queue;
 };
 
 NAMESPACE_END(Vulk)

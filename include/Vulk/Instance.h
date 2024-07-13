@@ -15,7 +15,7 @@ class Surface;
 
 class Instance : public Sharable<Instance>, private NotCopyable {
  public:
-  enum ValidationLevel {
+  enum ValidationLevel { //TODO refactor it to enum class and names without k prefix
     kNone    = 0,
     kError   = 1,
     kWarning = 2,

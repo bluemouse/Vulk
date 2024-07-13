@@ -2,6 +2,8 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/CommandBuffer.h>
+#include <Vulk/Queue.h>
+
 #include <Vulk/internal/debug.h>
 
 NAMESPACE_BEGIN(Vulk)
@@ -23,13 +25,15 @@ void CommandPool::create(const Device& device,
                          Mode modes) {
   MI_VERIFY(!isCreated());
 
+  const auto& queue = device.queue(queueFamilyType);
+
   _device = device.get_weak();
-  _queueFamilyType = queueFamilyType;
+  _queue  = queue.get_weak();
 
   VkCommandPoolCreateInfo poolInfo{};
   poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   poolInfo.flags            = static_cast<VkCommandPoolCreateFlags>(modes);
-  poolInfo.queueFamilyIndex = device.queueFamilyIndex(queueFamilyType).value();
+  poolInfo.queueFamilyIndex = queue.queueFamilyIndex();
 
   MI_VERIFY_VKCMD(vkCreateCommandPool(device, &poolInfo, nullptr, &_pool));
 }

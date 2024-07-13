@@ -1,0 +1,65 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 27,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "config-base",
+      "hidden": true,
+      "displayName": "base Configuration",
+      "description": "Default build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "VULKAN_DEBUG_UTILS": "OFF"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Config Debug",
+      "description": "Sets debug build type",
+      "inherits": "config-base",
+      "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "vulkan-debug",
+      "displayName": "Config Vulkan-Debug",
+      "description": "Sets debug build type with Vulkan debug utils enabled",
+      "inherits": "debug",
+      "cacheVariables": {
+          "VULKAN_DEBUG_UTILS": "ON"
+        }
+      },
+    {
+      "name": "release",
+      "displayName": "Config Release",
+      "description": "Sets release build type",
+      "inherits": "config-base",
+      "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "displayName": "Build Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "vulkan-debug",
+      "displayName": "Build Vulkan-Debug",
+      "configurePreset": "vulkan-debug"
+    },
+    {
+      "name": "release",
+      "displayName": "Build Release",
+      "configurePreset": "release"
+    }
+  ]
+}

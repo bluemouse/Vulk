@@ -87,5 +87,10 @@
     "bugprone-exception-escape",
     "cppcoreguidelines-avoid-c-arrays",
     "cppcoreguidelines-pro-bounds-array-to-pointer-decay"
-  ]
+  ],
+  "cmake.preferredGenerators": [
+    "Ninja"
+  ],
+  "cmake.useCMakePresets": "always",
+  "cmake.options.statusBarVisibility": "visible",
 }

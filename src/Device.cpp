@@ -182,4 +182,22 @@ const Instance& Device::instance() const {
   return physicalDevice().instance();
 }
 
+#if defined(ENABLE_VULKAN_DEBUG_UTILS)
+
+void Device::setObjectName(VkObjectType type, uint64_t object, const char* name)
+{
+  VkDebugUtilsObjectNameInfoEXT nameInfo{};
+  nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+  nameInfo.objectType   = type;
+  nameInfo.objectHandle = object;
+  nameInfo.pObjectName  = name;
+  vkSetDebugUtilsObjectNameEXT(_device, &nameInfo);
+}
+
+#else
+
+void Device::setObjectName(VkObjectType, uint64_t, const char*) {}
+
+#endif //defined(ENABLE_VULKAN_DEBUG_UTILS)
+
 NAMESPACE_END(Vulk)

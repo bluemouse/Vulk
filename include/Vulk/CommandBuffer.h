@@ -24,6 +24,7 @@ class Pipeline;
 class VertexBuffer;
 class IndexBuffer;
 class DescriptorSet;
+class Queue;
 
 class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
@@ -81,6 +82,25 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   [[nodiscard]] bool isAllocated() const { return _buffer != VK_NULL_HANDLE; }
 
   [[nodiscard]] const CommandPool& pool() const { return *_pool.lock(); }
+  [[nodiscard]] const Queue& queue() const;
+
+  void beginLabel(const char* label, const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
+  void insertLabel(const char* label, const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
+  void endLabel() const;
+
+  struct ScopedLabel {
+    ScopedLabel(const CommandBuffer& commandBuffer,
+                const char* label,
+                const glm::vec4& color) : _commandBuffer(commandBuffer) {
+      _commandBuffer.beginLabel(label, color);
+    }
+    ~ScopedLabel() { _commandBuffer.endLabel(); }
+
+   private:
+    const CommandBuffer& _commandBuffer;
+  };
+  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(const char* label,
+                                                         const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
 
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;

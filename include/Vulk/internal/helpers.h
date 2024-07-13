@@ -1,7 +1,5 @@
 #pragma once
 
-#include <volk/volk.h>
-
 #include <Vulk/internal/base.h>
 
 #define MI_INIT_VKPROC(cmd)                                                       \

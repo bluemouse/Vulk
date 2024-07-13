@@ -56,6 +56,8 @@ class Device : public Sharable<Device>, private NotCopyable {
 
   [[nodiscard]] bool isCreated() const { return _device != VK_NULL_HANDLE; }
 
+  void setObjectName(VkObjectType type, uint64_t object, const char* name);
+
  private:
   VkDevice _device = VK_NULL_HANDLE;
 

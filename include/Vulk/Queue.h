@@ -4,6 +4,9 @@
 
 #include <vector>
 
+// Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+
 #include <Vulk/internal/base.h>
 #include <Vulk/Device.h>
 #include <Vulk/Fence.h>
@@ -31,6 +34,24 @@ class Queue : public Sharable<Queue>, private NotCopyable {
   void waitIdle() const;
 
   const Device& device() const { return *_device.lock(); }
+
+  void beginLabel(const char* label, const glm::vec4& color = {0.8F, 0.2F, 0.1F, 1.0F}) const;
+  void insertLabel(const char* label, const glm::vec4& color = {0.8F, 0.2F, 0.1F, 1.0F}) const;
+  void endLabel() const;
+
+  struct ScopedLabel {
+    ScopedLabel(const Queue& queue,
+                const char* label,
+                const glm::vec4& color) : _queue(queue) {
+      _queue.beginLabel(label, color);
+    }
+    ~ScopedLabel() { _queue.endLabel(); }
+
+   private:
+    const Queue& _queue;
+  };
+  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(const char* label,
+                                                         const glm::vec4& color = {0.8F, 0.2F, 0.1F, 1.0F}) const;
 
  private:
   VkQueue _queue      = VK_NULL_HANDLE;

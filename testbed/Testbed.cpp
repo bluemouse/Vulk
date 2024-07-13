@@ -25,6 +25,7 @@
 #include <iostream>
 #include <filesystem>
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <stdexcept>
 #include <cstdint>
@@ -151,6 +152,11 @@ void Testbed::mainLoop() {
 void Testbed::drawFrame() {
   nextFrame(); // Move to the next frame. The new current frame may be in use.
 
+  auto& commandBuffer = *_currentFrame->commandBuffer;
+  auto& queue         = commandBuffer.queue();
+
+  auto label = queue.scopedLabel("Testbed::drawFrame()");
+
   if (_context.swapchain().acquireNextImage(*_currentFrame->imageAvailableSemaphore) ==
       VK_ERROR_OUT_OF_DATE_KHR) {
     resizeSwapchain();
@@ -161,7 +167,7 @@ void Testbed::drawFrame() {
 
   _currentFrame->fence->wait(); // To make sure the current frame is not in use.
   _currentFrame->fence->reset();
-  renderFrame(*_currentFrame->commandBuffer,
+  renderFrame(commandBuffer,
               // Inputs
               _drawable.vertexBuffer(),
               _drawable.indexBuffer(),
@@ -176,7 +182,7 @@ void Testbed::drawFrame() {
               {_currentFrame->renderFinishedSemaphore.get()},
               *_currentFrame->fence);
 
-  presentFrame(*_currentFrame->commandBuffer,
+  presentFrame(commandBuffer,
                *_currentFrame->colorBuffer,
                {_currentFrame->imageAvailableSemaphore.get(),
                 _currentFrame->renderFinishedSemaphore.get()});
@@ -196,6 +202,8 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
                           const std::vector<Vulk::Semaphore*> waits,
                           const std::vector<Vulk::Semaphore*> signals,
                           Vulk::Fence& fence) {
+  auto label = commandBuffer.queue().scopedLabel("Testbed::renderFrame()");
+
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   textureImageInfo.imageView   = texture.view();
@@ -226,6 +234,8 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
 
   commandBuffer.beginRecording();
   {
+    auto label = commandBuffer.scopedLabel("Frame");
+
     commandBuffer.beginRenderPass(*_renderPass, framebuffer);
 
     commandBuffer.bindPipeline(*_pipeline);
@@ -247,10 +257,14 @@ void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
   queue.submitCommands(commandBuffer, waits, signals, fence);
 
   queue.waitIdle();
+
+  commandBuffer.queue().endLabel();
 }
 void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
                            const Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
+  auto label = commandBuffer.queue().scopedLabel("Testbed::presetFrame()");
+
   auto& swapchainFrame = _context.swapchain().activeImage();
   const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
   swapchainFrame.blitFrom(queue, commandBuffer, frame);
@@ -283,7 +297,6 @@ void Testbed::createContext() {
   };
 
   createInfo.chooseSurfaceFormat = &Testbed::chooseSwapchainSurfaceFormat;
-  // createInfo.chooseDepthFormat   = &Testbed::chooseDepthFormat; //DELME
   createInfo.chooseSurfaceExtent = [this](const VkSurfaceCapabilitiesKHR& caps) {
     return chooseSwapchainSurfaceExtent(caps, width(), height());
   };
@@ -364,6 +377,8 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
   _camera.init(glm::vec2{extent.width, extent.height}, bbox);
 }
 
+
+
 void Testbed::createDrawable() {
   if (_textureFile.empty()) {
     const glm::uvec2 numBlocks{4, 4};
@@ -375,8 +390,16 @@ void Testbed::createDrawable() {
                                                        checkerboard.data(),
                                                        checkerboard.extent.x,
                                                        checkerboard.extent.y);
+
+    VkImage image = *_texture;
+    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t) image, "Created texture (checkerboard)");
   } else {
     _texture = Vulk::Toolbox(_context).createTexture2D(_textureFile.c_str());
+
+    std::string name;
+    name = "Loaded texture (" + _textureFile + ")";
+    VkImage image = *_texture;
+    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE,  (uint64_t) image, name.c_str());
   }
 
   std::vector<Vertex> vertices;

@@ -4,6 +4,7 @@
 
 #include <array>
 #include <stdexcept>
+#include <cstring>
 
 #include <Vulk/Instance.h>
 #include <Vulk/internal/debug.h>
@@ -107,7 +108,7 @@ void MainWindow::mainLoop() {
 }
 
 std::vector<const char*> MainWindow::getRequiredInstanceExtensions() {
-  uint32_t count          = 0;
+  uint32_t count = 0;
   const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 
   return {extensions, extensions + count};

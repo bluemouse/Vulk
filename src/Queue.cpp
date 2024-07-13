@@ -64,4 +64,46 @@ void Queue::waitIdle() const {
   vkQueueWaitIdle(_queue);
 }
 
+#if defined(ENABLE_VULKAN_DEBUG_UTILS)
+
+void Queue::beginLabel(const char* label, const glm::vec4& color) const {
+  VkDebugUtilsLabelEXT labelInfo{};
+  labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+  labelInfo.pLabelName = label;
+  labelInfo.color[0] = color.r;
+  labelInfo.color[1] = color.g;
+  labelInfo.color[2] = color.b;
+  labelInfo.color[3] = color.a;
+	vkQueueBeginDebugUtilsLabelEXT(_queue, &labelInfo);
+}
+void Queue::insertLabel(const char* label, const glm::vec4& color) const {
+  VkDebugUtilsLabelEXT labelInfo{};
+  labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+  labelInfo.pLabelName = label;
+  labelInfo.color[0] = color.r;
+  labelInfo.color[1] = color.g;
+  labelInfo.color[2] = color.b;
+  labelInfo.color[3] = color.a;
+  vkQueueInsertDebugUtilsLabelEXT(_queue, &labelInfo);
+}
+void Queue::endLabel() const {
+	vkQueueEndDebugUtilsLabelEXT(_queue);
+}
+auto Queue::scopedLabel(const char* label, const glm::vec4& color) const
+  -> std::unique_ptr<ScopedLabel> {
+  return std::make_unique<ScopedLabel>(*this, label, color);
+}
+
+#else
+
+void Queue::beginLabel(const char*, const glm::vec4&) const {}
+void Queue::insertLabel(const char*, const glm::vec4&) const {}
+void Queue::endLabel() const {}
+auto Queue::scopedLabel(const char*, const glm::vec4&) const
+  -> std::unique_ptr<ScopedLabel> {
+  return nullptr;
+}
+
+#endif //defined(ENABLE_VULKAN_DEBUG_UTILS)
+
 NAMESPACE_END(Vulk)
