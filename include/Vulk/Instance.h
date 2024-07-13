@@ -15,12 +15,12 @@ class Surface;
 
 class Instance : public Sharable<Instance>, private NotCopyable {
  public:
-  enum ValidationLevel { //TODO refactor it to enum class and names without k prefix
-    kNone    = 0,
-    kError   = 1,
-    kWarning = 2,
-    kInfo    = 3,
-    kVerbose = 4,
+  enum class ValidationLevel {
+    None    = 0,
+    Error   = 1,
+    Warning = 2,
+    Info    = 3,
+    Verbose = 4,
   };
 
  public:
@@ -35,7 +35,7 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   Instance(int versionMajor,
            int versionMinor,
            std::vector<const char*> extensions,
-           ValidationLevel validation = kNone);
+           ValidationLevel validation = ValidationLevel::None);
   ~Instance() override;
 
   void create(const ApplicationInfoOverride& appInfoOverride                           = {},
@@ -44,7 +44,7 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   void create(int versionMajor,
               int versionMinor,
               std::vector<const char*> extensions,
-              ValidationLevel validation = kNone);
+              ValidationLevel validation = ValidationLevel::None);
 
   void destroy();
 

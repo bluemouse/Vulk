@@ -19,7 +19,7 @@ class Context {
     int versionMajor = 1;
     int versionMinor = 0;
     std::vector<const char*> instanceExtensions;
-    ValidationLevel validationLevel = ValidationLevel::kNone;
+    ValidationLevel validationLevel = ValidationLevel::None;
 
     CreateWindowSurfaceFunc createWindowSurface;
 
@@ -65,7 +65,7 @@ class Context {
   virtual void createInstance(int versionMajor,
                               int versionMinor,
                               const std::vector<const char*>& extensions,
-                              ValidationLevel validation = ValidationLevel::kNone);
+                              ValidationLevel validation = ValidationLevel::None);
   virtual void createSurface(const CreateWindowSurfaceFunc& createWindowSurface);
   virtual void pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
                                   const std::vector<const char*>& deviceExtensions,

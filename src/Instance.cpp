@@ -111,20 +111,20 @@ void Instance::create(int versionMajor,
   };
 
   DebugUtilsMessengerCreateInfoOverride debugUtilsMessengerCreateInfoOverride;
-  if (validation != kNone) {
+  if (validation != ValidationLevel::None) {
     debugUtilsMessengerCreateInfoOverride = [&](VkDebugUtilsMessengerCreateInfoEXT* createInfo) {
       createInfo->sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
       createInfo->messageSeverity = 0x00;
-      if (validation >= kError) {
+      if (validation >= ValidationLevel::Error) {
         createInfo->messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
       }
-      if (validation >= kWarning) {
+      if (validation >= ValidationLevel::Warning) {
         createInfo->messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
       }
-      if (validation >= kInfo) {
+      if (validation >= ValidationLevel::Info) {
         createInfo->messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
       }
-      if (validation >= kVerbose) {
+      if (validation >= ValidationLevel::Verbose) {
         createInfo->messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
       }
       createInfo->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
@@ -136,7 +136,7 @@ void Instance::create(int versionMajor,
   }
 
   auto instanceCreateInfoOverride = [&](VkInstanceCreateInfo* createInfo) {
-    if (validation != kNone) {
+    if (validation != ValidationLevel::None) {
       createInfo->enabledLayerCount   = static_cast<uint32_t>(_layers.size());
       createInfo->ppEnabledLayerNames = _layers.data();
 

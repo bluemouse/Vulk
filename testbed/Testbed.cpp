@@ -42,7 +42,7 @@ struct hash<Testbed::Vertex> {
 };
 } // namespace std
 
-Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::kError;
+Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::Error;
 
 void Testbed::setValidationLevel(ValidationLevel level) {
   _validationLevel = level;
