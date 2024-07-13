@@ -100,6 +100,7 @@ void Device::create(const PhysicalDevice& physicalDevice,
   }
 
   MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
+  volkLoadDevice(_device);
 }
 
 void Device::initQueues() {

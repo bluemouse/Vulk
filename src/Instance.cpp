@@ -1,3 +1,6 @@
+#define VOLK_IMPLEMENTATION
+#include <volk/volk.h>
+
 #include <Vulk/Instance.h>
 
 #include <cstring>
@@ -14,7 +17,14 @@
 
 #include <Vulk/Surface.h>
 
-#include <vulkan/vulkan_core.h>
+namespace {
+struct Initializer {
+  Initializer() {
+    volkInitialize();
+  }
+};
+static Initializer init;
+}
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -82,9 +92,9 @@ void Instance::create(
   }
 
   MI_VERIFY_VKCMD(vkCreateInstance(&createInfo, nullptr, &_instance));
+  volkLoadInstanceOnly(_instance);
 
   if (debugUtilsMessengerCreateInfoOverride) {
-    MI_INIT_VKPROC(vkCreateDebugUtilsMessengerEXT);
     MI_VERIFY_VKCMD(
         vkCreateDebugUtilsMessengerEXT(_instance, &debugCreateInfo, nullptr, &_debugMessenger));
   }
@@ -145,7 +155,6 @@ void Instance::destroy() {
   _physicalDevice = nullptr;
 
   if (_debugMessenger != VK_NULL_HANDLE) {
-    MI_INIT_VKPROC(vkDestroyDebugUtilsMessengerEXT);
     vkDestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
   }
 
