@@ -49,20 +49,29 @@ class Sharable : public std::enable_shared_from_this<T> {
 };
 
 // Create a macro to define the following codes
-#define MI_DEFINE_SHARED_PTR(type, base)                            \
-  using shared_ptr = std::shared_ptr<type>;                         \
-  using weak_ptr   = std::weak_ptr<type>;                           \
-                                                                    \
-  template <class... Args>                                          \
-  static shared_ptr make_shared(Args&&... args) {                   \
-    return std::make_shared<type>(std::forward<Args>(args)...);     \
-  }                                                                 \
-                                                                    \
-  shared_ptr get_shared() {                                         \
-    return std::static_pointer_cast<type>(base::get_shared());      \
-  }                                                                 \
-  weak_ptr get_weak() {                                             \
-    return std::static_pointer_cast<type>(base::get_weak().lock()); \
+#define MI_DEFINE_SHARED_PTR(type, base)                             \
+  using shared_ptr = std::shared_ptr<type>;                          \
+  using weak_ptr   = std::weak_ptr<type>;                            \
+                                                                     \
+  using shared_ptr_const = std::shared_ptr<const type>;              \
+  using weak_ptr_const   = std::weak_ptr<const type>;                \
+                                                                     \
+  template <class... Args>                                           \
+  static shared_ptr make_shared(Args&&... args) {                    \
+    return std::make_shared<type>(std::forward<Args>(args)...);      \
+  }                                                                  \
+                                                                     \
+  shared_ptr get_shared() {                                          \
+    return std::static_pointer_cast<type>(base::get_shared());       \
+  }                                                                  \
+  weak_ptr get_weak() {                                              \
+    return std::static_pointer_cast<type>(base::get_shared());       \
+  }                                                                  \
+  shared_ptr_const get_shared() const {                              \
+    return std::static_pointer_cast<const type>(base::get_shared()); \
+  }                                                                  \
+  weak_ptr_const get_weak() const {                                  \
+    return std::static_pointer_cast<const type>(base::get_shared()); \
   }
 
 NAMESPACE_END(Vulk)

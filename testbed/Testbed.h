@@ -20,6 +20,8 @@
 #include <Vulk/engine/Vertex.h>
 #include <Vulk/engine/Camera.h>
 
+#include "RenderTask.h"
+
 class Testbed : public MainWindow {
  public:
   using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
@@ -52,9 +54,6 @@ class Testbed : public MainWindow {
                                                                uint32_t windowWidth,
                                                                uint32_t windowHeight);
 
-  [[nodiscard]] static Vulk::VertexShader createVertexShader(const Vulk::Device& device);
-  [[nodiscard]] static Vulk::FragmentShader createFragmentShader(const Vulk::Device& device);
-
   [[nodiscard]] static VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(
       const std::vector<VkSurfaceFormatKHR>& availableFormats);
   [[nodiscard]] static VkPresentModeKHR chooseSwapchainPresentMode(
@@ -74,8 +73,6 @@ class Testbed : public MainWindow {
   void createRenderTask();
   void createFrames();
 
-  void updateUniformBuffer();
-
   void nextFrame();
 
   void loadModel(const std::string& modelFile,
@@ -83,20 +80,6 @@ class Testbed : public MainWindow {
                  std::vector<uint32_t>& indices);
   void initCamera(const std::vector<Vertex>& vertices);
 
-  virtual void renderFrame(Vulk::CommandBuffer& commandBuffer,
-                           // Inputs
-                           const Vulk::VertexBuffer& vertexBuffer,
-                           const Vulk::IndexBuffer& indexBuffer,
-                           size_t numIndices,
-                           const Vulk::UniformBuffer& uniforms,
-                           const Vulk::Texture2D& texture,
-                           // Outputs
-                           const Vulk::Image2D& colorBuffer,
-                           const Vulk::DepthImage& depthStencilBuffer,
-                           // Synchronization
-                           const std::vector<Vulk::Semaphore*> waits,
-                           const std::vector<Vulk::Semaphore*> signals,
-                           Vulk::Fence& fence);
   virtual void presentFrame(Vulk::CommandBuffer& commandBuffer,
                             const Vulk::Image& frame,
                             const std::vector<Vulk::Semaphore*> waits);
@@ -104,11 +87,7 @@ class Testbed : public MainWindow {
  private:
   Vulk::Context _context;
 
-  Vulk::RenderPass::shared_ptr _renderPass;
-  Vulk::Pipeline::shared_ptr _pipeline;
-  Vulk::DescriptorPool::shared_ptr _descriptorPool;
-
-  uint32_t _vertexBufferBinding = 0U;
+  Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
 
   Vulk::Camera _camera;
 
@@ -120,11 +99,6 @@ class Testbed : public MainWindow {
 
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
-
-    Vulk::UniformBuffer::shared_ptr uniformBuffer;
-    void* uniformBufferMapped;
-
-    Vulk::DescriptorSet::shared_ptr descriptorSet;
 
     Vulk::Semaphore::shared_ptr imageAvailableSemaphore;
     Vulk::Semaphore::shared_ptr renderFinishedSemaphore;

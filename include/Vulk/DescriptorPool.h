@@ -24,6 +24,8 @@ class DescriptorPool : public Sharable<DescriptorPool>, private NotCopyable {
   void create(const Device& device, std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
   void destroy();
 
+  void reset();
+
   operator VkDescriptorPool() const { return _pool; }
 
   [[nodiscard]] bool isCreated() const { return _pool != VK_NULL_HANDLE; }

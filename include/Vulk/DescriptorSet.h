@@ -39,7 +39,7 @@ class DescriptorSet : public Sharable<DescriptorSet>, private NotCopyable {
   void allocate(const DescriptorPool& pool, const DescriptorSetLayout& layout);
   void free();
 
-  void bind(const std::vector<Binding>& bindings);
+  void bind(const std::vector<Binding>& bindings) const;
 
   operator VkDescriptorSet() const { return _set; }
   operator const VkDescriptorSet*() const { return &_set; }

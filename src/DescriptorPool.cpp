@@ -58,4 +58,8 @@ void DescriptorPool::destroy() {
   _device.reset();
 }
 
+void DescriptorPool::reset() {
+  MI_VERIFY_VKCMD(vkResetDescriptorPool(device(), _pool, 0));
+}
+
 NAMESPACE_END(Vulk)

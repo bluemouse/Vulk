@@ -50,7 +50,7 @@ void DescriptorSet::free() {
   _pool.reset();
 }
 
-void DescriptorSet::bind(const std::vector<Binding>& bindings) {
+void DescriptorSet::bind(const std::vector<Binding>& bindings) const {
   MI_VERIFY(isAllocated());
 
   const auto& pool   = _pool.lock();

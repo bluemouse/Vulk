@@ -115,8 +115,8 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createContext();
-  createRenderTask();
   createDrawable();
+  createRenderTask();
   createFrames();
 
   _zoomFactor = 1.0F;
@@ -129,11 +129,10 @@ void Testbed::cleanup() {
   }
   _frames.clear();
 
+  _textureMappingTask.reset();
+
   _texture->destroy();
   _drawable.destroy();
-  _descriptorPool->destroy();
-  _pipeline->destroy();
-  _renderPass->destroy();
 
   _context.destroy();
 
@@ -163,24 +162,23 @@ void Testbed::drawFrame() {
     return;
   }
 
-  updateUniformBuffer();
+  _textureMappingTask->prepareGeometry(_drawable.vertexBuffer(),
+                                       _drawable.indexBuffer(),
+                                       _drawable.numIndices());
+  _textureMappingTask->prepareUniforms(glm::mat4{1.0F},
+                                       _camera.viewMatrix(),
+                                       _camera.projectionMatrix());
+  _textureMappingTask->prepareInputs(*_texture);
+  _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer,
+                                      *_currentFrame->depthBuffer);
+  _textureMappingTask->prepareSynchronization({},
+                                              {_currentFrame->renderFinishedSemaphore.get()},
+                                              *_currentFrame->fence);
 
   _currentFrame->fence->wait(); // To make sure the current frame is not in use.
   _currentFrame->fence->reset();
-  renderFrame(commandBuffer,
-              // Inputs
-              _drawable.vertexBuffer(),
-              _drawable.indexBuffer(),
-              _drawable.numIndices(),
-              *_currentFrame->uniformBuffer,
-              *_texture,
-              // Outputs
-              *_currentFrame->colorBuffer,
-              *_currentFrame->depthBuffer,
-              // Synchronization
-              {},
-              {_currentFrame->renderFinishedSemaphore.get()},
-              *_currentFrame->fence);
+
+  _textureMappingTask->render();
 
   presentFrame(commandBuffer,
                *_currentFrame->colorBuffer,
@@ -188,85 +186,13 @@ void Testbed::drawFrame() {
                 _currentFrame->renderFinishedSemaphore.get()});
 }
 
-void Testbed::renderFrame(Vulk::CommandBuffer& commandBuffer,
-                          // Inputs
-                          const Vulk::VertexBuffer& vertexBuffer,
-                          const Vulk::IndexBuffer& indexBuffer,
-                          size_t numIndices,
-                          const Vulk::UniformBuffer& uniforms,
-                          const Vulk::Texture2D& texture,
-                          // Outputs
-                          const Vulk::Image2D& colorBuffer,
-                          const Vulk::DepthImage& depthStencilBuffer,
-                          // Synchronization
-                          const std::vector<Vulk::Semaphore*> waits,
-                          const std::vector<Vulk::Semaphore*> signals,
-                          Vulk::Fence& fence) {
-  auto label = commandBuffer.queue().scopedLabel("Testbed::renderFrame()");
-
-  VkDescriptorImageInfo textureImageInfo{};
-  textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  textureImageInfo.imageView   = texture.view();
-  textureImageInfo.sampler     = texture.sampler();
-
-  VkDescriptorBufferInfo transformationBufferInfo{};
-  transformationBufferInfo.offset = 0;
-  transformationBufferInfo.range  = VK_WHOLE_SIZE;
-  transformationBufferInfo.buffer = uniforms;
-
-  // The order of bindings must match the order of bindings in shaders. The name and the type need
-  // to match them in the shader as well.
-  std::vector<Vulk::DescriptorSet::Binding> bindings = {
-      {"xform", "Transformation", &transformationBufferInfo},
-      {"texSampler", "sampler2D", &textureImageInfo}
-  };
-
-  auto descriptorSet = _currentFrame->descriptorSet;
-  descriptorSet->bind(bindings);
-
-
-  auto colorAttachment = Vulk::ImageView::make_shared(_context.device(), colorBuffer);
-  auto depthStencilAttachment = Vulk::ImageView::make_shared(_context.device(), depthStencilBuffer);
-
-  Vulk::Framebuffer framebuffer{_context.device(), *_renderPass, *colorAttachment, *depthStencilAttachment};
-
-  commandBuffer.reset();
-
-  commandBuffer.beginRecording();
-  {
-    auto label = commandBuffer.scopedLabel("Frame");
-
-    commandBuffer.beginRenderPass(*_renderPass, framebuffer);
-
-    commandBuffer.bindPipeline(*_pipeline);
-
-    auto extent = framebuffer.extent();
-    commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
-
-    commandBuffer.bindVertexBuffer(vertexBuffer, _vertexBufferBinding);
-    commandBuffer.bindIndexBuffer(indexBuffer);
-    commandBuffer.bindDescriptorSet(*_pipeline, *descriptorSet);
-
-    commandBuffer.drawIndexed(numIndices);
-
-    commandBuffer.endRenderpass();
-  }
-  commandBuffer.endRecording();
-
-  const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
-  queue.submitCommands(commandBuffer, waits, signals, fence);
-
-  queue.waitIdle();
-
-  commandBuffer.queue().endLabel();
-}
 void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
                            const Vulk::Image& frame,
                            const std::vector<Vulk::Semaphore*> waits) {
   auto label = commandBuffer.queue().scopedLabel("Testbed::presetFrame()");
 
   auto& swapchainFrame = _context.swapchain().activeImage();
-  const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
+  const auto& queue    = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
   swapchainFrame.blitFrom(queue, commandBuffer, frame);
   swapchainFrame.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
@@ -306,29 +232,8 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderTask() {
-  //
-  // Create render pass
-  //
-  const auto [_, formats, __] = _context.surface().querySupports();
-
-  VkFormat colorFormat = chooseSwapchainSurfaceFormat(formats).format; //TODO This should be decided by the render task
-  VkFormat depthStencilFormat = chooseDepthFormat();
-
-  _renderPass = Vulk::RenderPass::make_shared(_context.device(), colorFormat, depthStencilFormat);
-
-  //
-  // Create pipeline
-  //
-  auto vertShader = createVertexShader(_context.device());
-  auto fragShader = createFragmentShader(_context.device());
-
-  _pipeline = Vulk::Pipeline::make_shared(_context.device(), *_renderPass, vertShader, fragShader);
-  _descriptorPool = Vulk::DescriptorPool::make_shared(_pipeline->descriptorSetLayout(), _maxFramesInFlight); //TODO This should be decided by the render task
-
-  _vertexBufferBinding = _pipeline->findBinding<Vertex>();// It is the location of this attachment in the `attachments` array
-  MI_VERIFY(_vertexBufferBinding != std::numeric_limits<uint32_t>::max());
+  _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
 }
-
 
 void Testbed::loadModel(const std::string& modelFile,
                         std::vector<Vertex>& vertices,
@@ -377,8 +282,6 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
   _camera.init(glm::vec2{extent.width, extent.height}, bbox);
 }
 
-
-
 void Testbed::createDrawable() {
   if (_textureFile.empty()) {
     const glm::uvec2 numBlocks{4, 4};
@@ -392,14 +295,15 @@ void Testbed::createDrawable() {
                                                        checkerboard.extent.y);
 
     VkImage image = *_texture;
-    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t) image, "Created texture (checkerboard)");
+    _context.device().setObjectName(
+        VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "Created texture (checkerboard)");
   } else {
     _texture = Vulk::Toolbox(_context).createTexture2D(_textureFile.c_str());
 
     std::string name;
-    name = "Loaded texture (" + _textureFile + ")";
+    name          = "Loaded texture (" + _textureFile + ")";
     VkImage image = *_texture;
-    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE,  (uint64_t) image, name.c_str());
+    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
   }
 
   std::vector<Vertex> vertices;
@@ -458,29 +362,12 @@ void Testbed::createFrames() {
     frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
     frame.fence                   = Vulk::Fence::make_shared(device, true);
 
-    frame.uniformBuffer       = Uniforms::allocateBuffer(device);
-    frame.uniformBufferMapped = frame.uniformBuffer->map();
-
-    frame.descriptorSet = Vulk::DescriptorSet::make_shared(*_descriptorPool,
-                                                           _pipeline->descriptorSetLayout());
-
     const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
-    frame.colorBuffer->transitToNewLayout(queue,
-                                          *frame.commandBuffer,
-                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(
+        queue, *frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();
-}
-
-Vulk::VertexShader Testbed::createVertexShader(const Vulk::Device& device) {
-  auto shaderFile = executablePath() / "shaders/vert.spv";
-  return {device, shaderFile.string().c_str()};
-}
-
-Vulk::FragmentShader Testbed::createFragmentShader(const Vulk::Device& device) {
-  auto shaderFile = executablePath() / "shaders/frag.spv";
-  return {device, shaderFile.string().c_str()};
 }
 
 void Testbed::resizeSwapchain() {
@@ -501,6 +388,7 @@ void Testbed::resizeSwapchain() {
   MainWindow::postEmptyEvent();
 }
 
+#if 0
 void Testbed::updateUniformBuffer() {
 #define USE_ARC_CAMERA
 #if defined(USE_ARC_CAMERA)
@@ -560,6 +448,7 @@ void Testbed::updateUniformBuffer() {
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
 #endif // USE_ARC_CAMERA
 }
+#endif //0
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                  uint32_t windowWidth,
