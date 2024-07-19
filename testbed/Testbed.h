@@ -80,14 +80,11 @@ class Testbed : public MainWindow {
                  std::vector<uint32_t>& indices);
   void initCamera(const std::vector<Vertex>& vertices);
 
-  virtual void presentFrame(Vulk::CommandBuffer& commandBuffer,
-                            const Vulk::Image& frame,
-                            const std::vector<Vulk::Semaphore*> waits);
-
  private:
   Vulk::Context _context;
 
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
+  Vulk::PresentTask::shared_ptr _presentTask;
 
   Vulk::Camera _camera;
 

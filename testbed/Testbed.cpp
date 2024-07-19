@@ -130,6 +130,7 @@ void Testbed::cleanup() {
   _frames.clear();
 
   _textureMappingTask.reset();
+  _presentTask.reset();
 
   _texture->destroy();
   _drawable.destroy();
@@ -162,6 +163,12 @@ void Testbed::drawFrame() {
     return;
   }
 
+  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
+  _currentFrame->fence->reset();
+
+  //
+  // Texture Mapping Task
+  //
   _textureMappingTask->prepareGeometry(_drawable.vertexBuffer(),
                                        _drawable.indexBuffer(),
                                        _drawable.numIndices());
@@ -175,28 +182,16 @@ void Testbed::drawFrame() {
                                               {_currentFrame->renderFinishedSemaphore.get()},
                                               *_currentFrame->fence);
 
-  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
-  _currentFrame->fence->reset();
-
   _textureMappingTask->render();
 
-  presentFrame(commandBuffer,
-               *_currentFrame->colorBuffer,
-               {_currentFrame->imageAvailableSemaphore.get(),
-                _currentFrame->renderFinishedSemaphore.get()});
-}
+  //
+  // Present Task
+  //
+  _presentTask->prepareInput(*_currentFrame->colorBuffer);
+  _presentTask->prepareSynchronization({_currentFrame->imageAvailableSemaphore.get(),
+                                        _currentFrame->renderFinishedSemaphore.get()});
 
-void Testbed::presentFrame(Vulk::CommandBuffer& commandBuffer,
-                           const Vulk::Image& frame,
-                           const std::vector<Vulk::Semaphore*> waits) {
-  auto label = commandBuffer.queue().scopedLabel("Testbed::presetFrame()");
-
-  auto& swapchainFrame = _context.swapchain().activeImage();
-  const auto& queue    = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
-  swapchainFrame.blitFrom(queue, commandBuffer, frame);
-  swapchainFrame.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-  auto result = _context.swapchain().present(waits);
+  auto result = _presentTask->render();
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
     resizeSwapchain();
   } else if (result != VK_SUCCESS) {
@@ -233,6 +228,7 @@ void Testbed::createContext() {
 
 void Testbed::createRenderTask() {
   _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
+  _presentTask = Vulk::PresentTask::make_shared(_context);
 }
 
 void Testbed::loadModel(const std::string& modelFile,

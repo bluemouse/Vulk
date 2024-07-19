@@ -124,11 +124,11 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Vulk::Semaphor
   _fence   = fence.get_shared();
 }
 
-void TextureMappingTask::render() {
+VkResult TextureMappingTask::render() {
   const auto& device  = _context.device();
   auto& commandBuffer = *_commandBuffer;
 
-  auto label = commandBuffer.queue().scopedLabel("Testbed::renderFrame()");
+  auto label = commandBuffer.queue().scopedLabel("TextureMappingTask::render()");
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -187,9 +187,11 @@ void TextureMappingTask::render() {
   const auto& queue = commandBuffer.queue();
   queue.submitCommands(commandBuffer, _waits, _signals, *_fence);
 
-  queue.waitIdle();
+  queue.waitIdle(); // TODO we need to remove this wait when the render graph is implemented
 
   _descriptorPool->reset(); // Free all sets allocated from this pool
+
+  return VK_SUCCESS;
 }
 
 Vulk::DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
@@ -205,10 +207,24 @@ PresentTask::PresentTask(const Vulk::Context& context) : RenderTask(context) {
 PresentTask::~PresentTask() {
 }
 
-void PresentTask::prepare() {
+void PresentTask::prepareInput(const Vulk::Image2D& frame) {
+  _frame = frame.get_shared();
 }
 
-void PresentTask::render() {
+void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits) {
+  _waits   = waits;
+}
+
+VkResult PresentTask::render() {
+  auto& commandBuffer = *_commandBuffer;
+
+  auto label = commandBuffer.queue().scopedLabel("PresentTask::render()");
+
+  auto& swapchainFrame = const_cast<Image& >(_context.swapchain().activeImage());
+  swapchainFrame.blitFrom(commandBuffer.queue(), commandBuffer, *_frame);
+  swapchainFrame.transitToNewLayout(commandBuffer.queue(), commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+  return _context.swapchain().present(_waits);
 }
 
 NAMESPACE_END(Vulk)
