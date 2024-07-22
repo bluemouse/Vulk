@@ -11,6 +11,8 @@
 
 #include <Vulk/Image2D.h>
 #include <Vulk/ImageView.h>
+#include <Vulk/Semaphore.h>
+#include <Vulk/Fence.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -18,7 +20,6 @@ class Device;
 class PhysicalDevice;
 class Surface;
 class RenderPass;
-class Semaphore;
 
 class Swapchain : public Sharable<Swapchain>, private NotCopyable {
  public:
@@ -74,7 +75,7 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
 
   // Acquire the next image from the swapchain and tag it as the active image.
-  VkResult acquireNextImage(const Vulk::Semaphore& signal) const;
+  VkResult acquireNextImage(const Vulk::Semaphore& signal = {}, const Fence& fence = {}) const;
 
   // Present the active image to the surface
   VkResult present(const std::vector<Vulk::Semaphore*>& waits) const;

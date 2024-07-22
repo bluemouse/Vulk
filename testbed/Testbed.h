@@ -97,9 +97,8 @@ class Testbed : public MainWindow {
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
 
-    Vulk::Semaphore::shared_ptr imageAvailableSemaphore;
-    Vulk::Semaphore::shared_ptr renderFinishedSemaphore;
-    Vulk::Fence::shared_ptr fence;
+    Vulk::Semaphore::shared_ptr swapchainImageReady;
+    Vulk::Semaphore::shared_ptr frameReady;
   };
 
   std::vector<Frame> _frames;

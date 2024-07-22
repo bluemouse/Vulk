@@ -385,6 +385,9 @@ void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
       bindingStride += formatsizeof(attribute.vkDescription.format);
     }
 
+    // TODO Right now, we presume one bound vertex buffer. Would like to provide an API to
+    //      allow multiple vertex buffers. Maybe a vector<vector> of attribute names? The
+    //      outer vector defines the bound buffer of the attribute in the inner vector.
     _vertexInputBindings.push_back({bindingIdx, bindingStride, VK_VERTEX_INPUT_RATE_VERTEX});
   }
 }

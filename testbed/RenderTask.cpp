@@ -121,10 +121,14 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Vulk::Semaphor
                                                 const Vulk::Fence& fence) {
   _waits   = waits;
   _signals = signals;
-  _fence   = fence.get_shared();
+  if (fence.isCreated()) {
+    _fence = fence.get_shared();
+  } else {
+    _fence = Fence::make_shared();
+  }
 }
 
-VkResult TextureMappingTask::render() {
+void TextureMappingTask::render() {
   const auto& device  = _context.device();
   auto& commandBuffer = *_commandBuffer;
 
@@ -190,8 +194,6 @@ VkResult TextureMappingTask::render() {
   queue.waitIdle(); // TODO we need to remove this wait when the render graph is implemented
 
   _descriptorPool->reset(); // Free all sets allocated from this pool
-
-  return VK_SUCCESS;
 }
 
 Vulk::DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
@@ -215,7 +217,7 @@ void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> wai
   _waits   = waits;
 }
 
-VkResult PresentTask::render() {
+void PresentTask::render() {
   auto& commandBuffer = *_commandBuffer;
 
   auto label = commandBuffer.queue().scopedLabel("PresentTask::render()");
@@ -224,7 +226,15 @@ VkResult PresentTask::render() {
   swapchainFrame.blitFrom(commandBuffer.queue(), commandBuffer, *_frame);
   swapchainFrame.transitToNewLayout(commandBuffer.queue(), commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-  return _context.swapchain().present(_waits);
+  auto result = _context.swapchain().present(_waits);
+  if (result != VK_SUCCESS) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+      // The size or format of the swapchain image is not correct. We'll just ignore them
+      // and let the resize callback to recreate the swapchain.
+    } else {
+      throw std::runtime_error("Error: failed to present swap chain image!");
+    }
+  }
 }
 
 NAMESPACE_END(Vulk)

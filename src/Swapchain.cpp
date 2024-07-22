@@ -10,6 +10,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/RenderPass.h>
 #include <Vulk/Semaphore.h>
+#include <Vulk/Fence.h>
 #include <Vulk/Queue.h>
 
 NAMESPACE_BEGIN(Vulk)
@@ -148,12 +149,12 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   create(device(), surface(), surfaceExtent, _surfaceFormat, _presentMode);
 }
 
-VkResult Swapchain::acquireNextImage(const Semaphore& signal) const {
+VkResult Swapchain::acquireNextImage(const Semaphore& signal, const Fence& fence) const {
   auto result = vkAcquireNextImageKHR(device(),
                                       _swapchain,
                                       std::numeric_limits<uint64_t>::max(),
                                       signal,
-                                      VK_NULL_HANDLE,
+                                      fence,
                                       &_activeImageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {

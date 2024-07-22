@@ -152,19 +152,11 @@ void Testbed::mainLoop() {
 void Testbed::drawFrame() {
   nextFrame(); // Move to the next frame. The new current frame may be in use.
 
-  auto& commandBuffer = *_currentFrame->commandBuffer;
-  auto& queue         = commandBuffer.queue();
+  auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
 
-  auto label = queue.scopedLabel("Testbed::drawFrame()");
-
-  if (_context.swapchain().acquireNextImage(*_currentFrame->imageAvailableSemaphore) ==
-      VK_ERROR_OUT_OF_DATE_KHR) {
-    resizeSwapchain();
+  if (_context.swapchain().acquireNextImage(*_currentFrame->swapchainImageReady) != VK_SUCCESS) {
     return;
   }
-
-  _currentFrame->fence->wait(); // To make sure the current frame is not in use.
-  _currentFrame->fence->reset();
 
   //
   // Texture Mapping Task
@@ -178,9 +170,7 @@ void Testbed::drawFrame() {
   _textureMappingTask->prepareInputs(*_texture);
   _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer,
                                       *_currentFrame->depthBuffer);
-  _textureMappingTask->prepareSynchronization({},
-                                              {_currentFrame->renderFinishedSemaphore.get()},
-                                              *_currentFrame->fence);
+  _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
 
   _textureMappingTask->render();
 
@@ -188,15 +178,10 @@ void Testbed::drawFrame() {
   // Present Task
   //
   _presentTask->prepareInput(*_currentFrame->colorBuffer);
-  _presentTask->prepareSynchronization({_currentFrame->imageAvailableSemaphore.get(),
-                                        _currentFrame->renderFinishedSemaphore.get()});
+  _presentTask->prepareSynchronization({_currentFrame->swapchainImageReady.get(),
+                                        _currentFrame->frameReady.get()});
 
-  auto result = _presentTask->render();
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isFramebufferResized()) {
-    resizeSwapchain();
-  } else if (result != VK_SUCCESS) {
-    throw std::runtime_error("Error: failed to present swap chain image!");
-  }
+  _presentTask->render();
 }
 
 void Testbed::createContext() {
@@ -354,9 +339,8 @@ void Testbed::createFrames() {
     frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
 
-    frame.imageAvailableSemaphore = Vulk::Semaphore::make_shared(device);
-    frame.renderFinishedSemaphore = Vulk::Semaphore::make_shared(device);
-    frame.fence                   = Vulk::Fence::make_shared(device, true);
+    frame.swapchainImageReady = Vulk::Semaphore::make_shared(device);
+    frame.frameReady = Vulk::Semaphore::make_shared(device);
 
     const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
     frame.colorBuffer->transitToNewLayout(
@@ -564,6 +548,7 @@ void Testbed::onScroll(double xoffset, double yoffset) {
 
 void Testbed::onFramebufferResize(int width, int height) {
   MainWindow::onFramebufferResize(width, height);
+  resizeSwapchain();
 }
 
 namespace {

@@ -27,7 +27,7 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
   explicit RenderTask(const Vulk::Context& context);
   virtual ~RenderTask(){};
 
-  virtual VkResult render() = 0;
+  virtual void render() = 0;
 
  protected:
   const Vulk::Context& _context;
@@ -52,11 +52,11 @@ class TextureMappingTask : public RenderTask {
   void prepareOutputs(const Vulk::Image2D& colorBuffer, const Vulk::DepthImage& depthStencilBuffer);
   void prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
                               const std::vector<Vulk::Semaphore*> signals,
-                              const Vulk::Fence& fence);
+                              const Vulk::Fence& fence = {});
 
   Vulk::DescriptorSet::shared_ptr createDescriptorSet();
 
-  VkResult render() override;
+  void render() override;
 
   //
   // Override the sharable types and functions
@@ -103,7 +103,7 @@ class PresentTask : public RenderTask {
   void prepareInput(const Vulk::Image2D& frame);
   void prepareSynchronization(const std::vector<Vulk::Semaphore*> waits);
 
-  VkResult render() override;
+  void render() override;
 
   //
   // Override the sharable types and functions
