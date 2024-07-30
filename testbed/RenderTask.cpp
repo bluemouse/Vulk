@@ -5,6 +5,7 @@
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/VertexShader.h>
 #include <Vulk/FragmentShader.h>
+#include <Vulk/Exception.h>
 
 #include <Vulk/internal/debug.h>
 
@@ -107,7 +108,7 @@ void TextureMappingTask::prepareUniforms(const glm::mat4& model2world,
 }
 
 void TextureMappingTask::prepareInputs(const Vulk::Texture2D& texture) {
-  _texture  = texture.get_shared();
+  _texture = texture.get_shared();
 }
 
 void TextureMappingTask::prepareOutputs(const Vulk::Image2D& colorBuffer,
@@ -128,11 +129,11 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Vulk::Semaphor
   }
 }
 
-void TextureMappingTask::render() {
+void TextureMappingTask::run() {
   const auto& device  = _context.device();
   auto& commandBuffer = *_commandBuffer;
 
-  auto label = commandBuffer.queue().scopedLabel("TextureMappingTask::render()");
+  auto label = commandBuffer.queue().scopedLabel("TextureMappingTask::run()");
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -203,6 +204,26 @@ Vulk::DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
 //
 //
 //
+AcquireSwapchainImageTask::AcquireSwapchainImageTask(const Vulk::Context& context)
+    : RenderTask(context) {
+}
+
+AcquireSwapchainImageTask::~AcquireSwapchainImageTask() {
+}
+
+void AcquireSwapchainImageTask::prepareSynchronization(const Vulk::Semaphore* signal) {
+  _signal = signal;
+}
+
+void AcquireSwapchainImageTask::run() {
+  auto label = _commandBuffer->queue().scopedLabel("AcquireSwapchainImageTask::run()");
+
+  _context.swapchain().acquireNextImage(*_signal);
+}
+
+//
+//
+//
 PresentTask::PresentTask(const Vulk::Context& context) : RenderTask(context) {
 }
 
@@ -214,27 +235,20 @@ void PresentTask::prepareInput(const Vulk::Image2D& frame) {
 }
 
 void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits) {
-  _waits   = waits;
+  _waits = waits;
 }
 
-void PresentTask::render() {
+void PresentTask::run() {
   auto& commandBuffer = *_commandBuffer;
 
-  auto label = commandBuffer.queue().scopedLabel("PresentTask::render()");
+  auto label = commandBuffer.queue().scopedLabel("PresentTask::run()");
 
-  auto& swapchainFrame = const_cast<Image& >(_context.swapchain().activeImage());
+  auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
   swapchainFrame.blitFrom(commandBuffer.queue(), commandBuffer, *_frame);
-  swapchainFrame.transitToNewLayout(commandBuffer.queue(), commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  swapchainFrame.transitToNewLayout(
+      commandBuffer.queue(), commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-  auto result = _context.swapchain().present(_waits);
-  if (result != VK_SUCCESS) {
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-      // The size or format of the swapchain image is not correct. We'll just ignore them
-      // and let the resize callback to recreate the swapchain.
-    } else {
-      throw std::runtime_error("Error: failed to present swap chain image!");
-    }
-  }
+  _context.swapchain().present(_waits);
 }
 
 NAMESPACE_END(Vulk)

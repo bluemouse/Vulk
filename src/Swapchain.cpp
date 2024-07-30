@@ -12,6 +12,7 @@
 #include <Vulk/Semaphore.h>
 #include <Vulk/Fence.h>
 #include <Vulk/Queue.h>
+#include <Vulk/Exception.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -98,6 +99,8 @@ void Swapchain::create(const Device& device,
   }
 
   deactivateActiveImage();
+
+  _requiredRecreate = false;
 }
 
 void Swapchain::create(const Device& device,
@@ -149,7 +152,7 @@ void Swapchain::resize(uint32_t width, uint32_t height) {
   create(device(), surface(), surfaceExtent, _surfaceFormat, _presentMode);
 }
 
-VkResult Swapchain::acquireNextImage(const Semaphore& signal, const Fence& fence) const {
+void Swapchain::acquireNextImage(const Semaphore& signal, const Fence& fence) const {
   auto result = vkAcquireNextImageKHR(device(),
                                       _swapchain,
                                       std::numeric_limits<uint64_t>::max(),
@@ -157,16 +160,15 @@ VkResult Swapchain::acquireNextImage(const Semaphore& signal, const Fence& fence
                                       fence,
                                       &_activeImageIndex);
 
-  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    return VK_ERROR_OUT_OF_DATE_KHR; // Require a swapchain resize
-  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-    throw std::runtime_error("Error: failed to acquire swapchain image!");
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    _requiredRecreate = true;
   }
-
-  return result;
+  if (result != VK_SUCCESS) {
+    throw Exception{result, "Failed to acquire swapchain image."};
+  }
 }
 
-VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
+void Swapchain::present(const std::vector<Semaphore*>& waits) const {
   MI_VERIFY(hasActiveImage());
 
   std::vector<VkSemaphore> semaphores;
@@ -185,7 +187,14 @@ VkResult Swapchain::present(const std::vector<Semaphore*>& waits) const {
 
   presentInfo.pImageIndices = &_activeImageIndex;
 
-  return vkQueuePresentKHR(device().queue(Device::QueueFamilyType::Present), &presentInfo);
+  auto result = vkQueuePresentKHR(device().queue(Device::QueueFamilyType::Present), &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    _requiredRecreate = true;
+  }
+  if (result != VK_SUCCESS) {
+    throw Exception{result, "Failed to present swapchain image."};
+  }
 }
 
 VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowHeight) {

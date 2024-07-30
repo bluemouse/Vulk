@@ -83,6 +83,7 @@ class Testbed : public MainWindow {
  private:
   Vulk::Context _context;
 
+  Vulk::AcquireSwapchainImageTask::shared_ptr _acquireSwapchainImageTask;
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 

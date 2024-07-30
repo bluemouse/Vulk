@@ -5,6 +5,7 @@
 #include <Vulk/DepthImage.h>
 #include <Vulk/Framebuffer.h>
 #include <Vulk/Queue.h>
+#include <Vulk/Exception.h>
 
 #include <Vulk/engine/Toolbox.h>
 #include <Vulk/internal/debug.h>
@@ -129,6 +130,7 @@ void Testbed::cleanup() {
   }
   _frames.clear();
 
+  _acquireSwapchainImageTask.reset();
   _textureMappingTask.reset();
   _presentTask.reset();
 
@@ -150,38 +152,43 @@ void Testbed::mainLoop() {
 }
 
 void Testbed::drawFrame() {
-  nextFrame(); // Move to the next frame. The new current frame may be in use.
+  try {
+    nextFrame(); // Move to the next frame. The new current frame may be in use.
 
-  auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
+    auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
 
-  if (_context.swapchain().acquireNextImage(*_currentFrame->swapchainImageReady) != VK_SUCCESS) {
-    return;
+    _acquireSwapchainImageTask->prepareSynchronization(_currentFrame->swapchainImageReady.get());
+    _acquireSwapchainImageTask->run();
+
+    //
+    // Texture Mapping Task
+    //
+    _textureMappingTask->prepareGeometry(
+        _drawable.vertexBuffer(), _drawable.indexBuffer(), _drawable.numIndices());
+    _textureMappingTask->prepareUniforms(
+        glm::mat4{1.0F}, _camera.viewMatrix(), _camera.projectionMatrix());
+    _textureMappingTask->prepareInputs(*_texture);
+    _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
+    _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
+
+    _textureMappingTask->run();
+
+    //
+    // Present Task
+    //
+    _presentTask->prepareInput(*_currentFrame->colorBuffer);
+    _presentTask->prepareSynchronization(
+        {_currentFrame->swapchainImageReady.get(), _currentFrame->frameReady.get()});
+
+    _presentTask->run();
+  } catch (const Vulk::Exception& e) {
+    if (e.result() == VK_ERROR_OUT_OF_DATE_KHR || e.result() == VK_SUBOPTIMAL_KHR) {
+      // The size or format of the swapchain image is not correct. We'll just ignore them
+      // and let the resize callback to recreate the swapchain.
+    } else {
+      throw e;
+    }
   }
-
-  //
-  // Texture Mapping Task
-  //
-  _textureMappingTask->prepareGeometry(_drawable.vertexBuffer(),
-                                       _drawable.indexBuffer(),
-                                       _drawable.numIndices());
-  _textureMappingTask->prepareUniforms(glm::mat4{1.0F},
-                                       _camera.viewMatrix(),
-                                       _camera.projectionMatrix());
-  _textureMappingTask->prepareInputs(*_texture);
-  _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer,
-                                      *_currentFrame->depthBuffer);
-  _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
-
-  _textureMappingTask->render();
-
-  //
-  // Present Task
-  //
-  _presentTask->prepareInput(*_currentFrame->colorBuffer);
-  _presentTask->prepareSynchronization({_currentFrame->swapchainImageReady.get(),
-                                        _currentFrame->frameReady.get()});
-
-  _presentTask->render();
 }
 
 void Testbed::createContext() {
@@ -212,8 +219,9 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderTask() {
+  _acquireSwapchainImageTask = Vulk::AcquireSwapchainImageTask::make_shared(_context);
   _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
-  _presentTask = Vulk::PresentTask::make_shared(_context);
+  _presentTask        = Vulk::PresentTask::make_shared(_context);
 }
 
 void Testbed::loadModel(const std::string& modelFile,
@@ -340,7 +348,7 @@ void Testbed::createFrames() {
     frame.depthBuffer->allocate();
 
     frame.swapchainImageReady = Vulk::Semaphore::make_shared(device);
-    frame.frameReady = Vulk::Semaphore::make_shared(device);
+    frame.frameReady          = Vulk::Semaphore::make_shared(device);
 
     const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
     frame.colorBuffer->transitToNewLayout(
@@ -370,8 +378,8 @@ void Testbed::resizeSwapchain() {
 
 #if 0
 void Testbed::updateUniformBuffer() {
-#define USE_ARC_CAMERA
-#if defined(USE_ARC_CAMERA)
+#  define USE_ARC_CAMERA
+#  if defined(USE_ARC_CAMERA)
   _camera.update();
 
   Uniforms uniforms{};
@@ -381,7 +389,7 @@ void Testbed::updateUniformBuffer() {
   uniforms.proj  = _camera.projectionMatrix();
 
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#else
+#  else
   using glm::vec3;
   using glm::vec4;
   using glm::mat4;
@@ -426,9 +434,9 @@ void Testbed::updateUniformBuffer() {
 #  endif
 
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#endif // USE_ARC_CAMERA
+#  endif // USE_ARC_CAMERA
 }
-#endif //0
+#endif   // 0
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                  uint32_t windowWidth,

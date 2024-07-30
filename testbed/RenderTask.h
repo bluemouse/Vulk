@@ -27,7 +27,7 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
   explicit RenderTask(const Vulk::Context& context);
   virtual ~RenderTask(){};
 
-  virtual void render() = 0;
+  virtual void run() = 0;
 
  protected:
   const Vulk::Context& _context;
@@ -56,7 +56,7 @@ class TextureMappingTask : public RenderTask {
 
   Vulk::DescriptorSet::shared_ptr createDescriptorSet();
 
-  void render() override;
+  void run() override;
 
   //
   // Override the sharable types and functions
@@ -92,6 +92,31 @@ class TextureMappingTask : public RenderTask {
   Vulk::Fence::shared_ptr_const _fence;
 };
 
+
+
+//
+//
+//
+class AcquireSwapchainImageTask : public RenderTask {
+ public:
+  AcquireSwapchainImageTask(const Vulk::Context& context);
+  ~AcquireSwapchainImageTask() override;
+
+  void run() override;
+
+  void prepareSynchronization(const Vulk::Semaphore* signal);
+
+  //
+  // Override the sharable types and functions
+  //
+  MI_DEFINE_SHARED_PTR(AcquireSwapchainImageTask, RenderTask);
+
+ private:
+  // Synchronizations
+  const Vulk::Semaphore* _signal = nullptr;
+};
+
+
 //
 //
 //
@@ -103,7 +128,7 @@ class PresentTask : public RenderTask {
   void prepareInput(const Vulk::Image2D& frame);
   void prepareSynchronization(const std::vector<Vulk::Semaphore*> waits);
 
-  void render() override;
+  void run() override;
 
   //
   // Override the sharable types and functions

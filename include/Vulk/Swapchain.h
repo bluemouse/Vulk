@@ -74,11 +74,12 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
 
   [[nodiscard]] bool isCreated() const { return _swapchain != VK_NULL_HANDLE; }
 
-  // Acquire the next image from the swapchain and tag it as the active image.
-  VkResult acquireNextImage(const Vulk::Semaphore& signal = {}, const Fence& fence = {}) const;
+  // Acquire the next image from the swapchain and tag it as the active image. If failed,
+  // throw exception.
+  void acquireNextImage(const Vulk::Semaphore& signal = {}, const Fence& fence = {}) const;
 
-  // Present the active image to the surface
-  VkResult present(const std::vector<Vulk::Semaphore*>& waits) const;
+  // Present the active image to the surface. If failed, throw exception.
+  void present(const std::vector<Vulk::Semaphore*>& waits) const;
 
   [[nodiscard]] uint32_t activeImageIndex() const { return _activeImageIndex; }
 
@@ -109,6 +110,8 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
 
   std::weak_ptr<const Device> _device;
   std::weak_ptr<const Surface> _surface;
+
+  mutable bool _requiredRecreate = false;
 };
 
 NAMESPACE_END(Vulk)

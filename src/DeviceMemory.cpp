@@ -4,6 +4,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/PhysicalDevice.h>
+#include <Vulk/Exception.h>
 
 NAMESPACE_BEGIN(Vulk)
 
@@ -74,7 +75,7 @@ uint32_t DeviceMemory::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
     }
     ++idx;
   }
-  throw std::runtime_error("Failed to find suitable memory type!");
+  throw Exception{VK_ERROR_UNKNOWN, "Failed to find suitable memory type."};
 }
 
 NAMESPACE_END(Vulk)

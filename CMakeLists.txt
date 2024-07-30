@@ -100,6 +100,7 @@ set(HEADER_FILES
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
+    include/Vulk/Exception.h
     # Engine classes
     include/Vulk/engine/Context.h
     include/Vulk/engine/Drawable.h
