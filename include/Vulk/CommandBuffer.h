@@ -29,15 +29,15 @@ class Queue;
 class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
   enum class Level {
-    Primary = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+    Primary   = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
     Secondary = VK_COMMAND_BUFFER_LEVEL_SECONDARY
   };
 
   enum class Usage {
-    OneTimeSubmit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    OneTimeSubmit      = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     RenderPassContinue = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
-    SimultaneousUse = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
-    Default = 0
+    SimultaneousUse    = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+    Default            = 0
   };
 
  public:
@@ -89,9 +89,8 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   void endLabel() const;
 
   struct ScopedLabel {
-    ScopedLabel(const CommandBuffer& commandBuffer,
-                const char* label,
-                const glm::vec4& color) : _commandBuffer(commandBuffer) {
+    ScopedLabel(const CommandBuffer& commandBuffer, const char* label, const glm::vec4& color)
+        : _commandBuffer(commandBuffer) {
       _commandBuffer.beginLabel(label, color);
     }
     ~ScopedLabel() { _commandBuffer.endLabel(); }
@@ -99,8 +98,9 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
    private:
     const CommandBuffer& _commandBuffer;
   };
-  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(const char* label,
-                                                         const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
+  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(
+      const char* label,
+      const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
 
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;

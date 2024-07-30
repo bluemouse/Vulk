@@ -10,7 +10,7 @@ NAMESPACE_BEGIN(Vulk)
 
 class Context {
  public:
-  using ValidationLevel       = Instance::ValidationLevel;
+  using ValidationLevel         = Instance::ValidationLevel;
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
 
  public:
@@ -71,7 +71,7 @@ class Context {
                                   const std::vector<const char*>& deviceExtensions,
                                   const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures);
   virtual void createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
-                                   const std::vector<const char*>& deviceExtensions);
+                            const std::vector<const char*>& deviceExtensions);
   virtual void createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
                                const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);

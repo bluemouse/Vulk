@@ -47,7 +47,7 @@ void CommandPool::destroy(VkDevice device) {
 
   vkDestroyCommandPool(device, _pool, nullptr);
 
-  _pool   = VK_NULL_HANDLE;
+  _pool = VK_NULL_HANDLE;
   _device.reset();
 }
 

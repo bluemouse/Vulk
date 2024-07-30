@@ -29,20 +29,23 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
     uint32_t presentIndex() const { return present.value(); }
   };
 
-  using HasDeviceFeaturesFunc = std::function<bool(const VkPhysicalDeviceFeatures& supportedFeatures)>;
+  using HasDeviceFeaturesFunc =
+      std::function<bool(const VkPhysicalDeviceFeatures& supportedFeatures)>;
 
  public:
   PhysicalDevice(const Instance& instance,
                  const QueueFamilies& queueFamilies,
                  const std::vector<const char*>& deviceExtensions,
                  const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
-  PhysicalDevice(const Instance& instance, const Surface* surface,
+  PhysicalDevice(const Instance& instance,
+                 const Surface* surface,
                  const QueueFamilies& queueFamilies,
                  const std::vector<const char*>& deviceExtensions,
                  const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
   ~PhysicalDevice() override;
 
-  void instantiate(const Instance& instance, const Surface* surface,
+  void instantiate(const Instance& instance,
+                   const Surface* surface,
                    const QueueFamilies& requiredQueueFamilies,
                    const std::vector<const char*>& requiredDeviceExtensions,
                    const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures);
@@ -58,7 +61,7 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
 
   [[nodiscard]] const QueueFamilies& queueFamilies() const { return _queueFamilies; }
 
-  [[nodiscard]] const Instance& instance() const {return *_instance.lock(); }
+  [[nodiscard]] const Instance& instance() const { return *_instance.lock(); }
 
   [[nodiscard]] static QueueFamilies findQueueFamilies(VkPhysicalDevice device,
                                                        VkSurfaceKHR surface = VK_NULL_HANDLE);

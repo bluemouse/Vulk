@@ -30,7 +30,9 @@ class Image : public Sharable<Image>, private NotCopyable {
   virtual void* map(VkDeviceSize offset, VkDeviceSize size);
   virtual void unmap();
 
-  virtual void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  virtual void copyFrom(const Queue& queue,
+                        const CommandBuffer& cmdBuffer,
+                        const StagingBuffer& stagingBuffer);
   virtual void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
   virtual void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
 

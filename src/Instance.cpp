@@ -19,9 +19,7 @@
 
 namespace {
 struct Initializer {
-  Initializer() {
-    volkInitialize();
-  }
+  Initializer() { volkInitialize(); }
 };
 static Initializer init;
 }
@@ -168,20 +166,16 @@ void Instance::pickPhysicalDevice(const Surface& surface,
                                   const PhysicalDevice::QueueFamilies& queueFamilies,
                                   const std::vector<const char*>& deviceExtensions,
                                   const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
-  _physicalDevice = PhysicalDevice::make_shared(*this, &surface,
-                                                queueFamilies,
-                                                deviceExtensions,
-                                                hasDeviceFeatures);
+  _physicalDevice = PhysicalDevice::make_shared(
+      *this, &surface, queueFamilies, deviceExtensions, hasDeviceFeatures);
   _physicalDevice->initQueueFamilies(surface);
 }
 
 void Instance::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
                                   const std::vector<const char*>& deviceExtensions,
                                   const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
-  _physicalDevice = PhysicalDevice::make_shared(*this, nullptr,
-                                                queueFamilies,
-                                                deviceExtensions,
-                                                hasDeviceFeatures);
+  _physicalDevice = PhysicalDevice::make_shared(
+      *this, nullptr, queueFamilies, deviceExtensions, hasDeviceFeatures);
   _physicalDevice->initQueueFamilies();
 }
 
@@ -260,6 +254,5 @@ Instance::VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
   auto* instance = static_cast<Instance*>(pUserData);
   return instance->_validationCallback(messageSeverity, messageType, pCallbackData);
 }
-
 
 NAMESPACE_END(Vulk)

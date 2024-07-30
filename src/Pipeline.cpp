@@ -117,7 +117,8 @@ void Pipeline::create(const Device &device,
 
   MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
   _descriptorSetLayout = DescriptorSetLayout::make_shared(
-      device, std::vector<ShaderModule*>{(ShaderModule *)&vertShader, (ShaderModule *)&fragShader});
+      device,
+      std::vector<ShaderModule *>{(ShaderModule *)&vertShader, (ShaderModule *)&fragShader});
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

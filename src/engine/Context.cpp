@@ -41,13 +41,11 @@ void Context::create(const CreateInfo& createInfo) {
                  createInfo.instanceExtensions,
                  createInfo.validationLevel);
   createSurface(createInfo.createWindowSurface);
-  pickPhysicalDevice(createInfo.queueFamilies,
-                     createInfo.deviceExtensions,
-                     createInfo.hasPhysicalDeviceFeatures);
+  pickPhysicalDevice(
+      createInfo.queueFamilies, createInfo.deviceExtensions, createInfo.hasPhysicalDeviceFeatures);
   createDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
-  createSwapchain(createInfo.chooseSurfaceExtent,
-                  createInfo.chooseSurfaceFormat,
-                  createInfo.choosePresentMode);
+  createSwapchain(
+      createInfo.chooseSurfaceExtent, createInfo.chooseSurfaceFormat, createInfo.choosePresentMode);
 }
 
 void Context::destroy() {
@@ -91,11 +89,11 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
 
   // TODO should use RenderPass.colorFormat() instead of choosing a format. RenderPass also call
   // chooseSurfaceFormat() to find the format which should be the same one to use.
-  VkSurfaceFormatKHR format = chooseSurfaceFormat ? chooseSurfaceFormat(formats)
-                                                  : chooseDefaultSurfaceFormat(formats);
+  VkSurfaceFormatKHR format =
+      chooseSurfaceFormat ? chooseSurfaceFormat(formats) : chooseDefaultSurfaceFormat(formats);
 
-  VkPresentModeKHR presentMode = choosePresentMode ? choosePresentMode(presentModes)
-                                                   : chooseDefaultPresentMode(presentModes);
+  VkPresentModeKHR presentMode =
+      choosePresentMode ? choosePresentMode(presentModes) : chooseDefaultPresentMode(presentModes);
 
   _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
 }

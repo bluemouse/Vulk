@@ -43,8 +43,8 @@ inline void Drawable<V, I>::create(const Vulk::Device& device,
                                    const std::vector<vertex_type>& vertices,
                                    const std::vector<index_type>& indices) {
   _vertexBuffer = VertexBuffer::make_shared(device, commandBuffer, vertices);
-  _indexBuffer = IndexBuffer::make_shared(device, commandBuffer, indices);
-  _numIndices = indices.size();
+  _indexBuffer  = IndexBuffer::make_shared(device, commandBuffer, indices);
+  _numIndices   = indices.size();
 }
 
 template <typename V, typename I>

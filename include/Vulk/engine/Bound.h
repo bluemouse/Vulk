@@ -145,7 +145,7 @@ void Bound<T>::fit(value_type aspect) {
 
   value_type boundAspect = extent.x / extent.y;
 
-  auto widthScale = aspect / boundAspect;
+  auto widthScale  = aspect / boundAspect;
   auto heightScale = 1.0F / widthScale;
 
   if (widthScale > heightScale) {

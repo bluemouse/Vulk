@@ -11,18 +11,20 @@
 
 NAMESPACE_BEGIN(Vulk)
 
-PhysicalDevice::PhysicalDevice(const Instance& instance,
-                               const QueueFamilies& queueFamilies,
-                               const std::vector<const char*>& deviceExtensions,
-                               const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
+PhysicalDevice::PhysicalDevice(
+    const Instance& instance,
+    const QueueFamilies& queueFamilies,
+    const std::vector<const char*>& deviceExtensions,
+    const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
   instantiate(instance, nullptr, queueFamilies, deviceExtensions, hasPhysicalDeviceFeatures);
 }
 
-PhysicalDevice::PhysicalDevice(const Instance& instance,
-                               const Surface* surface,
-                               const QueueFamilies& queueFamilies,
-                               const std::vector<const char*>& deviceExtensions,
-                               const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
+PhysicalDevice::PhysicalDevice(
+    const Instance& instance,
+    const Surface* surface,
+    const QueueFamilies& queueFamilies,
+    const std::vector<const char*>& deviceExtensions,
+    const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
   instantiate(instance, surface, queueFamilies, deviceExtensions, hasPhysicalDeviceFeatures);
 }
 
@@ -30,11 +32,12 @@ PhysicalDevice::~PhysicalDevice() {
   reset();
 }
 
-void PhysicalDevice::instantiate(const Instance& instance,
-                                 const Surface* surface,
-                                 const QueueFamilies& requiredQueueFamilies,
-                                 const std::vector<const char*>& requiredDeviceExtensions,
-                                 const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
+void PhysicalDevice::instantiate(
+    const Instance& instance,
+    const Surface* surface,
+    const QueueFamilies& requiredQueueFamilies,
+    const std::vector<const char*>& requiredDeviceExtensions,
+    const PhysicalDevice::HasDeviceFeaturesFunc& hasPhysicalDeviceFeatures) {
   MI_VERIFY(!isInstantiated());
 
   _instance = instance.get_weak();
@@ -47,45 +50,47 @@ void PhysicalDevice::instantiate(const Instance& instance,
   std::vector<VkPhysicalDevice> devices(deviceCount);
   vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-  auto isDeviceSuitable = [&requiredQueueFamilies, &requiredDeviceExtensions, hasPhysicalDeviceFeatures]
-    (VkPhysicalDevice device, const Surface* surface) {
-      if (surface) {
-        if (!surface->isAdequate(device)) {
+  auto isDeviceSuitable =
+      [&requiredQueueFamilies, &requiredDeviceExtensions, hasPhysicalDeviceFeatures](
+          VkPhysicalDevice device, const Surface* surface) {
+        if (surface) {
+          if (!surface->isAdequate(device)) {
+            return false;
+          }
+
+          auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
+          if (requiredQueueFamilies.graphics && !queueFamilies.graphics) {
+            return false;
+          }
+          if (requiredQueueFamilies.compute && !queueFamilies.compute) {
+            return false;
+          }
+          if (requiredQueueFamilies.transfer && !queueFamilies.transfer) {
+            return false;
+          }
+          if (requiredQueueFamilies.present && !queueFamilies.present) {
+            return false;
+          }
+        }
+
+        uint32_t extensionCount = 0;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+        std::vector<VkExtensionProperties> availableExtensions{extensionCount};
+        vkEnumerateDeviceExtensionProperties(
+            device, nullptr, &extensionCount, availableExtensions.data());
+        std::set<std::string> requiredExtensions{requiredDeviceExtensions.begin(),
+                                                 requiredDeviceExtensions.end()};
+        for (const auto& ext : availableExtensions) {
+          requiredExtensions.erase(ext.extensionName);
+        }
+        if (!requiredExtensions.empty()) {
           return false;
         }
 
-        auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
-        if (requiredQueueFamilies.graphics && !queueFamilies.graphics) {
-          return false;
-        }
-        if (requiredQueueFamilies.compute && !queueFamilies.compute) {
-          return false;
-        }
-        if (requiredQueueFamilies.transfer && !queueFamilies.transfer) {
-          return false;
-        }
-        if (requiredQueueFamilies.present && !queueFamilies.present) {
-          return false;
-        }
-      }
-
-      uint32_t extensionCount = 0;
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-      std::vector<VkExtensionProperties> availableExtensions{extensionCount};
-      vkEnumerateDeviceExtensionProperties(
-          device, nullptr, &extensionCount, availableExtensions.data());
-      std::set<std::string> requiredExtensions{requiredDeviceExtensions.begin(), requiredDeviceExtensions.end()};
-      for (const auto& ext : availableExtensions) {
-        requiredExtensions.erase(ext.extensionName);
-      }
-      if (!requiredExtensions.empty()) {
-        return false;
-      }
-
-      VkPhysicalDeviceFeatures supportedFeatures;
-      vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-      return hasPhysicalDeviceFeatures(supportedFeatures);
-    };
+        VkPhysicalDeviceFeatures supportedFeatures;
+        vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+        return hasPhysicalDeviceFeatures(supportedFeatures);
+      };
 
   for (const auto& device : devices) {
     if (isDeviceSuitable(device, surface)) {
@@ -103,8 +108,9 @@ void PhysicalDevice::reset() {
   _instance.reset();
 }
 
-std::shared_ptr<Device> PhysicalDevice::createDevice(const QueueFamilies& requiredQueueFamilies,
-                                                     const std::vector<const char*>& extensions) const {
+std::shared_ptr<Device> PhysicalDevice::createDevice(
+    const QueueFamilies& requiredQueueFamilies,
+    const std::vector<const char*>& extensions) const {
   return Vulk::Device::make_shared(*this, requiredQueueFamilies, extensions);
 }
 

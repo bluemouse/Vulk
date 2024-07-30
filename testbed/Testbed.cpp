@@ -220,8 +220,8 @@ void Testbed::createContext() {
 
 void Testbed::createRenderTask() {
   _acquireSwapchainImageTask = Vulk::AcquireSwapchainImageTask::make_shared(_context);
-  _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
-  _presentTask        = Vulk::PresentTask::make_shared(_context);
+  _textureMappingTask        = Vulk::TextureMappingTask::make_shared(_context);
+  _presentTask               = Vulk::PresentTask::make_shared(_context);
 }
 
 void Testbed::loadModel(const std::string& modelFile,
@@ -378,8 +378,8 @@ void Testbed::resizeSwapchain() {
 
 #if 0
 void Testbed::updateUniformBuffer() {
-#  define USE_ARC_CAMERA
-#  if defined(USE_ARC_CAMERA)
+#define USE_ARC_CAMERA
+#if defined(USE_ARC_CAMERA)
   _camera.update();
 
   Uniforms uniforms{};
@@ -389,7 +389,7 @@ void Testbed::updateUniformBuffer() {
   uniforms.proj  = _camera.projectionMatrix();
 
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#  else
+#else
   using glm::vec3;
   using glm::vec4;
   using glm::mat4;
@@ -424,19 +424,19 @@ void Testbed::updateUniformBuffer() {
   auto zNear = dist;
   auto zFar  = zNear + dist * 10.0F;
 // #define USE_PERSPECTIVE_PROJECTION
-#  if defined(USE_PERSPECTIVE_PROJECTION)
+#if defined(USE_PERSPECTIVE_PROJECTION)
   float fovy    = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
   uniforms.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
   uniforms.proj[1][1] *= -1;
-#  else
+#else
   uniforms.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
   std::cout << "projection: " << glm::to_string(uniforms.proj) << std::endl;
-#  endif
+#endif
 
   memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#  endif // USE_ARC_CAMERA
+#endif // USE_ARC_CAMERA
 }
-#endif   // 0
+#endif // 0
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                  uint32_t windowWidth,

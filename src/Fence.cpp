@@ -33,7 +33,7 @@ void Fence::destroy() {
   MI_VERIFY(isCreated());
   vkDestroyFence(device(), _fence, nullptr);
 
-  _fence  = VK_NULL_HANDLE;
+  _fence = VK_NULL_HANDLE;
   _device.reset();
 }
 

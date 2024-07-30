@@ -21,7 +21,7 @@ struct Vertex {
   }
 
   static VkVertexInputBindingDescription bindingDescription(uint32_t binding) {
-      return {binding, Vertex::size(), VK_VERTEX_INPUT_RATE_VERTEX};
+    return {binding, Vertex::size(), VK_VERTEX_INPUT_RATE_VERTEX};
   }
   static std::vector<VkVertexInputAttributeDescription> attributesDescription(uint32_t binding) {
     // In shader.vert, we should have:
@@ -32,9 +32,7 @@ struct Vertex {
             {1, binding, formatof(Vertex::color), offsetof(Vertex, color)},
             {2, binding, formatof(Vertex::texCoord), offsetof(Vertex, texCoord)}};
   }
-  static constexpr uint32_t size() {
-      return sizeof(Vertex);
-  }
+  static constexpr uint32_t size() { return sizeof(Vertex); }
 };
 
 NAMESPACE_END(Vulk)

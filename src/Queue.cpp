@@ -9,7 +9,7 @@
 NAMESPACE_BEGIN(Vulk)
 
 Queue::Queue(const Device& device, Device::QueueFamilyType queueFamily, uint32_t queueFamilyIndex)
-: _queueFamily(queueFamily), _queueFamilyIndex(queueFamilyIndex) {
+    : _queueFamily(queueFamily), _queueFamilyIndex(queueFamilyIndex) {
   // According to doc: vkGetDeviceQueue must only be used to get queues that
   // were created with the flags parameter of VkDeviceQueueCreateInfo set to
   // zero. To get queues that were created with a non-zero flags parameter use
@@ -24,7 +24,8 @@ Queue::Queue(const Device& device, Device::QueueFamilyType queueFamily, uint32_t
   vkGetDeviceQueue(device, queueFamilyIndex, _queueIndex, &_queue);
 }
 
-Queue::~Queue() {}
+Queue::~Queue() {
+}
 
 void Queue::submitCommands(const CommandBuffer& commandBuffer,
                            const std::vector<Semaphore*>& waits,
@@ -68,42 +69,44 @@ void Queue::waitIdle() const {
 
 void Queue::beginLabel(const char* label, const glm::vec4& color) const {
   VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
   labelInfo.pLabelName = label;
-  labelInfo.color[0] = color.r;
-  labelInfo.color[1] = color.g;
-  labelInfo.color[2] = color.b;
-  labelInfo.color[3] = color.a;
-	vkQueueBeginDebugUtilsLabelEXT(_queue, &labelInfo);
+  labelInfo.color[0]   = color.r;
+  labelInfo.color[1]   = color.g;
+  labelInfo.color[2]   = color.b;
+  labelInfo.color[3]   = color.a;
+  vkQueueBeginDebugUtilsLabelEXT(_queue, &labelInfo);
 }
 void Queue::insertLabel(const char* label, const glm::vec4& color) const {
   VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
   labelInfo.pLabelName = label;
-  labelInfo.color[0] = color.r;
-  labelInfo.color[1] = color.g;
-  labelInfo.color[2] = color.b;
-  labelInfo.color[3] = color.a;
+  labelInfo.color[0]   = color.r;
+  labelInfo.color[1]   = color.g;
+  labelInfo.color[2]   = color.b;
+  labelInfo.color[3]   = color.a;
   vkQueueInsertDebugUtilsLabelEXT(_queue, &labelInfo);
 }
 void Queue::endLabel() const {
-	vkQueueEndDebugUtilsLabelEXT(_queue);
+  vkQueueEndDebugUtilsLabelEXT(_queue);
 }
 auto Queue::scopedLabel(const char* label, const glm::vec4& color) const
-  -> std::unique_ptr<ScopedLabel> {
+    -> std::unique_ptr<ScopedLabel> {
   return std::make_unique<ScopedLabel>(*this, label, color);
 }
 
 #else
 
-void Queue::beginLabel(const char*, const glm::vec4&) const {}
-void Queue::insertLabel(const char*, const glm::vec4&) const {}
-void Queue::endLabel() const {}
-auto Queue::scopedLabel(const char*, const glm::vec4&) const
-  -> std::unique_ptr<ScopedLabel> {
+void Queue::beginLabel(const char*, const glm::vec4&) const {
+}
+void Queue::insertLabel(const char*, const glm::vec4&) const {
+}
+void Queue::endLabel() const {
+}
+auto Queue::scopedLabel(const char*, const glm::vec4&) const -> std::unique_ptr<ScopedLabel> {
   return nullptr;
 }
 
-#endif //defined(ENABLE_VULKAN_DEBUG_UTILS)
+#endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
 NAMESPACE_END(Vulk)

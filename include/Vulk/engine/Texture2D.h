@@ -36,7 +36,9 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();
 
-  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer);
+  void copyFrom(const Queue& queue,
+                const CommandBuffer& cmdBuffer,
+                const StagingBuffer& stagingBuffer);
   void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);
   void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
   void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);

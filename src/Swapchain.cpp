@@ -39,16 +39,15 @@ void Swapchain::create(const Device& device,
   _device  = device.get_weak();
   _surface = surface.get_weak();
 
-  const auto capabilities    = surface.querySupports().capabilities;
+  const auto capabilities = surface.querySupports().capabilities;
 
   _surfaceExtent = surfaceExtent;
   _surfaceFormat = surfaceFormat;
   _presentMode   = presentMode;
 
   constexpr uint32_t PREFERRED_IMAGE_COUNT = 3; // Triple buffering
-  uint32_t minImageCount = std::min(std::max(PREFERRED_IMAGE_COUNT,
-                                             capabilities.minImageCount),
-                                             capabilities.maxImageCount);
+  uint32_t minImageCount = std::min(std::max(PREFERRED_IMAGE_COUNT, capabilities.minImageCount),
+                                    capabilities.maxImageCount);
 
   VkSwapchainCreateInfoKHR createInfo{};
   createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

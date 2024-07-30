@@ -160,7 +160,6 @@ const CommandPool& Device::commandPool(QueueFamilyType queueFamilyType) const {
   return *_commandPools[queueFamilyType];
 }
 
-
 void Device::destroy() {
   MI_VERIFY(isCreated());
 
@@ -184,10 +183,9 @@ const Instance& Device::instance() const {
 
 #if defined(ENABLE_VULKAN_DEBUG_UTILS)
 
-void Device::setObjectName(VkObjectType type, uint64_t object, const char* name)
-{
+void Device::setObjectName(VkObjectType type, uint64_t object, const char* name) {
   VkDebugUtilsObjectNameInfoEXT nameInfo{};
-  nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+  nameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
   nameInfo.objectType   = type;
   nameInfo.objectHandle = object;
   nameInfo.pObjectName  = name;
@@ -196,8 +194,9 @@ void Device::setObjectName(VkObjectType type, uint64_t object, const char* name)
 
 #else
 
-void Device::setObjectName(VkObjectType, uint64_t, const char*) {}
+void Device::setObjectName(VkObjectType, uint64_t, const char*) {
+}
 
-#endif //defined(ENABLE_VULKAN_DEBUG_UTILS)
+#endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
 NAMESPACE_END(Vulk)

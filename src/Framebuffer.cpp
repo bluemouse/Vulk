@@ -60,13 +60,14 @@ void Framebuffer::create() {
   }
 
   VkFramebufferCreateInfo framebufferInfo{};
-  framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  framebufferInfo.renderPass      = renderPass(); //TODO use RenderPass to assert the matching of the attachments
+  framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  framebufferInfo.renderPass =
+      renderPass(); // TODO use RenderPass to assert the matching of the attachments
   framebufferInfo.attachmentCount = attachments.size();
   framebufferInfo.pAttachments    = attachments.data();
   framebufferInfo.width           = colorBuffer().width();
   framebufferInfo.height          = colorBuffer().height();
-  framebufferInfo.layers          = 1; //TODO should be a parameter
+  framebufferInfo.layers          = 1; // TODO should be a parameter
 
   MI_VERIFY_VKCMD(vkCreateFramebuffer(device(), &framebufferInfo, nullptr, &_buffer));
 }

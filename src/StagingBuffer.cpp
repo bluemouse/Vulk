@@ -60,12 +60,7 @@ void StagingBuffer::copyToImage(const Queue& queue,
                                 const VkBufferImageCopy& roi,
                                 bool waitForFinish) const {
   commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
-  vkCmdCopyBufferToImage(commandBuffer,
-                         *this,
-                         dst,
-                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                         1,
-                         &roi);
+  vkCmdCopyBufferToImage(commandBuffer, *this, dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &roi);
   commandBuffer.endRecording();
 
   queue.submitCommands(commandBuffer);

@@ -14,7 +14,7 @@ DescriptorSet::DescriptorSet(const DescriptorPool& pool, const DescriptorSetLayo
 DescriptorSet::DescriptorSet(const DescriptorPool& pool,
                              const DescriptorSetLayout& layout,
                              const std::vector<Binding>& bindings)
-                             : DescriptorSet(pool, layout) {
+    : DescriptorSet(pool, layout) {
   bind(bindings);
 }
 
@@ -28,7 +28,7 @@ void DescriptorSet::allocate(const DescriptorPool& pool, const DescriptorSetLayo
   MI_VERIFY(!isAllocated());
 
   _layout = layout.get_weak();
-  _pool = pool.get_weak();
+  _pool   = pool.get_weak();
 
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -46,7 +46,7 @@ void DescriptorSet::free() {
   // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
   //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
 
-  _set  = VK_NULL_HANDLE;
+  _set = VK_NULL_HANDLE;
   _pool.reset();
 }
 

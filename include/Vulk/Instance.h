@@ -29,9 +29,10 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   using DebugUtilsMessengerCreateInfoOverride =
       std::function<void(VkDebugUtilsMessengerCreateInfoEXT*)>;
 
-  explicit Instance(const ApplicationInfoOverride& appInfoOverride = {},
-                    const InstanceCreateInfoOverride& instanceCreateInfoOverride = {},
-                    const DebugUtilsMessengerCreateInfoOverride& debugUtilsMessengerCreateInfoOverride = {});
+  explicit Instance(
+      const ApplicationInfoOverride& appInfoOverride                                     = {},
+      const InstanceCreateInfoOverride& instanceCreateInfoOverride                       = {},
+      const DebugUtilsMessengerCreateInfoOverride& debugUtilsMessengerCreateInfoOverride = {});
   Instance(int versionMajor,
            int versionMinor,
            std::vector<const char*> extensions,

@@ -32,7 +32,8 @@ class Toolbox {
  private:
   using width_t  = uint32_t;
   using height_t = uint32_t;
-  std::tuple<StagingBuffer::shared_ptr, width_t, height_t> createStagingBuffer(const char* imageFile) const;
+  std::tuple<StagingBuffer::shared_ptr, width_t, height_t> createStagingBuffer(
+      const char* imageFile) const;
   StagingBuffer::shared_ptr createStagingBuffer(const uint8_t* data, uint32_t size) const;
 
  private:

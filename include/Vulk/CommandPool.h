@@ -15,9 +15,9 @@ class Queue;
 class CommandPool : public Sharable<CommandPool>, private NotCopyable {
  public:
   enum class Mode {
-    Transient = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-    ResetCommandBuffer =  VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-    Default = 0
+    Transient          = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+    ResetCommandBuffer = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+    Default            = 0
   };
 
  public:

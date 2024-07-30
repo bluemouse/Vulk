@@ -23,7 +23,7 @@ void Texture2D::create(const Device& device,
   _image = Image2D::make_shared(device, format, extent, usage);
   _image->allocate(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  _view = ImageView::make_shared(device, image());
+  _view    = ImageView::make_shared(device, image());
   _sampler = Sampler::make_shared(device, filter, addressMode);
 }
 
@@ -34,30 +34,35 @@ void Texture2D::destroy() {
 }
 
 void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer, const StagingBuffer& stagingBuffer) {
+                         const CommandBuffer& cmdBuffer,
+                         const StagingBuffer& stagingBuffer) {
   _image->copyFrom(queue, cmdBuffer, stagingBuffer);
   _image->makeShaderReadable(queue, cmdBuffer);
 }
 
 void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
+                         const CommandBuffer& cmdBuffer,
+                         const Image2D& srcImage) {
   _image->copyFrom(queue, cmdBuffer, srcImage);
   _image->makeShaderReadable(queue, cmdBuffer);
 }
 
 void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {
+                         const CommandBuffer& cmdBuffer,
+                         const Texture2D& srcTexture) {
   copyFrom(queue, cmdBuffer, srcTexture.image());
 }
 
 void Texture2D::blitFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer, const Image2D& srcImage) {
+                         const CommandBuffer& cmdBuffer,
+                         const Image2D& srcImage) {
   _image->blitFrom(queue, cmdBuffer, srcImage);
   _image->makeShaderReadable(queue, cmdBuffer);
 }
 
 void Texture2D::blitFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer, const Texture2D& srcTexture) {
+                         const CommandBuffer& cmdBuffer,
+                         const Texture2D& srcTexture) {
   blitFrom(queue, cmdBuffer, srcTexture.image());
 }
 

@@ -28,9 +28,9 @@ class Queue : public Sharable<Queue>, private NotCopyable {
   uint32_t queueIndex() const { return _queueIndex; }
 
   void submitCommands(const CommandBuffer& commandBuffer,
-                      const std::vector<Semaphore*>& waits = {},
+                      const std::vector<Semaphore*>& waits   = {},
                       const std::vector<Semaphore*>& signals = {},
-                      const Fence& fence = {}) const;
+                      const Fence& fence                     = {}) const;
   void waitIdle() const;
 
   const Device& device() const { return *_device.lock(); }
@@ -40,9 +40,7 @@ class Queue : public Sharable<Queue>, private NotCopyable {
   void endLabel() const;
 
   struct ScopedLabel {
-    ScopedLabel(const Queue& queue,
-                const char* label,
-                const glm::vec4& color) : _queue(queue) {
+    ScopedLabel(const Queue& queue, const char* label, const glm::vec4& color) : _queue(queue) {
       _queue.beginLabel(label, color);
     }
     ~ScopedLabel() { _queue.endLabel(); }
@@ -50,11 +48,12 @@ class Queue : public Sharable<Queue>, private NotCopyable {
    private:
     const Queue& _queue;
   };
-  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(const char* label,
-                                                         const glm::vec4& color = {0.8F, 0.2F, 0.1F, 1.0F}) const;
+  [[nodiscard]] std::unique_ptr<ScopedLabel> scopedLabel(
+      const char* label,
+      const glm::vec4& color = {0.8F, 0.2F, 0.1F, 1.0F}) const;
 
  private:
-  VkQueue _queue      = VK_NULL_HANDLE;
+  VkQueue _queue = VK_NULL_HANDLE;
 
   Device::QueueFamilyType _queueFamily;
   uint32_t _queueFamilyIndex;

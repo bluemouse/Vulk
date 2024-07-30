@@ -76,7 +76,7 @@ void ImageView::destroy() {
   MI_VERIFY(isCreated());
   vkDestroyImageView(device(), _view, nullptr);
 
-  _view   = VK_NULL_HANDLE;
+  _view = VK_NULL_HANDLE;
   _device.reset();
   _image.reset();
 }

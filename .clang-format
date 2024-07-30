@@ -14,7 +14,7 @@ BinPackParameters: false
 Cpp11BracedListStyle: true
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: false
-IndentPPDirectives: AfterHash
+IndentPPDirectives: None
 IndentWrappedFunctionNames: false
 NamespaceIndentation: None
 NamespaceMacros: ['NAMESPACE_BEGIN', 'NAMESPACE_END']

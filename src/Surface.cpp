@@ -27,7 +27,7 @@ void Surface::destroy() {
 
   vkDestroySurfaceKHR(instance(), _surface, nullptr);
 
-  _surface  = VK_NULL_HANDLE;
+  _surface = VK_NULL_HANDLE;
   _instance.reset();
 }
 

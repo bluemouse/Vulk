@@ -43,7 +43,7 @@ void Camera::init(const glm::vec2& frameSize,
 }
 
 void Camera::update() {
-  _world2View  = glm::lookAt(_eye, _lookAt, _up);
+  _world2View = glm::lookAt(_eye, _lookAt, _up);
 
   // Convert _roi to view-space volume
   glm::vec3 volumeOrigin{_lookAt.x, _lookAt.y, _eye.z};

@@ -179,7 +179,8 @@ void Image::copyFrom(const Queue& queue,
 
 // copy the image data from `srcImage` to this image
 void Image::copyFrom(const Queue& queue,
-                     const CommandBuffer& commandBuffer, const Image& srcImage) {
+                     const CommandBuffer& commandBuffer,
+                     const Image& srcImage) {
   // TODO should we execute transit and copy in one command buffer execution?
 
   auto& dstImage = *this;
@@ -222,7 +223,8 @@ void Image::copyFrom(const Queue& queue,
 
 // blit the image data from `srcImage` to this image
 void Image::blitFrom(const Queue& queue,
-                     const CommandBuffer& commandBuffer, const Image& srcImage) {
+                     const CommandBuffer& commandBuffer,
+                     const Image& srcImage) {
   // TODO should we execute transit and blit in one command buffer execution?
 
   auto& dstImage = *this;
@@ -255,7 +257,8 @@ void Image::blitFrom(const Queue& queue,
     blit.dstOffsets[0]             = {0, 0, 0};
     blit.dstOffsets[1]             = {dstW, dstH, dstD};
 
-    vkCmdBlitImage(commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
+    vkCmdBlitImage(
+        commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
   };
   commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
