@@ -166,7 +166,7 @@ void Testbed::drawFrame() {
     _textureMappingTask->prepareGeometry(
         _drawable.vertexBuffer(), _drawable.indexBuffer(), _drawable.numIndices());
     _textureMappingTask->prepareUniforms(
-        glm::mat4{1.0F}, _camera.viewMatrix(), _camera.projectionMatrix());
+        glm::mat4{1.0F}, _camera->viewMatrix(), _camera->projectionMatrix());
     _textureMappingTask->prepareInputs(*_texture);
     _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
     _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
@@ -261,14 +261,14 @@ void Testbed::loadModel(const std::string& modelFile,
 }
 
 void Testbed::initCamera(const std::vector<Vertex>& vertices) {
-  auto bbox = Vulk::Camera::BBox::null();
+  auto bbox = Vulk::ArcCamera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
   }
   bbox.expandPlanarSide(1.0F);
 
   auto extent = _context.swapchain().surfaceExtent();
-  _camera.init(glm::vec2{extent.width, extent.height}, bbox);
+  _camera = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
 void Testbed::createDrawable() {
@@ -368,7 +368,7 @@ void Testbed::resizeSwapchain() {
   // We need to get the updated size from the surface directly. It is not guaranteed that the extent
   // is the same as the {width(), height()}.
   auto extent = _context.swapchain().surfaceExtent();
-  _camera.update(glm::vec2{extent.width, extent.height});
+  _camera->update(glm::vec2{extent.width, extent.height});
 
   setFramebufferResized(false);
 
@@ -487,15 +487,20 @@ void Testbed::onKeyInput(int key, int action, int mods) {
 
   if (action == GLFW_PRESS) {
     if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL) {
-      _camera.zoom(_zoomFactor = 1.0F);
-    } else if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
-      _camera.orbitVertical(M_PI / 2.0F);
-    } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
-      _camera.orbitVertical(-M_PI / 2.0F);
-    } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
-      _camera.orbitHorizontal(M_PI / 2.0F);
-    } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
-      _camera.orbitHorizontal(-M_PI / 2.0F);
+      _camera->zoom(_zoomFactor = 1.0F);
+    } else {
+      auto arcCamera = static_pointer_cast<Vulk::ArcCamera>(_camera);
+      if (arcCamera) {
+        if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
+          arcCamera->orbitVertical(M_PI / 2.0F);
+        } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
+          arcCamera->orbitVertical(-M_PI / 2.0F);
+        } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
+          arcCamera->orbitHorizontal(M_PI / 2.0F);
+        } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
+          arcCamera->orbitHorizontal(-M_PI / 2.0F);
+        }
+      }
     }
   }
 }
@@ -510,12 +515,12 @@ void Testbed::onMouseMove(double xpos, double ypos) {
 
   int button = getMouseButton();
   if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-    _camera.move(mousePosHistory.front(), {xpos, ypos});
+    _camera->move(mousePosHistory.front(), {xpos, ypos});
     mousePosHistory.pop();
     mousePosHistory.push({xpos, ypos});
   } else if (button == GLFW_MOUSE_BUTTON_LEFT) {
     if (mousePosHistory.size() >= 2) {
-      _camera.rotate(mousePosHistory.front(), {xpos, ypos});
+      _camera->rotate(mousePosHistory.front(), {xpos, ypos});
       mousePosHistory = {};
       mousePosHistory.push({xpos, ypos});
     } else {
@@ -548,9 +553,9 @@ void Testbed::onScroll(double xoffset, double yoffset) {
   }
 
   if (yoffset > 0.0F) {
-    _camera.zoom(_zoomFactor *= (1.0F + delta));
+    _camera->zoom(_zoomFactor *= (1.0F + delta));
   } else {
-    _camera.zoom(_zoomFactor *= (1.0F - delta));
+    _camera->zoom(_zoomFactor *= (1.0F - delta));
   }
 }
 

@@ -87,7 +87,7 @@ class Testbed : public MainWindow {
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 
-  Vulk::Camera _camera;
+  Vulk::Camera::shared_ptr _camera;
 
   Vulk::Drawable<Vertex, uint32_t> _drawable;
   Vulk::Texture2D::shared_ptr _texture;
