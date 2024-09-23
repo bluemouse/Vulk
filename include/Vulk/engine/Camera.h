@@ -15,8 +15,18 @@ class Camera : public Sharable<Camera> {
   Camera() = default;
   virtual ~Camera() = default;
 
+  // Camera, orthographic and located at 2x radius of `roi`, looks at center of `roi`
+  // toward positive z.  Camera up vector is negative y initially. `frameSize` is the
+  // dimension of the frame buffer. It is used for fitting and other frame-size-dependent
+  // calculations.
+  void init(const glm::vec2& frameSize,
+            const BBox& roi,
+            const glm::vec3& up,
+            const glm::vec3& eyeRay,
+            float zoomScale = 1.0F);
+
   // Update the camera matrices with new frame size.
-  virtual void update(const glm::vec2& frameSize) = 0;
+  void update(const glm::vec2& frameSize);
 
   virtual void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) = 0;
   virtual void rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) = 0;
@@ -45,13 +55,24 @@ class Camera : public Sharable<Camera> {
   [[nodiscard]] glm::vec3 view2world(glm::vec3 p) const;
 
  protected:
+  // Update the camera matrices.
+  void update();
+
   void setFrameSize(glm::vec2 size) { _frameSize = size; }
 
  protected:
-  BBox _roi;            // region-of-interest bounding box in world space
-  glm::vec2 _frameSize; // Frame size in pixels
+  // Camera parameters in world space
+  glm::vec3 _eye;
+  glm::vec3 _lookAt;
+  glm::vec3 _up;
 
-  BBox _viewVolume; // view volume in view space
+  // region-of-interest bounding box in world space
+  BBox _roi;
+  // Frame size in pixels
+  glm::vec2 _frameSize;
+
+  // view volume in view space
+  BBox _viewVolume;
   float _zoomScale{1.0F};
 
   glm::mat4 _world2View, _view2World;
@@ -63,18 +84,8 @@ class ArcCamera : public Camera {
   ArcCamera() : ArcCamera{glm::vec2{1.0f}, BBox::unit()} {}
   ArcCamera(const glm::vec2& frameSize, const BBox& roi) : Camera{} { init(frameSize, roi); }
 
-  // Camera, located at 2x radius of `roi`, looks at center of `roi` toward positive z.  Camera up
-  // vector is negative y initially. `frameSize` is the dimension of the frame buffer. It is used
-  // for fitting and other frame-size-dependent calculations.
+  using Camera::init;
   void init(const glm::vec2& frameSize, const BBox& roi);
-  void init(const glm::vec2& frameSize,
-            const BBox& roi,
-            const glm::vec3& up,
-            const glm::vec3& eyeRay,
-            float zoomScale = 1.0F);
-
-  // Update the camera matrices with new frame size.
-  void update(const glm::vec2& frameSize) override;
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) override;
   void rotate(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) override;
@@ -93,9 +104,6 @@ class ArcCamera : public Camera {
   MI_DEFINE_SHARED_PTR(ArcCamera, Camera);
 
  private:
-  // Update the camera matrices.
-  void update();
-
   struct Rotation {
     glm::vec3 axis;
     float angle;
@@ -103,12 +111,6 @@ class ArcCamera : public Camera {
   [[nodiscard]] Rotation computeTrackballRotation(const glm::vec2& screenFrom,
                                                   const glm::vec2& screenTo) const;
   [[nodiscard]] glm::vec3 trackballPoint(glm::vec2 screenPos) const;
-
- private:
-  // Camera parameters in world space
-  glm::vec3 _eye;
-  glm::vec3 _lookAt;
-  glm::vec3 _up;
 };
 
 // A 2D camera to render a plane in 3D space. The camera is orthographic toward the x-y plane of
@@ -118,22 +120,12 @@ class FlatCamera : public Camera {
   FlatCamera() : FlatCamera{glm::vec2{1.0f}, BBox::unit()} {}
   FlatCamera(const glm::vec2& frameSize, const BBox& roi) : Camera{} { init(frameSize, roi); }
 
-  // Camera, orthographic and located at 2x radius of `roi`, looks at center of `roi`
-  // toward positive z.  Camera up vector is negative y initially. `frameSize` is the
-  // dimension of the frame buffer. It is used for fitting and other frame-size-dependent
-  // calculations.
+  using Camera::init;
   void init(const glm::vec2& frameSize, const BBox& roi);
-  void init(const glm::vec2& frameSize,
-            const BBox& roi,
-            const glm::vec3& up,
-            const glm::vec3& eyeRay,
-            float zoomScale = 1.0F);
-
-  // Update the camera matrices with new frame size.
-  void update(const glm::vec2& frameSize) override;
 
   void move(const glm::vec2& fromScreenPosition, const glm::vec2& toScreenPosition) override;
   void zoom(float scale) override;
+
   // rotate and orbit funstions are null operation for FlatCamera
   void rotate(const glm::vec2&, const glm::vec2&) override final {}
   void orbit(const glm::vec3&, float) override final {};
@@ -144,16 +136,6 @@ class FlatCamera : public Camera {
   // Override the sharable types and functions
   //
   MI_DEFINE_SHARED_PTR(FlatCamera, Camera);
-
- private:
-  // Update the camera matrices.
-  void update();
-
- private:
-  // Camera parameters in world space
-  glm::vec3 _eye;
-  glm::vec3 _lookAt;
-  glm::vec3 _up;
 };
 
 NAMESPACE_END(Vulk)
