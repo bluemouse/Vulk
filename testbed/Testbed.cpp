@@ -260,7 +260,7 @@ void Testbed::loadModel(const std::string& modelFile,
   }
 }
 
-void Testbed::initCamera(const std::vector<Vertex>& vertices) {
+void Testbed::initCamera(const std::vector<Vertex>& vertices, bool is3D) {
   auto bbox = Vulk::ArcCamera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
@@ -268,7 +268,11 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices) {
   bbox.expandPlanarSide(1.0F);
 
   auto extent = _context.swapchain().surfaceExtent();
-  _camera = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
+  if (is3D) {
+    _camera = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
+  } else {
+    _camera = Vulk::FlatCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
+  }
 }
 
 void Testbed::createDrawable() {
@@ -316,10 +320,10 @@ void Testbed::createDrawable() {
         top    = 1.0F / textureAspect;
       }
     }
-    vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F}},
-                {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 1.0F}},
-                {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 1.0F}},
-                {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 0.0F}}};
+    vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F}},
+                {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
+                {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 0.0F}},
+                {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
     indices  = {0, 1, 2, 2, 3, 0};
 
   } else {
@@ -327,7 +331,9 @@ void Testbed::createDrawable() {
   }
   Vulk::CommandBuffer cmdBuffer{_context.commandPool(Vulk::Device::QueueFamilyType::Graphics)};
   _drawable.create(_context.device(), cmdBuffer, vertices, indices);
-  initCamera(vertices);
+
+  const bool is3DScene = !_modelFile.empty();
+  initCamera(vertices, is3DScene);
 }
 
 void Testbed::createFrames() {
@@ -375,68 +381,6 @@ void Testbed::resizeSwapchain() {
   // To force a drawFrame()
   MainWindow::postEmptyEvent();
 }
-
-#if 0
-void Testbed::updateUniformBuffer() {
-#define USE_ARC_CAMERA
-#if defined(USE_ARC_CAMERA)
-  _camera.update();
-
-  Uniforms uniforms{};
-
-  uniforms.model = glm::mat4{1.0F};
-  uniforms.view  = _camera.viewMatrix();
-  uniforms.proj  = _camera.projectionMatrix();
-
-  memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#else
-  using glm::vec3;
-  using glm::vec4;
-  using glm::mat4;
-
-  auto [textureW, textureH] = _texture->extent();
-  float textureAspect       = static_cast<float>(textureW) / static_cast<float>(textureH);
-
-  Uniforms uniforms{};
-
-  // Make the aspect ratio of the rendered texture match the physical texture.
-  uniforms.model = mat4{1.0F};
-  if (textureAspect > 1.0F) {
-    uniforms.model[1][1] = 1.0F / textureAspect;
-  } else {
-    uniforms.model[0][0] = 1.0F / textureAspect;
-  }
-
-  vec3 cameraPos{0.0F, 0.0F, -1.0F};
-  vec3 cameraLookAt{0.0F, 0.0F, 0.0F};
-  vec3 cameraUp{0.0F, -1.0F, 0.0F};
-
-  uniforms.view = glm::lookAt(cameraPos, cameraLookAt, cameraUp);
-  std::cout << "view: " << glm::to_string(uniforms.view) << std::endl;
-
-  auto [surfaceW, surfaceH] = _context.swapchain().surfaceExtent();
-  float surfaceAspect       = static_cast<float>(surfaceW) / static_cast<float>(surfaceH);
-
-  vec4 roi = surfaceAspect > 1.0F ? vec4{-surfaceAspect, surfaceAspect, 1.0F, -1.0F}
-                                  : vec4{-1.0F, 1.0F, 1.0F / surfaceAspect, -1.0F / surfaceAspect};
-
-  auto dist  = glm::distance(cameraPos, cameraLookAt);
-  auto zNear = dist;
-  auto zFar  = zNear + dist * 10.0F;
-// #define USE_PERSPECTIVE_PROJECTION
-#if defined(USE_PERSPECTIVE_PROJECTION)
-  float fovy    = glm::angle(cameraPos - cameraLookAt, cameraUp * (roi[2] - roi[3]) / 2.0F);
-  uniforms.proj = glm::perspective(fovy, surfaceAspect, zNear, zFar);
-  uniforms.proj[1][1] *= -1;
-#else
-  uniforms.proj = glm::ortho(roi[0], roi[1], roi[2], roi[3], zNear, zFar);
-  std::cout << "projection: " << glm::to_string(uniforms.proj) << std::endl;
-#endif
-
-  memcpy(_currentFrame->uniformBufferMapped, &uniforms, sizeof(uniforms));
-#endif // USE_ARC_CAMERA
-}
-#endif // 0
 
 VkExtent2D Testbed::chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
                                                  uint32_t windowWidth,
@@ -488,19 +432,14 @@ void Testbed::onKeyInput(int key, int action, int mods) {
   if (action == GLFW_PRESS) {
     if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL) {
       _camera->zoom(_zoomFactor = 1.0F);
-    } else {
-      auto arcCamera = static_pointer_cast<Vulk::ArcCamera>(_camera);
-      if (arcCamera) {
-        if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
-          arcCamera->orbitVertical(M_PI / 2.0F);
-        } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
-          arcCamera->orbitVertical(-M_PI / 2.0F);
-        } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
-          arcCamera->orbitHorizontal(M_PI / 2.0F);
-        } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
-          arcCamera->orbitHorizontal(-M_PI / 2.0F);
-        }
-      }
+    } else if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
+      _camera->orbitVertical(M_PI / 2.0F);
+    } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
+      _camera->orbitVertical(-M_PI / 2.0F);
+    } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
+      _camera->orbitHorizontal(M_PI / 2.0F);
+    } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
+      _camera->orbitHorizontal(-M_PI / 2.0F);
     }
   }
 }

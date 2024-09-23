@@ -78,7 +78,7 @@ class Testbed : public MainWindow {
   void loadModel(const std::string& modelFile,
                  std::vector<Vertex>& vertices,
                  std::vector<uint32_t>& indices);
-  void initCamera(const std::vector<Vertex>& vertices);
+  void initCamera(const std::vector<Vertex>& vertices, bool is3D);
 
  private:
   Vulk::Context _context;
