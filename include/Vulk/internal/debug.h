@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Vulk/internal/arch.h>
+
 #include <stdexcept>
 
 #define _MI_STRINGIZE_IMPL(x) #x
@@ -10,11 +12,11 @@
 #define _MI_AT_THIS_LINE " [" __FILE__ ":" _MI_STRINGIZE(__LINE__) "]"
 
 #define MI_VERIFY(condition)                                                   \
-  if (!(condition)) {                                                          \
+  if (ARCH_UNLIKELY(!(condition))) {                                           \
     throw std::runtime_error("Error: " #condition " failed" _MI_AT_THIS_LINE); \
   }
 #define MI_VERIFY_MSG(condition, ...)                                                              \
-  if (!(condition)) {                                                                              \
+  if (ARCH_UNLIKELY(!(condition))) {                                                               \
     auto msg = std::string("Error: ") + __helpers_debug__::format(__VA_ARGS__) + _MI_AT_THIS_LINE; \
     throw std::runtime_error(msg);                                                                 \
   }
@@ -40,28 +42,50 @@
 #endif
 
 #if defined(_NO_ASSERTIONS) || defined(_NDEBUG) || defined(NDEBUG)
-#define MI_ASSERT(EX) ((void)0)
-#define MI_ASSERT_MSG(EX, ...) ((void)0)
+#define MI_ASSERT(COND) ((void)0)
+#define MI_ASSERT_MSG(COND, ...) ((void)0)
 #define MI_DEBUG_CODE(CODE)
 #else
-#define MI_ASSERT(EX) \
-  ((EX) ? ((void)0) : __helpers_debug__::assertion_fail(#EX, __FILE__, __LINE__, nullptr))
-#define MI_ASSERT_MSG(EX, ...) \
-  ((EX) ? ((void)0) : __helpers_debug__::assertion_fail(#EX, __FILE__, __LINE__, __VA_ARGS__))
+#define MI_ASSERT(COND)          \
+  (ARCH_LIKELY(COND) ? ((void)0) \
+                     : __helpers_debug__::assertion_fail(#COND, __FILE__, __LINE__, nullptr))
+#define MI_ASSERT_MSG(COND, ...) \
+  (ARCH_LIKELY(COND) ? ((void)0) \
+                     : __helpers_debug__::assertion_fail(#COND, __FILE__, __LINE__, __VA_ARGS__))
 #define MI_DEBUG_CODE(CODE) CODE
 #endif
 
 #if defined(_NO_WARNINGS) || defined(_NDEBUG) || defined(NDEBUG)
-#define MI_WARNING(EX) ((void)0)
-#define MI_WARNING_MSG(EX, ...) ((void)0)
+#define MI_WARNING(COND) ((void)0)
+#define MI_WARNING_MSG(COND, ...) ((void)0)
 #else
-#define MI_WARNING(EX) \
-  ((EX) ? ((void)0) : __helpers_debug__::warning_fail(#EX, __FILE__, __LINE__, 0))
-#define MI_WARNING_MSG(EX, ...) \
-  ((EX) ? ((void)0) : __helpers_debug__::warning_fail(#EX, __FILE__, __LINE__, __VA_ARGS__))
+#define MI_WARNING(COND) \
+  (ARCH_LIKELY(COND) ? ((void)0) : __helpers_debug__::warning_fail(#COND, __FILE__, __LINE__, 0))
+#define MI_WARNING_MSG(COND, ...) \
+  (ARCH_LIKELY(COND) ? ((void)0)  \
+                     : __helpers_debug__::warning_fail(#COND, __FILE__, __LINE__, __VA_ARGS__))
 #endif
 
-// Functions
+//
+// Vulkan helpers
+//
+#define MI_VERIFY_VK_RESULT(cmd)                                           \
+  do {                                                                     \
+    const auto result = cmd;                                               \
+    if (ARCH_UNLIKELY(result != VK_SUCCESS)) {                             \
+      throw std::runtime_error("Error: " #cmd " failed" _MI_AT_THIS_LINE); \
+    }                                                                      \
+  } while (0)
+#define MI_VERIFY_VK_HANDLE(handle)                                            \
+  do {                                                                         \
+    if (ARCH_UNLIKELY(handle == VK_NULL_HANDLE)) {                             \
+      throw std::runtime_error("Error: " #handle " is null" _MI_AT_THIS_LINE); \
+    }                                                                          \
+  } while (0)
+
+//
+// Helper functions
+//
 namespace __helpers_debug__ {
 void not_tested(const char* func, const char* file, int line);
 void not_implemented(const char* func, const char* file, int line);
@@ -75,13 +99,3 @@ void log_backtraces();
 
 const char* format(const char* fmt, ...);
 } // namespace __helpers_debug__
-
-#define MI_VERIFY_VK_RESULT(cmd)                                             \
-  if (cmd != VK_SUCCESS) {                                               \
-    throw std::runtime_error("Error: " #cmd " failed" _MI_AT_THIS_LINE); \
-  }
-
-#define MI_VERIFY_VK_HANDLE(handle)                                           \
-  if (handle == VK_NULL_HANDLE) {                                            \
-    throw std::runtime_error("Error: " #handle " is null" _MI_AT_THIS_LINE); \
-  }

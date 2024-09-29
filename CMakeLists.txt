@@ -67,6 +67,7 @@ set(SRC_FILES
 set(HEADER_FILES
     # Internal helpers
     include/Vulk/internal/base.h
+    include/Vulk/internal/arch.h
     include/Vulk/internal/debug.h
     include/Vulk/internal/helpers.h
     # Vulkan core classes
