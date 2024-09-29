@@ -11,7 +11,7 @@ MI_NAMESPACE_BEGIN(Vulk)
 Image2D::Image2D(const Device& device,
                  VkFormat format,
                  VkExtent2D extent,
-                 VkImageUsageFlags usage,
+                 Usage usage,
                  const ImageCreateInfoOverride& override) {
   create(device, format, extent, usage, override);
 }
@@ -19,7 +19,7 @@ Image2D::Image2D(const Device& device,
 Image2D::Image2D(const Device& device,
                  VkFormat format,
                  VkExtent2D extent,
-                 VkImageUsageFlags usage,
+                 Usage usage,
                  VkMemoryPropertyFlags properties,
                  const ImageCreateInfoOverride& override)
     : Image2D(device, format, extent, usage, override) {
@@ -35,7 +35,7 @@ Image2D::Image2D(VkImage image, VkFormat format, VkExtent2D extent) : _external{
 void Image2D::create(const Device& device,
                      VkFormat format,
                      VkExtent2D extent,
-                     VkImageUsageFlags usage,
+                     Usage usage,
                      const ImageCreateInfoOverride& override) {
   MI_ASSERT(extent.width > 0 && extent.height > 0);
 
@@ -53,10 +53,7 @@ void Image2D::create(const Device& device,
   imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 
-  imageInfo.usage = usage;
-
-  // imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-  //                   VK_IMAGE_USAGE_SAMPLED_BIT;
+  imageInfo.usage = SAMPLED | usage;
 
   if (override) {
     override(&imageInfo);

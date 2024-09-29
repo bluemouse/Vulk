@@ -346,8 +346,7 @@ void Testbed::createFrames() {
   for (auto& frame : _frames) {
     frame.commandBuffer = Vulk::CommandBuffer::make_shared(cmdPool);
 
-    const auto usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-                       VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    const auto usage  = Vulk::Image2D::Usage::COLOR_ATTACHMENT | Vulk::Image2D::Usage::TRANSFER_SRC;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
     frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());

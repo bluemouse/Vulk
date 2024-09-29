@@ -1,13 +1,13 @@
-#include <Vulk/VertexBuffer.h>
+#include <Vulk/StorageBuffer.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-VertexBuffer::VertexBuffer(const Device& device, VkDeviceSize size, Property property) {
+StorageBuffer::StorageBuffer(const Device& device, VkDeviceSize size, Property property) {
   create(device, size, property);
 }
 
-void VertexBuffer::create(const Device& device, VkDeviceSize size, Property property) {
-  VkBufferUsageFlags usage         = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+void StorageBuffer::create(const Device& device, VkDeviceSize size, Property property) {
+  VkBufferUsageFlags usage         = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   VkMemoryPropertyFlags properties = 0;
 
   if (property & Property::HOST_VISIBLE) {
@@ -17,8 +17,8 @@ void VertexBuffer::create(const Device& device, VkDeviceSize size, Property prop
     usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
   }
 
-  if (property & Property::AS_STORAGE_BUFFER) {
-    usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+  if (property & Property::AS_VERTEX_BUFFER) {
+    usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   }
 
   Buffer::create(device, size, usage);

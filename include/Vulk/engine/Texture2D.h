@@ -23,7 +23,7 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   Texture2D(const Device& device,
             VkFormat format,
             VkExtent2D extent,
-            VkImageUsageFlags usage,
+            Image2D::Usage usage = Image2D::Usage::NONE,
             Filter filter           = {VK_FILTER_LINEAR},
             AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   ~Texture2D() override = default;
@@ -31,7 +31,7 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
-              VkImageUsageFlags usage,
+              Image2D::Usage usage = Image2D::Usage::NONE,
               Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();

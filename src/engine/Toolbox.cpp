@@ -19,9 +19,10 @@ Toolbox::Toolbox(const Context& context) : _context(context) {
 Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(imageFile);
 
-  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-  auto image       = Image2D::make_shared(
-      _context.device(), VK_FORMAT_R8G8B8A8_SRGB, VkExtent2D{width, height}, usage);
+  auto image = Image2D::make_shared(_context.device(),
+                                    VK_FORMAT_R8G8B8A8_SRGB,
+                                    VkExtent2D{width, height},
+                                    Image2D::Usage::TRANSFER_DST);
 
   image->allocate();
   CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
@@ -35,9 +36,10 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
 Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
   auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
 
-  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-  auto texture     = Texture2D::make_shared(
-      _context.device(), VK_FORMAT_R8G8B8A8_SRGB, VkExtent2D{width, height}, usage);
+  auto texture = Texture2D::make_shared(_context.device(),
+                                        VK_FORMAT_R8G8B8A8_SRGB,
+                                        VkExtent2D{width, height},
+                                        Image2D::Usage::TRANSFER_DST);
 
   CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
   const auto& queue = _context.queue(Device::QueueFamilyType::Graphics);
@@ -55,9 +57,8 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
 
   const auto vkFormat =
       format == TextureFormat::RGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8_SRGB;
-  const auto usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-  auto texture =
-      Texture2D::make_shared(_context.device(), vkFormat, VkExtent2D{width, height}, usage);
+  auto texture = Texture2D::make_shared(
+      _context.device(), vkFormat, VkExtent2D{width, height}, Image2D::Usage::TRANSFER_DST);
 
   CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
   const auto& queue = _context.queue(Device::QueueFamilyType::Graphics);

@@ -8,7 +8,7 @@ MI_NAMESPACE_BEGIN(Vulk)
 Texture2D::Texture2D(const Device& device,
                      VkFormat format,
                      VkExtent2D extent,
-                     VkImageUsageFlags usage,
+                     Image2D::Usage usage,
                      Filter filter,
                      AddressMode addressMode) {
   create(device, format, extent, usage, filter, addressMode);
@@ -17,7 +17,7 @@ Texture2D::Texture2D(const Device& device,
 void Texture2D::create(const Device& device,
                        VkFormat format,
                        VkExtent2D extent,
-                       VkImageUsageFlags usage,
+                       Image2D::Usage usage,
                        Filter filter,
                        AddressMode addressMode) {
   _image = Image2D::make_shared(device, format, extent, usage);

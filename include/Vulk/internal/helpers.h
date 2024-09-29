@@ -6,6 +6,24 @@
   auto cmd = reinterpret_cast<PFN_##cmd>(vkGetInstanceProcAddr(_instance, #cmd)); \
   MI_VERIFY(cmd != nullptr);
 
+#define MI_ENABLE_ENUM_BITWISE_OP(enum_t)                                         \
+  constexpr enum_t operator|(const enum_t& lhs, const enum_t& rhs) {              \
+    return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(lhs) | \
+                               static_cast<std::underlying_type_t<enum_t>>(rhs)); \
+  }                                                                               \
+  constexpr enum_t operator&(const enum_t& lhs, const enum_t& rhs) {              \
+    return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(lhs) & \
+                               static_cast<std::underlying_type_t<enum_t>>(rhs)); \
+  }                                                                               \
+  constexpr enum_t operator^(const enum_t& lhs, const enum_t& rhs) {              \
+    return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(lhs) ^ \
+                               static_cast<std::underlying_type_t<enum_t>>(rhs)); \
+  }                                                                               \
+  constexpr bool operator!(const enum_t& val) {                                   \
+    return static_cast<std::underlying_type_t<enum_t>>(val) ==                    \
+           static_cast<std::underlying_type_t<enum_t>>(0);                        \
+  }
+
 MI_NAMESPACE_BEGIN(Vulk)
 
 inline bool operator==(const VkExtent2D& lhs, const VkExtent2D& rhs) {

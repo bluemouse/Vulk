@@ -53,6 +53,7 @@ set(SRC_FILES
     src/VertexBuffer.cpp
     src/IndexBuffer.cpp
     src/UniformBuffer.cpp
+    src/StorageBuffer.cpp
     src/DeviceMemory.cpp
     src/Semaphore.cpp
     src/Fence.cpp
@@ -98,6 +99,7 @@ set(HEADER_FILES
     include/Vulk/VertexBuffer.h
     include/Vulk/IndexBuffer.h
     include/Vulk/UniformBuffer.h
+    include/Vulk/StorageBuffer.h
     include/Vulk/DeviceMemory.h
     include/Vulk/Semaphore.h
     include/Vulk/Fence.h
