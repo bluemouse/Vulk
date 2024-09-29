@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Exception : public std::logic_error {
  public:
@@ -16,4 +16,4 @@ class Exception : public std::logic_error {
   VkResult _result;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

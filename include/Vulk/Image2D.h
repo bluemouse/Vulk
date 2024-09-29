@@ -8,7 +8,7 @@
 
 #include <Vulk/Image.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -60,4 +60,4 @@ class Image2D : public Image {
   bool _external = false;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

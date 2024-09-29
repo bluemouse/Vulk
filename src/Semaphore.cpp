@@ -4,7 +4,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Semaphore::Semaphore(const Device& device) {
   create(device);
@@ -23,7 +23,7 @@ void Semaphore::create(const Device& device) {
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-  MI_VERIFY_VKCMD(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &_semaphore));
+  MI_VERIFY_VK_RESULT(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &_semaphore));
 }
 
 void Semaphore::destroy() {
@@ -34,4 +34,4 @@ void Semaphore::destroy() {
   _device.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

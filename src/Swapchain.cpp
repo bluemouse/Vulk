@@ -14,7 +14,7 @@
 #include <Vulk/Queue.h>
 #include <Vulk/Exception.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Swapchain::Swapchain(const Device& device,
                      const Surface& surface,
@@ -80,11 +80,11 @@ void Swapchain::create(const Device& device,
   _surfaceExtent         = chooseSurfaceExtent(_surfaceExtent.width, _surfaceExtent.height);
   createInfo.imageExtent = _surfaceExtent;
 
-  MI_VERIFY_VKCMD(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
+  MI_VERIFY_VK_RESULT(vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapchain));
 
   // Initialize the swapchain images.
   std::vector<VkImage> imgs{minImageCount};
-  MI_VERIFY_VKCMD(vkGetSwapchainImagesKHR(device, _swapchain, &minImageCount, imgs.data()));
+  MI_VERIFY_VK_RESULT(vkGetSwapchainImagesKHR(device, _swapchain, &minImageCount, imgs.data()));
 
   // We need to reserve the space first to avoid resizing (which triggers the destructor)
   _images.reserve(minImageCount);
@@ -208,4 +208,4 @@ VkExtent2D Swapchain::chooseSurfaceExtent(uint32_t windowWidth, uint32_t windowH
   }
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -4,7 +4,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 RenderPass::RenderPass(const Device& device,
                        VkFormat colorFormat,
@@ -119,7 +119,7 @@ void RenderPass::create(const Device& device,
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments    = attachments.data();
 
-  MI_VERIFY_VKCMD(vkCreateRenderPass(device, &renderPassInfo, nullptr, &_renderPass));
+  MI_VERIFY_VK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, &_renderPass));
 }
 
 void RenderPass::destroy() {
@@ -130,4 +130,4 @@ void RenderPass::destroy() {
   _device.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

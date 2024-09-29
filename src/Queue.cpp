@@ -6,7 +6,7 @@
 #include <Vulk/Fence.h>
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Queue::Queue(const Device& device, Device::QueueFamilyType queueFamily, uint32_t queueFamilyIndex)
     : _queueFamily(queueFamily), _queueFamilyIndex(queueFamilyIndex) {
@@ -58,7 +58,7 @@ void Queue::submitCommands(const CommandBuffer& commandBuffer,
     submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
     submitInfo.pSignalSemaphores    = signalSemaphores.data();
   }
-  MI_VERIFY_VKCMD(vkQueueSubmit(_queue, 1, &submitInfo, fence));
+  MI_VERIFY_VK_RESULT(vkQueueSubmit(_queue, 1, &submitInfo, fence));
 }
 
 void Queue::waitIdle() const {
@@ -109,4 +109,4 @@ auto Queue::scopedLabel(const char*, const glm::vec4&) const -> std::unique_ptr<
 
 #endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

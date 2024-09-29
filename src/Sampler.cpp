@@ -5,7 +5,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/PhysicalDevice.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Sampler::Sampler(const Device& device,
                  Filter filter,
@@ -49,7 +49,7 @@ void Sampler::create(const Device& device,
     createInfoOverride(&samplerInfo);
   }
 
-  MI_VERIFY_VKCMD(vkCreateSampler(device, &samplerInfo, nullptr, &_sampler));
+  MI_VERIFY_VK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &_sampler));
 }
 
 void Sampler::destroy() {
@@ -60,4 +60,4 @@ void Sampler::destroy() {
   _device.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

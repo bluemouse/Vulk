@@ -1,6 +1,6 @@
 #include <Vulk/engine/TypeTraits.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 uint32_t FormatInfo::size(VkFormat format) {
   switch (format) {
@@ -151,4 +151,4 @@ uint32_t FormatInfo::size(VkFormat format) {
   }
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Camera : public Sharable<Camera> {
  public:
@@ -138,4 +138,4 @@ class FlatCamera : public Camera {
   MI_DEFINE_SHARED_PTR(FlatCamera, Camera);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

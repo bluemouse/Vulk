@@ -6,7 +6,7 @@
 
 #include <Vulk/internal/base.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -31,4 +31,4 @@ class Semaphore : public Sharable<Semaphore>, private NotCopyable {
   std::weak_ptr<const Device> _device;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

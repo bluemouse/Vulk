@@ -9,7 +9,7 @@
 
 #include <Vulk/ShaderModule.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -45,4 +45,4 @@ class DescriptorSetLayout : public Sharable<DescriptorSetLayout>, private NotCop
   std::weak_ptr<const Device> _device;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -6,7 +6,7 @@
 
 #include <Vulk/internal/base.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class RenderPass;
@@ -57,4 +57,4 @@ class Framebuffer : public Sharable<Framebuffer>, private NotCopyable {
   std::weak_ptr<const ImageView> _depthStencilAttachment;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -8,7 +8,7 @@
 
 #include <tuple>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Context;
 
@@ -40,4 +40,4 @@ class Toolbox {
   const Vulk::Context& _context;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

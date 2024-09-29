@@ -4,7 +4,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Fence::Fence(const Device& device, bool signaled) {
   create(device, signaled);
@@ -26,7 +26,7 @@ void Fence::create(const Device& device, bool signaled) {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
   }
 
-  MI_VERIFY_VKCMD(vkCreateFence(device, &fenceInfo, nullptr, &_fence));
+  MI_VERIFY_VK_RESULT(vkCreateFence(device, &fenceInfo, nullptr, &_fence));
 }
 
 void Fence::destroy() {
@@ -39,12 +39,12 @@ void Fence::destroy() {
 
 void Fence::wait(uint64_t timeout) const {
   MI_VERIFY(isCreated());
-  MI_VERIFY_VKCMD(vkWaitForFences(device(), 1, &_fence, VK_TRUE, timeout));
+  MI_VERIFY_VK_RESULT(vkWaitForFences(device(), 1, &_fence, VK_TRUE, timeout));
 }
 
 void Fence::reset() {
   MI_VERIFY(isCreated());
-  MI_VERIFY_VKCMD(vkResetFences(device(), 1, &_fence));
+  MI_VERIFY_VK_RESULT(vkResetFences(device(), 1, &_fence));
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

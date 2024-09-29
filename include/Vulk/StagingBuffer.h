@@ -6,7 +6,7 @@
 
 #include <Vulk/Buffer.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -51,4 +51,4 @@ class StagingBuffer : public Buffer {
   MI_DEFINE_SHARED_PTR(StagingBuffer, Buffer);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

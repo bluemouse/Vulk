@@ -10,7 +10,7 @@
 #include <Vulk/Queue.h>
 #include <Vulk/CommandPool.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Device::Device(const PhysicalDevice& physicalDevice,
                const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
@@ -99,7 +99,7 @@ void Device::create(const PhysicalDevice& physicalDevice,
     override(&createInfo, &deviceFeatures, &queueCreateInfos);
   }
 
-  MI_VERIFY_VKCMD(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
+  MI_VERIFY_VK_RESULT(vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device));
   volkLoadDevice(_device);
 }
 
@@ -199,4 +199,4 @@ void Device::setObjectName(VkObjectType, uint64_t, const char*) {
 
 #endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

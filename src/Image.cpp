@@ -92,7 +92,7 @@ void selectStageAccess(VkImageLayout layout, VkPipelineStageFlags& stage, VkAcce
 }
 } // namespace
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Image::~Image() {
   if (isCreated()) {
@@ -104,7 +104,7 @@ void Image::create(const Device& device, const VkImageCreateInfo& imageInfo) {
   MI_VERIFY(!isCreated());
   _device = device.get_weak();
 
-  MI_VERIFY_VKCMD(vkCreateImage(device, &imageInfo, nullptr, &_image));
+  MI_VERIFY_VK_RESULT(vkCreateImage(device, &imageInfo, nullptr, &_image));
 
   _type   = imageInfo.imageType;
   _format = imageInfo.format;
@@ -326,4 +326,4 @@ VkImageViewType Image::imageViewType() const {
   }
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

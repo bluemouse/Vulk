@@ -4,7 +4,7 @@
 
 #include <vector>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 template <typename Position, typename Color, typename TexCoord>
 struct Vertex {
@@ -35,4 +35,4 @@ struct Vertex {
   static constexpr uint32_t size() { return sizeof(Vertex); }
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

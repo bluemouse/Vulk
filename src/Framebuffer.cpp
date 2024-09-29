@@ -7,7 +7,7 @@
 #include <Vulk/ImageView.h>
 #include <Vulk/RenderPass.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Framebuffer::Framebuffer(const Device& device,
                          const RenderPass& renderPass,
@@ -69,7 +69,7 @@ void Framebuffer::create() {
   framebufferInfo.height          = colorBuffer().height();
   framebufferInfo.layers          = 1; // TODO should be a parameter
 
-  MI_VERIFY_VKCMD(vkCreateFramebuffer(device(), &framebufferInfo, nullptr, &_buffer));
+  MI_VERIFY_VK_RESULT(vkCreateFramebuffer(device(), &framebufferInfo, nullptr, &_buffer));
 }
 
 void Framebuffer::destroy() {
@@ -93,4 +93,4 @@ const Image& Framebuffer::colorBuffer() const {
   return _colorAttachment.lock()->image();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

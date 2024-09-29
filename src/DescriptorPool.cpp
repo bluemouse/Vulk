@@ -8,7 +8,7 @@
 
 #include <utility>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 DescriptorPool::DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets) {
   create(layout, maxSets);
@@ -42,7 +42,7 @@ void DescriptorPool::create(const Device& device,
   poolInfo.pPoolSizes    = poolSizes.data();
   poolInfo.maxSets       = maxSets;
 
-  MI_VERIFY_VKCMD(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_pool));
+  MI_VERIFY_VK_RESULT(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_pool));
 }
 
 void DescriptorPool::create(const DescriptorSetLayout& layout, uint32_t maxSets) {
@@ -59,7 +59,7 @@ void DescriptorPool::destroy() {
 }
 
 void DescriptorPool::reset() {
-  MI_VERIFY_VKCMD(vkResetDescriptorPool(device(), _pool, 0));
+  MI_VERIFY_VK_RESULT(vkResetDescriptorPool(device(), _pool, 0));
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

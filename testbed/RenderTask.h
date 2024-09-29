@@ -17,7 +17,7 @@
 #include <Vulk/VertexBuffer.h>
 #include <Vulk/IndexBuffer.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 //
 //
@@ -144,4 +144,4 @@ class PresentTask : public RenderTask {
 };
 
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

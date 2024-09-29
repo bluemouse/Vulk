@@ -3,7 +3,7 @@
 #include <Vulk/Instance.h>
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Surface::Surface(const Instance& instance, VkSurfaceKHR surface) {
   create(instance, surface);
@@ -63,4 +63,4 @@ bool Surface::isAdequate(VkPhysicalDevice physicalDevice) const {
   return !supports.formats.empty() && !supports.presentModes.empty();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -24,7 +24,7 @@ struct Initializer {
 static Initializer init;
 }
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Instance::Instance(
     const ApplicationInfoOverride& appInfoOverride,
@@ -89,11 +89,11 @@ void Instance::create(
     createInfo.pNext = &debugCreateInfo;
   }
 
-  MI_VERIFY_VKCMD(vkCreateInstance(&createInfo, nullptr, &_instance));
+  MI_VERIFY_VK_RESULT(vkCreateInstance(&createInfo, nullptr, &_instance));
   volkLoadInstanceOnly(_instance);
 
   if (debugUtilsMessengerCreateInfoOverride) {
-    MI_VERIFY_VKCMD(
+    MI_VERIFY_VK_RESULT(
         vkCreateDebugUtilsMessengerEXT(_instance, &debugCreateInfo, nullptr, &_debugMessenger));
   }
 }
@@ -255,4 +255,4 @@ Instance::VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
   return instance->_validationCallback(messageSeverity, messageType, pCallbackData);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

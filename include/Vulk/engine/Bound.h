@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <array>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 template <typename T>
 class Bound {
@@ -179,4 +179,4 @@ void Bound<T>::expandPlanarSide(value_type padding) {
   }
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

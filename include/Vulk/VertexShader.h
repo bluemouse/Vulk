@@ -8,7 +8,7 @@
 
 #include <Vulk/ShaderModule.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class VertexShader : public ShaderModule {
  public:
@@ -48,4 +48,4 @@ class VertexShader : public ShaderModule {
   MI_DEFINE_SHARED_PTR(VertexShader, ShaderModule);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

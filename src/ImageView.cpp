@@ -7,7 +7,7 @@
 #include <Vulk/Image2D.h>
 #include <Vulk/DepthImage.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 ImageView::ImageView(const Device& device,
                      const Image2D& image,
@@ -69,7 +69,7 @@ void ImageView::create(const Device& device,
     createInfoOverride(viewInfo);
   }
 
-  MI_VERIFY_VKCMD(vkCreateImageView(device, &viewInfo, nullptr, &_view));
+  MI_VERIFY_VK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, &_view));
 }
 
 void ImageView::destroy() {
@@ -81,4 +81,4 @@ void ImageView::destroy() {
   _image.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

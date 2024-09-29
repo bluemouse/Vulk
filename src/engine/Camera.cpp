@@ -19,7 +19,7 @@ DEFINE_OSTREAM_GLM_TYPE(vec3);
 DEFINE_OSTREAM_GLM_TYPE(vec4);
 DEFINE_OSTREAM_GLM_TYPE(mat4);
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 void Camera::update() {
   _world2View = glm::lookAt(_eye, _lookAt, _up);
@@ -209,4 +209,4 @@ void FlatCamera::zoom(float scale) {
   update();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

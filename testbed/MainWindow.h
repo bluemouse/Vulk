@@ -6,11 +6,11 @@
 
 #include <vector>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)
 
 class GLFWwindow;
 

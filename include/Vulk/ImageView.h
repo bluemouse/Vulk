@@ -7,7 +7,7 @@
 
 #include <Vulk/internal/base.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class Image;
@@ -57,4 +57,4 @@ class ImageView : public Sharable<ImageView>, private NotCopyable {
   std::weak_ptr<const Image> _image;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

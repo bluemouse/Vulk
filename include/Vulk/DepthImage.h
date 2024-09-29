@@ -6,7 +6,7 @@
 
 #include <Vulk/Image.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -65,4 +65,4 @@ class DepthImage : public Image {
   VkFormat _format = VK_FORMAT_UNDEFINED;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

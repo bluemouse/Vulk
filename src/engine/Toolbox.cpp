@@ -11,7 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Toolbox::Toolbox(const Context& context) : _context(context) {
 }
@@ -88,4 +88,4 @@ StagingBuffer::shared_ptr Toolbox::createStagingBuffer(const uint8_t* data, uint
   return StagingBuffer::make_shared(_context.device(), size, data);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

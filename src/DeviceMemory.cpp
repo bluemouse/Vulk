@@ -6,7 +6,7 @@
 #include <Vulk/PhysicalDevice.h>
 #include <Vulk/Exception.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 DeviceMemory::DeviceMemory(const Device& device,
                            VkMemoryPropertyFlags properties,
@@ -32,7 +32,7 @@ void DeviceMemory::allocate(const Device& device,
   allocInfo.allocationSize  = requirements.size;
   allocInfo.memoryTypeIndex = findMemoryType(requirements.memoryTypeBits, properties);
 
-  MI_VERIFY_VKCMD(vkAllocateMemory(device, &allocInfo, nullptr, &_memory));
+  MI_VERIFY_VK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, &_memory));
 
   _hostVisible = (properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0;
 }
@@ -78,4 +78,4 @@ uint32_t DeviceMemory::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
   throw Exception{VK_ERROR_UNKNOWN, "Failed to find suitable memory type."};
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

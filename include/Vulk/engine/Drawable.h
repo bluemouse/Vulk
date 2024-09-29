@@ -8,7 +8,7 @@
 
 #include <vector>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 template <typename Vertex, typename Index>
 class Drawable {
@@ -55,4 +55,4 @@ inline void Drawable<V, I>::destroy() {
   _numIndices = 0;
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

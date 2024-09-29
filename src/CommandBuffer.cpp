@@ -12,7 +12,7 @@
 #include <Vulk/IndexBuffer.h>
 #include <Vulk/DescriptorSet.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 CommandBuffer::CommandBuffer(const CommandPool& commandPool, Level level) {
   allocate(commandPool, level);
@@ -38,7 +38,7 @@ void CommandBuffer::allocate(const CommandPool& commandPool, Level level) {
   allocInfo.level              = static_cast<VkCommandBufferLevel>(level);
   allocInfo.commandBufferCount = 1;
 
-  MI_VERIFY_VKCMD(vkAllocateCommandBuffers(commandPool.device(), &allocInfo, &_buffer));
+  MI_VERIFY_VK_RESULT(vkAllocateCommandBuffers(commandPool.device(), &allocInfo, &_buffer));
 }
 
 void CommandBuffer::reset() {
@@ -66,11 +66,11 @@ void CommandBuffer::beginRecording(Usage usage) const {
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
 
-  MI_VERIFY_VKCMD(vkBeginCommandBuffer(_buffer, &beginInfo));
+  MI_VERIFY_VK_RESULT(vkBeginCommandBuffer(_buffer, &beginInfo));
 }
 
 void CommandBuffer::endRecording() const {
-  MI_VERIFY_VKCMD(vkEndCommandBuffer(_buffer));
+  MI_VERIFY_VK_RESULT(vkEndCommandBuffer(_buffer));
 }
 
 void CommandBuffer::beginRenderPass(const RenderPass& renderPass,
@@ -193,4 +193,4 @@ auto CommandBuffer::scopedLabel(const char*, const glm::vec4&) const
 
 #endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

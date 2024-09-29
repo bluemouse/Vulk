@@ -9,7 +9,7 @@
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/Buffer.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -64,4 +64,4 @@ inline void VertexBuffer::create(const Device& device,
   load(queue, stagingCommandBuffer, vertices.data(), size);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

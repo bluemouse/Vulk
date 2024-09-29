@@ -1,6 +1,6 @@
 #include <Vulk/IndexBuffer.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 IndexBuffer::IndexBuffer(const Device& device, VkDeviceSize size, bool hostVisible) {
   create(device, size, hostVisible);
@@ -20,4 +20,4 @@ void IndexBuffer::create(const Device& device, VkDeviceSize size, bool hostVisib
   Buffer::allocate(properties);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

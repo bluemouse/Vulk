@@ -7,14 +7,14 @@
 // Defined in CMakeLists.txt:GLM_FORCE_DEPTH_ZERO_TO_ONE, GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 template <typename T>
 struct ImageTrait {
   static constexpr VkFormat format    = VK_FORMAT_UNDEFINED;
   static constexpr uint32_t size      = 0;
   static constexpr uint32_t dimension = 0;
-}; // NAMESPACE_BEGIN(Vulk)
+}; // MI_NAMESPACE_BEGIN(Vulk)
 template <>
 struct ImageTrait<float> {
   [[maybe_unused]] static constexpr VkFormat format    = VK_FORMAT_R32_SFLOAT;
@@ -62,7 +62,7 @@ struct FormatInfo {
   static uint32_t size(VkFormat format);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)
 
 #define formatof(var) Vulk::ImageTrait<decltype(var)>::format
 #define formatsizeof(format) Vulk::FormatInfo::size(format)

@@ -10,7 +10,7 @@
 #include <Vulk/VertexShader.h>
 #include <Vulk/FragmentShader.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Pipeline::Pipeline(const Device &device,
                    const RenderPass &renderPass,
@@ -125,7 +125,7 @@ void Pipeline::create(const Device &device,
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts    = *_descriptorSetLayout;
 
-  MI_VERIFY_VKCMD(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &_layout));
+  MI_VERIFY_VK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &_layout));
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
   pipelineInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -146,7 +146,7 @@ void Pipeline::create(const Device &device,
   pipelineInfo.subpass            = 0;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-  MI_VERIFY_VKCMD(
+  MI_VERIFY_VK_RESULT(
       vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline));
 }
 
@@ -160,4 +160,4 @@ void Pipeline::destroy() {
   _device.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

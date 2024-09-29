@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 UniformBuffer::UniformBuffer(const Device& device, VkDeviceSize size) {
   create(device, size);
@@ -13,4 +13,4 @@ void UniformBuffer::create(const Device& device, VkDeviceSize size) {
   Buffer::allocate(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -12,7 +12,7 @@
 #include <Vulk/Fence.h>
 #include <Vulk/Semaphore.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class CommandBuffer;
 
@@ -62,4 +62,4 @@ class Queue : public Sharable<Queue>, private NotCopyable {
   std::weak_ptr<const Device> _device;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

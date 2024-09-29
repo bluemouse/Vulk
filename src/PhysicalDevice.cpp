@@ -9,7 +9,7 @@
 #include <Vulk/Surface.h>
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 PhysicalDevice::PhysicalDevice(
     const Instance& instance,
@@ -99,7 +99,7 @@ void PhysicalDevice::instantiate(
     }
   }
 
-  MI_VERIFY_VKHANDLE(_device);
+  MI_VERIFY_VK_HANDLE(_device);
 }
 
 void PhysicalDevice::reset() {
@@ -187,4 +187,4 @@ bool PhysicalDevice::isFormatSupported(VkFormat format,
   return format == findSupportedFormat({format}, tiling, features);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

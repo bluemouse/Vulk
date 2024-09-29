@@ -4,10 +4,10 @@
 
 #include <memory>
 
-#define NAMESPACE_BEGIN(name) namespace name {
-#define NAMESPACE_END(name) }
+#define MI_NAMESPACE_BEGIN(name) namespace name {
+#define MI_NAMESPACE_END(name) }
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class NotCopyable {
  public:
@@ -74,4 +74,4 @@ class Sharable : public std::enable_shared_from_this<T> {
     return std::static_pointer_cast<const type>(base::get_shared()); \
   }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

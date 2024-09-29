@@ -7,7 +7,7 @@
 #include <Vulk/internal/base.h>
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class CommandBuffer;
 class Queue;
@@ -56,4 +56,4 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
   std::weak_ptr<const Queue> _queue;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -6,7 +6,7 @@
 
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Image2D::Image2D(const Device& device,
                  VkFormat format,
@@ -90,4 +90,4 @@ void Image2D::free() {
   Image::free();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

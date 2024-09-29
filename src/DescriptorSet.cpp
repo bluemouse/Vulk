@@ -5,7 +5,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 DescriptorSet::DescriptorSet(const DescriptorPool& pool, const DescriptorSetLayout& layout) {
   allocate(pool, layout);
@@ -36,7 +36,7 @@ void DescriptorSet::allocate(const DescriptorPool& pool, const DescriptorSetLayo
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts        = layout;
 
-  MI_VERIFY_VKCMD(vkAllocateDescriptorSets(pool.device(), &allocInfo, &_set));
+  MI_VERIFY_VK_RESULT(vkAllocateDescriptorSets(pool.device(), &allocInfo, &_set));
 }
 
 void DescriptorSet::free() {
@@ -89,4 +89,4 @@ void DescriptorSet::bind(const std::vector<Binding>& bindings) const {
   vkUpdateDescriptorSets(pool->device(), writes.size(), writes.data(), 0, nullptr);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

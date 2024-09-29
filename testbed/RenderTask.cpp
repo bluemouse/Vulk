@@ -24,7 +24,7 @@ std::filesystem::path executablePath() {
 #endif
 } // namespace
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 RenderTask::RenderTask(const Vulk::Context& context) : _context(context) {
   const auto& commandPool = _context.commandPool(Device::QueueFamilyType::Graphics);
@@ -251,4 +251,4 @@ void PresentTask::run() {
   _context.swapchain().present(_waits);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

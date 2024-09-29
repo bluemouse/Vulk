@@ -202,7 +202,7 @@ std::vector<char> readFile(const std::string& filename) {
 }
 } // namespace
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 ShaderModule::ShaderModule(const Device& device, const std::vector<char>& codes, bool reflection) {
   create(device, codes, reflection);
@@ -232,7 +232,7 @@ void ShaderModule::create(const Device& device, const std::vector<char>& codes, 
   createInfo.codeSize = codes.size();
   createInfo.pCode    = reinterpret_cast<const uint32_t*>(codes.data());
 
-  MI_VERIFY_VKCMD(vkCreateShaderModule(device, &createInfo, nullptr, &_shader));
+  MI_VERIFY_VK_RESULT(vkCreateShaderModule(device, &createInfo, nullptr, &_shader));
 }
 
 void ShaderModule::create(const Device& device, const char* shaderFile, bool reflection) {
@@ -399,4 +399,4 @@ void ShaderModule::disablePrintReflection() {
   gEnablePrintReflection = false;
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -7,7 +7,7 @@
 
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 DepthImage::DepthImage(const Device& device,
                        VkExtent2D extent,
@@ -104,4 +104,4 @@ bool DepthImage::hasStencilBits() const {
          _format == VK_FORMAT_D24_UNORM_S8_UINT || _format == VK_FORMAT_D32_SFLOAT_S8_UINT;
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

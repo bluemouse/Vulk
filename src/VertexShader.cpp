@@ -2,7 +2,7 @@
 
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 void VertexShader::addVertexInputBinding(uint32_t binding,
                                          uint32_t stride,
@@ -35,4 +35,4 @@ void VertexShader::addDescriptorSetLayoutBinding(const std::string& name,
       name, type, binding, descriptorType, VK_SHADER_STAGE_VERTEX_BIT);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

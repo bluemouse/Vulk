@@ -8,7 +8,7 @@
 #include <vector>
 #include <algorithm>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 DescriptorSetLayout::DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders) {
   create(device, std::move(shaders));
@@ -68,7 +68,7 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
   layoutInfo.bindingCount = static_cast<uint32_t>(vkBindings.size());
   layoutInfo.pBindings    = vkBindings.data();
 
-  MI_VERIFY_VKCMD(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &_layout));
+  MI_VERIFY_VK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &_layout));
 }
 
 void DescriptorSetLayout::destroy() {
@@ -81,4 +81,4 @@ void DescriptorSetLayout::destroy() {
   _device.reset();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

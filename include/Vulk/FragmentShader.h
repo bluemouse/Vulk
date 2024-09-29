@@ -6,7 +6,7 @@
 
 #include <Vulk/ShaderModule.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class FragmentShader : public ShaderModule {
  public:
@@ -24,4 +24,4 @@ class FragmentShader : public ShaderModule {
   MI_DEFINE_SHARED_PTR(FragmentShader, ShaderModule);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

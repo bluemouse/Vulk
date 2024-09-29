@@ -9,7 +9,7 @@
 
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 StagingBuffer::StagingBuffer(const Device& device, VkDeviceSize size, const void* data) {
   create(device, size);
@@ -83,4 +83,4 @@ void StagingBuffer::copyToImage(const Queue& queue,
               waitForFinish);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

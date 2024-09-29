@@ -3,7 +3,7 @@
 #include <Vulk/Device.h>
 #include <Vulk/Queue.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Texture2D::Texture2D(const Device& device,
                      VkFormat format,
@@ -66,4 +66,4 @@ void Texture2D::blitFrom(const Queue& queue,
   blitFrom(queue, cmdBuffer, srcTexture.image());
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

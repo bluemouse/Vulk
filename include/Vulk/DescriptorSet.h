@@ -8,7 +8,7 @@
 
 #include <Vulk/internal/base.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class DescriptorPool;
 class DescriptorSetLayout;
@@ -55,4 +55,4 @@ class DescriptorSet : public Sharable<DescriptorSet>, private NotCopyable {
   std::weak_ptr<const DescriptorPool> _pool;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -9,7 +9,7 @@
 #include <Vulk/Buffer.h>
 #include <Vulk/engine/TypeTraits.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class CommandBuffer;
@@ -71,4 +71,4 @@ inline void IndexBuffer::create(const Device& device,
   load(queue, stagingCommandBuffer, indices.data(), size);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

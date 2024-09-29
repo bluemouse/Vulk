@@ -6,7 +6,7 @@
 #include <Vulk/Swapchain.h>
 #include <Vulk/Device.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Context {
  public:
@@ -84,4 +84,4 @@ class Context {
   Vulk::Swapchain::shared_ptr _swapchain;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

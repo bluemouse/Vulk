@@ -10,7 +10,7 @@
 
 struct SpvReflectShaderModule;
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -89,4 +89,4 @@ class ShaderModule : public Sharable<ShaderModule>, private NotCopyable {
   std::weak_ptr<const Device> _device;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

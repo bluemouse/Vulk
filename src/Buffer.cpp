@@ -9,7 +9,7 @@
 #include <Vulk/StagingBuffer.h>
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 Buffer::Buffer(const Device& device,
                VkDeviceSize size,
@@ -55,7 +55,7 @@ void Buffer::create(const Device& device,
     override(&bufferInfo);
   }
 
-  MI_VERIFY_VKCMD(vkCreateBuffer(device, &bufferInfo, nullptr, &_buffer));
+  MI_VERIFY_VK_RESULT(vkCreateBuffer(device, &bufferInfo, nullptr, &_buffer));
 }
 
 void Buffer::destroy() {
@@ -141,4 +141,4 @@ bool Buffer::isMapped() const {
   return isAllocated() && _memory->isMapped();
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

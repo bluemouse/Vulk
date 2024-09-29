@@ -6,7 +6,7 @@
 
 #include <Vulk/internal/debug.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 CommandPool::CommandPool(const Device& device,
                          Device::QueueFamilyType queueFamilyType,
@@ -35,7 +35,7 @@ void CommandPool::create(const Device& device,
   poolInfo.flags            = static_cast<VkCommandPoolCreateFlags>(modes);
   poolInfo.queueFamilyIndex = queue.queueFamilyIndex();
 
-  MI_VERIFY_VKCMD(vkCreateCommandPool(device, &poolInfo, nullptr, &_pool));
+  MI_VERIFY_VK_RESULT(vkCreateCommandPool(device, &poolInfo, nullptr, &_pool));
 }
 
 void CommandPool::destroy() {
@@ -61,4 +61,4 @@ std::shared_ptr<CommandBuffer> CommandPool::allocateSecondary() const {
   return CommandBuffer::make_shared(*this, CommandBuffer::Level::Secondary);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

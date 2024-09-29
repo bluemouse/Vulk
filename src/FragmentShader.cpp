@@ -1,6 +1,6 @@
 #include <Vulk/FragmentShader.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 void FragmentShader::addDescriptorSetLayoutBinding(const std::string& name,
                                                    const std::string& type,
@@ -10,4 +10,4 @@ void FragmentShader::addDescriptorSetLayoutBinding(const std::string& name,
       name, type, binding, descriptorType, VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

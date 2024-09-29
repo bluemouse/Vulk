@@ -8,7 +8,7 @@
 #include <Vulk/ImageView.h>
 #include <Vulk/Sampler.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class Queue;
@@ -85,4 +85,4 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   Sampler::shared_ptr _sampler;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -14,7 +14,7 @@
 #include <Vulk/Semaphore.h>
 #include <Vulk/Fence.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 class PhysicalDevice;
@@ -114,4 +114,4 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
   mutable bool _requiredRecreate = false;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -7,7 +7,7 @@
 #include <Vulk/DeviceMemory.h>
 #include <Vulk/Buffer.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
 
@@ -23,4 +23,4 @@ class UniformBuffer : public Buffer {
   MI_DEFINE_SHARED_PTR(UniformBuffer, Buffer);
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

@@ -11,7 +11,7 @@
 #include <Vulk/internal/base.h>
 #include <Vulk/PhysicalDevice.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 class Queue;
@@ -73,4 +73,4 @@ class Device : public Sharable<Device>, private NotCopyable {
   std::weak_ptr<const PhysicalDevice> _physicalDevice;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

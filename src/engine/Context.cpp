@@ -33,7 +33,7 @@ VkPresentModeKHR chooseDefaultPresentMode(
 }
 } // namespace
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 void Context::create(const CreateInfo& createInfo) {
   createInstance(createInfo.versionMajor,
@@ -123,4 +123,4 @@ const CommandPool& Context::commandPool(Device::QueueFamilyType queueFamily) con
   return _device->commandPool(queueFamily);
 }
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

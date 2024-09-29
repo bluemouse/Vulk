@@ -9,7 +9,7 @@
 
 #include <Vulk/internal/base.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Instance;
 class Surface;
@@ -83,4 +83,4 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
   std::weak_ptr<const Instance> _instance;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)

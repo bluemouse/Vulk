@@ -9,7 +9,7 @@
 
 #include <Vulk/PhysicalDevice.h>
 
-NAMESPACE_BEGIN(Vulk)
+MI_NAMESPACE_BEGIN(Vulk)
 
 class Surface;
 
@@ -91,4 +91,4 @@ class Instance : public Sharable<Instance>, private NotCopyable {
   ValidationCallback _validationCallback;
 };
 
-NAMESPACE_END(Vulk)
+MI_NAMESPACE_END(Vulk)
