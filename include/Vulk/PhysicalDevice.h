@@ -20,11 +20,19 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
   struct QueueFamilies {
     std::optional<uint32_t> graphics;
     std::optional<uint32_t> compute;
+    std::optional<uint32_t> graphicsAndCompute;
     std::optional<uint32_t> transfer;
     std::optional<uint32_t> present;
 
+    bool hasGraphics() const { return graphics.has_value(); }
+    bool hasCompute() const { return compute.has_value(); }
+    bool hasGraphicsAndCompute() const { return graphicsAndCompute.has_value(); }
+    bool hasTransfer() const { return transfer.has_value(); }
+    bool hasPresent() const { return present.has_value(); }
+
     uint32_t graphicsIndex() const { return graphics.value(); }
     uint32_t computeIndex() const { return compute.value(); }
+    uint32_t graphicsAndComputeIndex() const { return graphicsAndCompute.value(); }
     uint32_t transferIndex() const { return transfer.value(); }
     uint32_t presentIndex() const { return present.value(); }
   };
@@ -63,9 +71,6 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
 
   [[nodiscard]] const Instance& instance() const { return *_instance.lock(); }
 
-  [[nodiscard]] static QueueFamilies findQueueFamilies(VkPhysicalDevice device,
-                                                       VkSurfaceKHR surface = VK_NULL_HANDLE);
-
   [[nodiscard]] bool isInstantiated() const { return _device != VK_NULL_HANDLE; }
 
   VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
@@ -75,6 +80,10 @@ class PhysicalDevice : public Sharable<PhysicalDevice>, private NotCopyable {
   bool isFormatSupported(VkFormat format,
                          VkImageTiling tiling,
                          VkFormatFeatureFlags features) const;
+
+private:
+  [[nodiscard]] static QueueFamilies findQueueFamilies(VkPhysicalDevice device,
+                                                       VkSurfaceKHR surface = VK_NULL_HANDLE);
 
  private:
   VkPhysicalDevice _device = VK_NULL_HANDLE;

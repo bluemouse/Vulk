@@ -121,6 +121,16 @@ void PhysicalDevice::initQueueFamilies() {
   _queueFamilies = findQueueFamilies(_device, VK_NULL_HANDLE);
 }
 
+namespace {
+  struct QueueFlags {
+    QueueFlags(VkQueueFlags flags) : _flags(flags) {}
+    bool contain(VkQueueFlags required) {
+      return (_flags & required) == required;
+    }
+  private:
+    VkQueueFlags _flags;
+  };
+}
 PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice device,
                                                                 VkSurfaceKHR surface) {
   QueueFamilies queueFamilies;
@@ -132,13 +142,20 @@ PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice
     vkGetPhysicalDeviceQueueFamilyProperties(device, &count, props.data());
 
     for (size_t i = 0; i < props.size(); ++i) {
-      if (!queueFamilies.graphics && ((props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0U)) {
+      QueueFlags queueFlags{props[i].queueFlags};
+      if (!queueFamilies.graphics &&
+          queueFlags.contain(VK_QUEUE_GRAPHICS_BIT) && !queueFlags.contain(VK_QUEUE_COMPUTE_BIT)) {
         queueFamilies.graphics = i;
       }
-      if (!queueFamilies.compute && ((props[i].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0U)) {
+      if (!queueFamilies.compute &&
+          !queueFlags.contain(VK_QUEUE_GRAPHICS_BIT) && queueFlags.contain(VK_QUEUE_COMPUTE_BIT)) {
         queueFamilies.compute = i;
       }
-      if (!queueFamilies.transfer && ((props[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0U)) {
+      if (!queueFamilies.graphicsAndCompute &&
+          queueFlags.contain(VK_QUEUE_GRAPHICS_BIT) && queueFlags.contain(VK_QUEUE_COMPUTE_BIT)) {
+        queueFamilies.graphicsAndCompute = i;
+      }
+      if (!queueFamilies.transfer && queueFlags.contain(VK_QUEUE_TRANSFER_BIT)) {
         queueFamilies.transfer = i;
       }
 
@@ -150,6 +167,13 @@ PhysicalDevice::QueueFamilies PhysicalDevice::findQueueFamilies(VkPhysicalDevice
         }
       }
     }
+  }
+
+  if (!queueFamilies.graphics) {
+    queueFamilies.graphics = queueFamilies.graphicsAndCompute;
+  }
+  if (!queueFamilies.compute) {
+    queueFamilies.compute = queueFamilies.graphicsAndCompute;
   }
 
   return queueFamilies;
