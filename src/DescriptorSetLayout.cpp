@@ -10,8 +10,17 @@
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-DescriptorSetLayout::DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders) {
+DescriptorSetLayout::DescriptorSetLayout(const Device& device, std::vector<const ShaderModule*> shaders) {
   create(device, std::move(shaders));
+}
+
+DescriptorSetLayout::DescriptorSetLayout(const Device& device,
+                                         const VertexShader& vertShader,
+                                         const FragmentShader& fragShader) {
+  create(device, vertShader, fragShader);
+}
+DescriptorSetLayout::DescriptorSetLayout(const Device& device, const ComputeShader& compShader) {
+  create(device, compShader);
 }
 
 DescriptorSetLayout::~DescriptorSetLayout() {
@@ -20,7 +29,7 @@ DescriptorSetLayout::~DescriptorSetLayout() {
   }
 }
 
-void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*> shaders) {
+void DescriptorSetLayout::create(const Device& device, std::vector<const ShaderModule*> shaders) {
   MI_VERIFY(!isCreated());
   _device = device.get_weak();
 
@@ -45,7 +54,7 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
   // Make sure there is no duplicate bindings
   std::unique(std::begin(_bindings), std::end(_bindings));
 
-  // TODO Should we verify that there is no mutiple types in one the bindings?
+  // TODO Should we verify that there is no mutiple types in the bindings?
 
   std::map<VkDescriptorType, int> typeCounts;
   for (const auto& layoutBinding : _bindings) {
@@ -69,6 +78,16 @@ void DescriptorSetLayout::create(const Device& device, std::vector<ShaderModule*
   layoutInfo.pBindings    = vkBindings.data();
 
   MI_VERIFY_VK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &_layout));
+}
+
+void DescriptorSetLayout::create(const Device& device,
+                                 const VertexShader& vertShader,
+                                 const FragmentShader& fragShader) {
+  create(device,
+         std::vector<const ShaderModule*>{(ShaderModule*)&vertShader, (ShaderModule*)&fragShader});
+}
+void DescriptorSetLayout::create(const Device& device, const ComputeShader& compShader) {
+  create(device, std::vector<const ShaderModule*>{(ShaderModule*)&compShader});
 }
 
 void DescriptorSetLayout::destroy() {

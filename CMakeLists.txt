@@ -41,6 +41,7 @@ set(SRC_FILES
     src/ShaderModule.cpp
     src/VertexShader.cpp
     src/FragmentShader.cpp
+    src/ComputeShader.cpp
     src/Pipeline.cpp
     src/Queue.cpp
     src/CommandPool.cpp
@@ -87,6 +88,7 @@ set(HEADER_FILES
     include/Vulk/ShaderModule.h
     include/Vulk/VertexShader.h
     include/Vulk/FragmentShader.h
+    include/Vulk/ComputeShader.h
     include/Vulk/Pipeline.h
     include/Vulk/Queue.h
     include/Vulk/CommandPool.h

@@ -16,6 +16,7 @@ class Device;
 class RenderPass;
 class VertexShader;
 class FragmentShader;
+class ComputeShader;
 
 class Pipeline : public Sharable<Pipeline>, private NotCopyable {
  public:
@@ -29,6 +30,7 @@ class Pipeline : public Sharable<Pipeline>, private NotCopyable {
               const RenderPass& renderPass,
               const VertexShader& vertShader,
               const FragmentShader& fragShader);
+  void create(const Device& device, const ComputeShader& compShader);
   void destroy();
 
   operator VkPipeline() const { return _pipeline; }

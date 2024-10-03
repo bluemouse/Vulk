@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     )
     (
       "c,continuous-update",
-      "Continuous rendering update even when there is UI events",
+      "Continuous rendering update even when there is no UI events",
       cxxopts::value<bool>()->default_value("false")
     )
     (

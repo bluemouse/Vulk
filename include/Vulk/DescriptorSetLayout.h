@@ -12,16 +12,24 @@
 MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
+class VertexShader;
+class FragmentShader;
+class ComputeShader;
 
 class DescriptorSetLayout : public Sharable<DescriptorSetLayout>, private NotCopyable {
  public:
   using DescriptorSetLayoutBinding = ShaderModule::DescriptorSetLayoutBinding;
 
  public:
-  DescriptorSetLayout(const Device& device, std::vector<ShaderModule*> shaders);
+  DescriptorSetLayout() = default;
+  DescriptorSetLayout(const Device& device, std::vector<const ShaderModule*> shaders);
+  DescriptorSetLayout(const Device& device, const VertexShader& vertShader, const FragmentShader& fragShader);
+  DescriptorSetLayout(const Device& device, const ComputeShader& compShader);
   ~DescriptorSetLayout();
 
-  void create(const Device& device, std::vector<ShaderModule*> shaders);
+  void create(const Device& device, std::vector<const ShaderModule*> shaders);
+  void create(const Device& device, const VertexShader& vertShader, const FragmentShader& fragShader);
+  void create(const Device& device, const ComputeShader& compShader);
   void destroy();
 
   operator VkDescriptorSetLayout() const { return _layout; }

@@ -9,6 +9,7 @@
 #include <Vulk/ShaderModule.h>
 #include <Vulk/VertexShader.h>
 #include <Vulk/FragmentShader.h>
+#include <Vulk/ComputeShader.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
@@ -116,9 +117,7 @@ void Pipeline::create(const Device &device,
   dynamicState.pDynamicStates    = dynamicStates.data();
 
   MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
-  _descriptorSetLayout = DescriptorSetLayout::make_shared(
-      device,
-      std::vector<ShaderModule *>{(ShaderModule *)&vertShader, (ShaderModule *)&fragShader});
+  _descriptorSetLayout = DescriptorSetLayout::make_shared(device, vertShader, fragShader);
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -148,6 +147,35 @@ void Pipeline::create(const Device &device,
 
   MI_VERIFY_VK_RESULT(
       vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline));
+}
+
+void Pipeline::create(const Device &device, const ComputeShader &compShader) {
+  MI_VERIFY(!isCreated());
+  _device = device.get_weak();
+
+  VkPipelineShaderStageCreateInfo compShaderStageInfo{};
+  compShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  compShaderStageInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
+  compShaderStageInfo.module = compShader;
+  compShaderStageInfo.pName  = compShader.entry();
+
+   MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
+   _descriptorSetLayout = DescriptorSetLayout::make_shared(device, compShader);
+
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts    = *_descriptorSetLayout;
+
+  MI_VERIFY_VK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &_layout));
+
+  VkComputePipelineCreateInfo pipelineInfo{};
+  pipelineInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+  pipelineInfo.stage  = compShaderStageInfo;
+  pipelineInfo.layout = _layout;
+
+  MI_VERIFY_VK_RESULT(
+      vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline));
 }
 
 void Pipeline::destroy() {
