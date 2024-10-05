@@ -230,10 +230,11 @@ void Instance::initDefaultValidationCallback() {
 
     std::string message = std::string{"Vulkan ["} + type + " " + severity + "]: " + data->pMessage;
     if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-      throw std::runtime_error(message);
+      std::cerr << message << std::endl;
+      // throw std::runtime_error(message);
+    } else {
+      std::cerr << message << std::endl;
     }
-
-    std::cerr << message << std::endl;
     return VK_FALSE;
   };
 }

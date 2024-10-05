@@ -62,15 +62,29 @@ void CommandBuffer::recordCommands(const Recorder& recorder, Usage usage) const 
 }
 
 void CommandBuffer::beginRecording(Usage usage) const {
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
+  if (_recordingStack == 0) {
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
 
-  MI_VERIFY_VK_RESULT(vkBeginCommandBuffer(_buffer, &beginInfo));
+    MI_VERIFY_VK_RESULT(vkBeginCommandBuffer(_buffer, &beginInfo));
+  }
+  _recordingStack++;
 }
 
 void CommandBuffer::endRecording() const {
-  MI_VERIFY_VK_RESULT(vkEndCommandBuffer(_buffer));
+  _recordingStack--;
+  if (_recordingStack == 0) {
+    MI_VERIFY_VK_RESULT(vkEndCommandBuffer(_buffer));
+  }
+}
+
+void CommandBuffer::submitCommands(const std::vector<Semaphore*>& waits,
+                                   const std::vector<Semaphore*>& signals,
+                                   const Fence& fence) const {
+  if (_recordingStack == 0) {
+    queue().submitCommands(*this, waits, signals, fence);
+  }
 }
 
 void CommandBuffer::beginRenderPass(const RenderPass& renderPass,

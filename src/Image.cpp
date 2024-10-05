@@ -47,7 +47,9 @@ bool isLayoutReadOnly(VkImageLayout layout) {
   return readOnlyLayouts.find(layout) != std::end(readOnlyLayouts);
 }
 
-void selectStageAccess(VkImageLayout layout, VkPipelineStageFlags& stage, VkAccessFlags& access) {
+std::pair<VkPipelineStageFlags, VkAccessFlags> selectStageAccess(VkImageLayout layout) {
+  VkPipelineStageFlags stage;
+  VkAccessFlags access;
   switch (layout) {
     case VK_IMAGE_LAYOUT_UNDEFINED:
       stage  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -89,6 +91,7 @@ void selectStageAccess(VkImageLayout layout, VkPipelineStageFlags& stage, VkAcce
       break;
     default: throw std::invalid_argument("Unsupported image layout!");
   }
+  return {stage, access};
 }
 } // namespace
 
@@ -170,28 +173,36 @@ void Image::unmap() {
   _memory->unmap();
 }
 
-void Image::copyFrom(const Queue& queue,
-                     const CommandBuffer& commandBuffer,
-                     const StagingBuffer& stagingBuffer) {
-  transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  stagingBuffer.copyToImage(queue, commandBuffer, *this, width(), height());
+void Image::copyFrom(const CommandBuffer& commandBuffer,
+                     const StagingBuffer& stagingBuffer,
+                     const std::vector<Semaphore*>& waits,
+                     const std::vector<Semaphore*>& signals,
+                     const Fence& fence) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    stagingBuffer.copyToImage(commandBuffer, *this, width(), height(), waits, signals, fence);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
 // copy the image data from `srcImage` to this image
-void Image::copyFrom(const Queue& queue,
-                     const CommandBuffer& commandBuffer,
-                     const Image& srcImage) {
-  // TODO should we execute transit and copy in one command buffer execution?
+void Image::copyFrom(const CommandBuffer& commandBuffer,
+                     const Image& srcImage,
+                     const std::vector<Semaphore*>& waits,
+                     const std::vector<Semaphore*>& signals,
+                     const Fence& fence) {
 
   auto& dstImage = *this;
   MI_VERIFY(srcImage.extent() == dstImage.extent());
-
-  dstImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
   auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  auto commands = [&srcImage, &dstImage](const CommandBuffer& commandBuffer) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    dstImage.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    srcImage.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -211,30 +222,27 @@ void Image::copyFrom(const Queue& queue,
     copyRegion.extent    = {srcImage.width(), srcImage.height(), srcImage.depth()};
 
     vkCmdCopyImage(commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &copyRegion);
-  };
-  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
-  queue.submitCommands(commandBuffer);
-
-  queue.waitIdle();
-
-  srcImage.transitToNewLayout(queue, commandBuffer, prevSrcLayout);
+    srcImage.transitToNewLayout(commandBuffer, prevSrcLayout);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
 // blit the image data from `srcImage` to this image
-void Image::blitFrom(const Queue& queue,
-                     const CommandBuffer& commandBuffer,
-                     const Image& srcImage) {
-  // TODO should we execute transit and blit in one command buffer execution?
+void Image::blitFrom(const CommandBuffer& commandBuffer,
+                     const Image& srcImage,
+                     const std::vector<Semaphore*>& waits,
+                     const std::vector<Semaphore*>& signals,
+                     const Fence& fence) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    auto& dstImage = *this;
+    dstImage.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-  auto& dstImage = *this;
+    auto prevSrcLayout = srcImage._layout;
+    srcImage.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  dstImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-  auto prevSrcLayout = srcImage._layout;
-  srcImage.transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-  auto commands = [&srcImage, &dstImage](const CommandBuffer& commandBuffer) {
     const auto& srcLayout = srcImage._layout;
     const auto& dstLayout = dstImage._layout;
 
@@ -259,25 +267,24 @@ void Image::blitFrom(const Queue& queue,
 
     vkCmdBlitImage(
         commandBuffer, srcImage, srcLayout, dstImage, dstLayout, 1, &blit, VK_FILTER_LINEAR);
-  };
-  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
 
-  queue.submitCommands(commandBuffer);
-
-  queue.waitIdle();
-
-  srcImage.transitToNewLayout(queue, commandBuffer, prevSrcLayout);
+    srcImage.transitToNewLayout(commandBuffer, prevSrcLayout);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void Image::transitToNewLayout(const Queue& queue,
-                               const CommandBuffer& commandBuffer,
+void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
                                VkImageLayout newLayout,
-                               bool waitForFinish) const {
+                               const std::vector<Semaphore*>& waits,
+                               const std::vector<Semaphore*>& signals,
+                               const Fence& fence) const{
   if (_layout == newLayout) {
     return;
   }
 
-  auto commands = [this, newLayout](const CommandBuffer& buffer) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
     auto oldLayout = _layout;
 
     VkImageMemoryBarrier barrier{};
@@ -293,28 +300,19 @@ void Image::transitToNewLayout(const Queue& queue,
     barrier.subresourceRange.layerCount     = 1;
     barrier.subresourceRange.aspectMask     = selectAspectMask(newLayout);
 
-    VkPipelineStageFlags srcStage = VK_PIPELINE_STAGE_NONE;
-    selectStageAccess(oldLayout, srcStage, barrier.srcAccessMask);
-    VkPipelineStageFlags dstStage = VK_PIPELINE_STAGE_NONE;
-    selectStageAccess(newLayout, dstStage, barrier.dstAccessMask);
+    auto [srcStage, srcAccess] = selectStageAccess(oldLayout);
+    barrier.srcAccessMask      = srcAccess;
+    auto [dstStage, dstAccess] = selectStageAccess(newLayout);
+    barrier.dstAccessMask      = dstAccess;
 
-    vkCmdPipelineBarrier(buffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  };
-  commandBuffer.recordCommands(commands, CommandBuffer::Usage::OneTimeSubmit);
-
-  queue.submitCommands(commandBuffer);
-
-  if (waitForFinish) {
-    queue.waitIdle();
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
   }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 
   // TODO there could be sync issue here. We should update the layout after the command buffer is
   // executed.
   _layout = newLayout;
-}
-
-void Image::makeShaderReadable(const Queue& queue, const CommandBuffer& commandBuffer) const {
-  transitToNewLayout(queue, commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 VkImageViewType Image::imageViewType() const {

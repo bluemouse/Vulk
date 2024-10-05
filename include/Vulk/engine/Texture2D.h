@@ -23,7 +23,7 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   Texture2D(const Device& device,
             VkFormat format,
             VkExtent2D extent,
-            Image2D::Usage usage = Image2D::Usage::NONE,
+            Image2D::Usage usage    = Image2D::Usage::NONE,
             Filter filter           = {VK_FILTER_LINEAR},
             AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   ~Texture2D() override = default;
@@ -31,18 +31,36 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
-              Image2D::Usage usage = Image2D::Usage::NONE,
+              Image2D::Usage usage    = Image2D::Usage::NONE,
               Filter filter           = {VK_FILTER_LINEAR},
               AddressMode addressMode = {VK_SAMPLER_ADDRESS_MODE_REPEAT});
   void destroy();
 
-  void copyFrom(const Queue& queue,
-                const CommandBuffer& cmdBuffer,
-                const StagingBuffer& stagingBuffer);
-  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);
-  void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
-  void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image2D& srcImage);
-  void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Texture2D& srcTexture);
+  void copyFrom(const CommandBuffer& cmdBuffer,
+                const StagingBuffer& stagingBuffer,
+                const std::vector<Semaphore*>& waits   = {},
+                const std::vector<Semaphore*>& signals = {},
+                const Fence& fence                     = {});
+  void copyFrom(const CommandBuffer& cmdBuffer,
+                const Image2D& srcImage,
+                const std::vector<Semaphore*>& waits   = {},
+                const std::vector<Semaphore*>& signals = {},
+                const Fence& fence                     = {});
+  void copyFrom(const CommandBuffer& cmdBuffer,
+                const Texture2D& srcTexture,
+                const std::vector<Semaphore*>& waits   = {},
+                const std::vector<Semaphore*>& signals = {},
+                const Fence& fence                     = {});
+  void blitFrom(const CommandBuffer& cmdBuffer,
+                const Image2D& srcImage,
+                const std::vector<Semaphore*>& waits   = {},
+                const std::vector<Semaphore*>& signals = {},
+                const Fence& fence                     = {});
+  void blitFrom(const CommandBuffer& cmdBuffer,
+                const Texture2D& srcTexture,
+                const std::vector<Semaphore*>& waits   = {},
+                const std::vector<Semaphore*>& signals = {},
+                const Fence& fence                     = {});
 
   const Image2D& image() const { return *_image; }
   const ImageView& view() const { return *_view; }

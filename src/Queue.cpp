@@ -37,16 +37,17 @@ void Queue::submitCommands(const CommandBuffer& commandBuffer,
   submitInfo.pCommandBuffers    = commandBuffer;
 
   std::vector<VkSemaphore> waitSemaphores;
-  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  std::vector<VkPipelineStageFlags> waitStages;
   if (!waits.empty()) {
     waitSemaphores.reserve(waits.size());
     for (const auto& wait : waits) {
       waitSemaphores.push_back(*wait);
+      waitStages.push_back(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT); // TODO: how about other stages such as VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     }
 
     submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
     submitInfo.pWaitSemaphores    = waitSemaphores.data();
-    submitInfo.pWaitDstStageMask  = static_cast<VkPipelineStageFlags*>(waitStages);
+    submitInfo.pWaitDstStageMask  = waitStages.data();
   }
   std::vector<VkSemaphore> signalSemaphores;
   if (!signals.empty()) {

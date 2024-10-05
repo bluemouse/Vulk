@@ -30,57 +30,56 @@ void StagingBuffer::copyFromHost(const void* src, VkDeviceSize offset, VkDeviceS
   unmap();
 }
 
-void StagingBuffer::copyToBuffer(const Queue& queue,
-                                 const CommandBuffer& commandBuffer,
+void StagingBuffer::copyToBuffer(const CommandBuffer& commandBuffer,
                                  Buffer& dst,
                                  const VkBufferCopy& roi,
-                                 bool waitForFinish) const {
+                                 const std::vector<Semaphore*>& waits,
+                                 const std::vector<Semaphore*>& signals,
+                                 const Fence& fence) const {
   commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
-  vkCmdCopyBuffer(commandBuffer, *this, dst, 1, &roi);
-  commandBuffer.endRecording();
-
-  queue.submitCommands(commandBuffer);
-
-  if (waitForFinish) {
-    queue.waitIdle();
+  {
+    vkCmdCopyBuffer(commandBuffer, *this, dst, 1, &roi);
   }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void StagingBuffer::copyToBuffer(const Queue& queue,
-                                 const CommandBuffer& commandBuffer,
+void StagingBuffer::copyToBuffer(const CommandBuffer& commandBuffer,
                                  Buffer& dst,
                                  VkDeviceSize size,
-                                 bool waitForFinish) const {
-  copyToBuffer(queue, commandBuffer, dst, {0, 0, size}, waitForFinish);
+                                 const std::vector<Semaphore*>& waits,
+                                 const std::vector<Semaphore*>& signals,
+                                 const Fence& fence) const {
+  copyToBuffer(commandBuffer, dst, {0, 0, size}, waits, signals, fence);
 }
 
-void StagingBuffer::copyToImage(const Queue& queue,
-                                const CommandBuffer& commandBuffer,
+void StagingBuffer::copyToImage(const CommandBuffer& commandBuffer,
                                 Image& dst,
                                 const VkBufferImageCopy& roi,
-                                bool waitForFinish) const {
+                                const std::vector<Semaphore*>& waits,
+                                const std::vector<Semaphore*>& signals,
+                                const Fence& fence) const {
   commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
-  vkCmdCopyBufferToImage(commandBuffer, *this, dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &roi);
-  commandBuffer.endRecording();
-
-  queue.submitCommands(commandBuffer);
-
-  if (waitForFinish) {
-    queue.waitIdle();
+  {
+    vkCmdCopyBufferToImage(commandBuffer, *this, dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &roi);
   }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void StagingBuffer::copyToImage(const Queue& queue,
-                                const CommandBuffer& commandBuffer,
+void StagingBuffer::copyToImage(const CommandBuffer& commandBuffer,
                                 Image& dst,
                                 uint32_t width,
                                 uint32_t height,
-                                bool waitForFinish) const {
-  copyToImage(queue,
-              commandBuffer,
+                                const std::vector<Semaphore*>& waits,
+                                const std::vector<Semaphore*>& signals,
+                                const Fence& fence) const {
+  copyToImage(commandBuffer,
               dst,
               {0, 0, 0, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1}, {0, 0, 0}, {width, height, 1}},
-              waitForFinish);
+              waits,
+              signals,
+              fence);
 }
 
 MI_NAMESPACE_END(Vulk)

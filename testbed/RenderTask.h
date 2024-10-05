@@ -24,14 +24,13 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 class RenderTask : public Sharable<RenderTask>, private NotCopyable {
  public:
-  explicit RenderTask(const Vulk::Context& context);
+  explicit RenderTask(const Context& context);
   virtual ~RenderTask(){};
 
-  virtual void run() = 0;
+  virtual void run(CommandBuffer& commandBuffer) = 0;
 
  protected:
-  const Vulk::Context& _context;
-  Vulk::CommandBuffer::shared_ptr _commandBuffer;
+  const Context& _context;
 };
 
 //
@@ -39,24 +38,25 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
 //
 class TextureMappingTask : public RenderTask {
  public:
-  TextureMappingTask(const Vulk::Context& context);
+  explicit TextureMappingTask(const Context& context);
   ~TextureMappingTask() override;
 
-  void prepareGeometry(const Vulk::VertexBuffer& vertexBuffer,
-                       const Vulk::IndexBuffer& indexBuffer, size_t numIndices);
+  void prepareGeometry(const VertexBuffer& vertexBuffer,
+                       const IndexBuffer& indexBuffer,
+                       size_t numIndices);
   void prepareUniforms(const glm::mat4& model2world,
                        const glm::mat4& world2view,
                        const glm::mat4& project,
                        bool newFrame = true);
-  void prepareInputs(const Vulk::Texture2D& texture);
-  void prepareOutputs(const Vulk::Image2D& colorBuffer, const Vulk::DepthImage& depthStencilBuffer);
-  void prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
-                              const std::vector<Vulk::Semaphore*> signals,
-                              const Vulk::Fence& fence = {});
+  void prepareInputs(const Texture2D& texture);
+  void prepareOutputs(const Image2D& colorBuffer, const DepthImage& depthStencilBuffer);
+  void prepareSynchronization(const std::vector<Semaphore*> waits,
+                              const std::vector<Semaphore*> signals,
+                              const Fence& fence = {});
 
-  Vulk::DescriptorSet::shared_ptr createDescriptorSet();
+  DescriptorSet::shared_ptr createDescriptorSet();
 
-  void run() override;
+  void run(CommandBuffer& commandBuffer) override;
 
   //
   // Override the sharable types and functions
@@ -64,47 +64,45 @@ class TextureMappingTask : public RenderTask {
   MI_DEFINE_SHARED_PTR(TextureMappingTask, RenderTask);
 
  private:
-  Vulk::RenderPass::shared_ptr _renderPass;
-  Vulk::Pipeline::shared_ptr _pipeline;
-  Vulk::DescriptorPool::shared_ptr _descriptorPool;
+  RenderPass::shared_ptr _renderPass;
+  Pipeline::shared_ptr _pipeline;
+  DescriptorPool::shared_ptr _descriptorPool;
   uint32_t _vertexBufferBinding = 0U;
 
   // Geometry
-  Vulk::VertexBuffer::shared_ptr_const _vertexBuffer;
-  Vulk::IndexBuffer::shared_ptr_const _indexBuffer;
+  VertexBuffer::shared_ptr_const _vertexBuffer;
+  IndexBuffer::shared_ptr_const _indexBuffer;
   size_t _numIndices;
 
   // Inputs
-  Vulk::Texture2D::shared_ptr_const _texture;
+  Texture2D::shared_ptr_const _texture;
 
   // Uniforms: the buffers and mapped memory are internal managed
-  std::vector<Vulk::UniformBuffer::shared_ptr> _uniformBuffers;
+  std::vector<UniformBuffer::shared_ptr> _uniformBuffers;
   std::vector<void*> _uniformBufferMapped;
   size_t _currentUniformBufferIdx = 0;
 
   // Outputs
-  Vulk::Image2D::shared_ptr_const _colorBuffer;
-  Vulk::DepthImage::shared_ptr_const _depthStencilBuffer; // TODO this could be internal managed as well.
+  Image2D::shared_ptr_const _colorBuffer;
+  DepthImage::shared_ptr_const _depthStencilBuffer; // TODO this could be internal managed as well.
 
   // Synchronizations
-  std::vector<Vulk::Semaphore*> _waits;
-  std::vector<Vulk::Semaphore*> _signals;
-  Vulk::Fence::shared_ptr_const _fence;
+  std::vector<Semaphore*> _waits;
+  std::vector<Semaphore*> _signals;
+  Fence::shared_ptr_const _fence;
 };
-
-
 
 //
 //
 //
 class AcquireSwapchainImageTask : public RenderTask {
  public:
-  AcquireSwapchainImageTask(const Vulk::Context& context);
+  explicit AcquireSwapchainImageTask(const Context& context);
   ~AcquireSwapchainImageTask() override;
 
-  void run() override;
+  void run(CommandBuffer& commandBuffer) override;
 
-  void prepareSynchronization(const Vulk::Semaphore* signal);
+  void prepareSynchronization(const Semaphore* signal);
 
   //
   // Override the sharable types and functions
@@ -113,22 +111,22 @@ class AcquireSwapchainImageTask : public RenderTask {
 
  private:
   // Synchronizations
-  const Vulk::Semaphore* _signal = nullptr;
+  const Semaphore* _signal = nullptr;
 };
-
 
 //
 //
 //
 class PresentTask : public RenderTask {
  public:
-  PresentTask(const Vulk::Context& context);
+  explicit PresentTask(const Context& context);
   ~PresentTask() override;
 
-  void prepareInput(const Vulk::Image2D& frame);
-  void prepareSynchronization(const std::vector<Vulk::Semaphore*> waits);
+  void prepareInput(const Image2D& frame);
+  void prepareSynchronization(const std::vector<Semaphore*> waits,
+                              const std::vector<Vulk::Semaphore*> readyToPreset);
 
-  void run() override;
+  void run(CommandBuffer& commandBuffer) override;
 
   //
   // Override the sharable types and functions
@@ -137,11 +135,11 @@ class PresentTask : public RenderTask {
 
  private:
   // Input
-  Vulk::Image2D::shared_ptr_const _frame;
+  Image2D::shared_ptr_const _frame;
 
   // Synchronizations
-  std::vector<Vulk::Semaphore*> _waits;
+  std::vector<Semaphore*> _waits;
+  std::vector<Semaphore*> _readyToPresent;
 };
-
 
 MI_NAMESPACE_END(Vulk)

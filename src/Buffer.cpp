@@ -93,8 +93,7 @@ void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
   unmap();
 }
 
-void Buffer::load(const Queue& queue,
-                  const CommandBuffer& stagingCommandBuffer,
+void Buffer::load(const CommandBuffer& commandBuffer,
                   const void* data,
                   VkDeviceSize size,
                   VkDeviceSize offset) {
@@ -102,7 +101,9 @@ void Buffer::load(const Queue& queue,
   MI_VERIFY(offset + size <= _size);
   StagingBuffer stagingBuffer(device(), size);
   stagingBuffer.copyFromHost(data, size);
-  stagingBuffer.copyToBuffer(queue, stagingCommandBuffer, *this, {0, offset, size});
+  stagingBuffer.copyToBuffer(commandBuffer, *this, {0, offset, size});
+  commandBuffer.queue().waitIdle(); //TODO: fix this hack.
+  // TODO What if load() was called within the upper block of begin/ednRecording()?
 }
 
 void Buffer::free() {

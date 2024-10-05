@@ -152,13 +152,16 @@ void Testbed::mainLoop() {
 }
 
 void Testbed::drawFrame() {
+  const auto& commandPool = _context.commandPool(Vulk::Device::QueueFamilyType::Graphics);
+  auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
+
   try {
     nextFrame(); // Move to the next frame. The new current frame may be in use.
 
     auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
 
     _acquireSwapchainImageTask->prepareSynchronization(_currentFrame->swapchainImageReady.get());
-    _acquireSwapchainImageTask->run();
+    _acquireSwapchainImageTask->run(*commandBuffer);
 
     //
     // Texture Mapping Task
@@ -171,16 +174,17 @@ void Testbed::drawFrame() {
     _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
     _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
 
-    _textureMappingTask->run();
+    _textureMappingTask->run(*commandBuffer);
 
     //
     // Present Task
     //
     _presentTask->prepareInput(*_currentFrame->colorBuffer);
     _presentTask->prepareSynchronization(
-        {_currentFrame->swapchainImageReady.get(), _currentFrame->frameReady.get()});
+        {_currentFrame->swapchainImageReady.get(), _currentFrame->frameReady.get()},
+        {_currentFrame->presentReady.get()});
 
-    _presentTask->run();
+    _presentTask->run(*commandBuffer);
   } catch (const Vulk::Exception& e) {
     if (e.result() == VK_ERROR_OUT_OF_DATE_KHR || e.result() == VK_SUBOPTIMAL_KHR) {
       // The size or format of the swapchain image is not correct. We'll just ignore them
@@ -189,6 +193,8 @@ void Testbed::drawFrame() {
       throw e;
     }
   }
+
+  commandBuffer->queue().waitIdle(); //TODO fix this hack
 }
 
 void Testbed::createContext() {
@@ -329,8 +335,8 @@ void Testbed::createDrawable() {
   } else {
     loadModel(_modelFile, vertices, indices);
   }
-  Vulk::CommandBuffer cmdBuffer{_context.commandPool(Vulk::Device::QueueFamilyType::Graphics)};
-  _drawable.create(_context.device(), cmdBuffer, vertices, indices);
+  Vulk::CommandBuffer commandBuffer{_context.commandPool(Vulk::Device::QueueFamilyType::Graphics)}; // TODO: should't we use `Transfer`?
+  _drawable.create(_context.device(), commandBuffer, vertices, indices);
 
   const bool is3DScene = !_modelFile.empty();
   initCamera(vertices, is3DScene);
@@ -354,10 +360,10 @@ void Testbed::createFrames() {
 
     frame.swapchainImageReady = Vulk::Semaphore::make_shared(device);
     frame.frameReady          = Vulk::Semaphore::make_shared(device);
+    frame.presentReady        = Vulk::Semaphore::make_shared(device);
 
-    const auto& queue = _context.queue(Vulk::Device::QueueFamilyType::Graphics);
-    frame.colorBuffer->transitToNewLayout(
-        queue, *frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer,
+                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   nextFrame();

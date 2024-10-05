@@ -67,11 +67,8 @@ void DepthImage::create(const Device& device,
   Image::create(device, imageInfo);
 }
 
-void DepthImage::promoteLayout(const Queue& queue,
-                               const CommandBuffer& cmdBuffer,
-                               bool waitForFinish) {
-  transitToNewLayout(
-      queue, cmdBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, waitForFinish);
+void DepthImage::promoteLayout(const CommandBuffer& cmdBuffer) {
+  transitToNewLayout(cmdBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 VkFormat DepthImage::findFormat(uint32_t depthBits, uint32_t stencilBits) {

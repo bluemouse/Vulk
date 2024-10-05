@@ -9,8 +9,10 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${command:cmake.launchTargetPath}",
-      "args": ["-m", "models/teapot.obj"],
-      // "args": ["-v", "0"],
+      "args": [
+        "-m", "models/dice.obj",
+        "-t", "textures/stary-night.jpg"
+      ],
       "stopAtEntry": false,
       "cwd": "${command:cmake.launchTargetDirectory}",
       "environment": [

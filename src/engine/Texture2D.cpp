@@ -2,6 +2,7 @@
 
 #include <Vulk/Device.h>
 #include <Vulk/Queue.h>
+#include <Vulk/CommandBuffer.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
@@ -33,37 +34,61 @@ void Texture2D::destroy() {
   _image.reset();
 }
 
-void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer,
-                         const StagingBuffer& stagingBuffer) {
-  _image->copyFrom(queue, cmdBuffer, stagingBuffer);
-  _image->makeShaderReadable(queue, cmdBuffer);
+void Texture2D::copyFrom(const CommandBuffer& commandBuffer,
+                         const StagingBuffer& stagingBuffer,
+                         const std::vector<Semaphore*>& waits,
+                         const std::vector<Semaphore*>& signals,
+                         const Fence& fence) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    _image->copyFrom(commandBuffer, stagingBuffer);
+    _image->transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer,
-                         const Image2D& srcImage) {
-  _image->copyFrom(queue, cmdBuffer, srcImage);
-  _image->makeShaderReadable(queue, cmdBuffer);
+void Texture2D::copyFrom(const CommandBuffer& commandBuffer,
+                         const Image2D& srcImage,
+                         const std::vector<Semaphore*>& waits,
+                         const std::vector<Semaphore*>& signals,
+                         const Fence& fence) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    _image->copyFrom(commandBuffer, srcImage);
+    _image->transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void Texture2D::copyFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer,
-                         const Texture2D& srcTexture) {
-  copyFrom(queue, cmdBuffer, srcTexture.image());
+void Texture2D::copyFrom(const CommandBuffer& commandBuffer,
+                         const Texture2D& srcTexture,
+                         const std::vector<Semaphore*>& waits,
+                         const std::vector<Semaphore*>& signals,
+                         const Fence& fence) {
+  copyFrom(commandBuffer, srcTexture.image(), waits, signals, fence);
 }
 
-void Texture2D::blitFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer,
-                         const Image2D& srcImage) {
-  _image->blitFrom(queue, cmdBuffer, srcImage);
-  _image->makeShaderReadable(queue, cmdBuffer);
+void Texture2D::blitFrom(const CommandBuffer& commandBuffer,
+                         const Image2D& srcImage,
+                         const std::vector<Semaphore*>& waits,
+                         const std::vector<Semaphore*>& signals,
+                         const Fence& fence) {
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    _image->blitFrom(commandBuffer, srcImage);
+    _image->transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(waits, signals, fence);
 }
 
-void Texture2D::blitFrom(const Queue& queue,
-                         const CommandBuffer& cmdBuffer,
-                         const Texture2D& srcTexture) {
-  blitFrom(queue, cmdBuffer, srcTexture.image());
+void Texture2D::blitFrom(const CommandBuffer& commandBuffer, const Texture2D& srcTexture,
+                         const std::vector<Semaphore*>& waits,
+                         const std::vector<Semaphore*>& signals,
+                         const Fence& fence) {
+  blitFrom(commandBuffer, srcTexture.image(), waits, signals, fence);
 }
 
 MI_NAMESPACE_END(Vulk)

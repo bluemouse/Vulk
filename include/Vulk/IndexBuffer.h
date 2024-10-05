@@ -67,8 +67,7 @@ inline void IndexBuffer::create(const Device& device,
   VkDeviceSize size = sizeof(Index) * indices.size();
   create(device, size);
 
-  const auto& queue = device.queue(Vulk::Device::QueueFamilyType::Graphics);
-  load(queue, stagingCommandBuffer, indices.data(), size);
+  load(stagingCommandBuffer, indices.data(), size);
 }
 
 MI_NAMESPACE_END(Vulk)

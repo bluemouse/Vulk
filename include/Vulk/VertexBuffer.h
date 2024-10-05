@@ -69,8 +69,7 @@ inline void VertexBuffer::create(const Device& device,
   VkDeviceSize size = sizeof(Vertex) * vertices.size();
   create(device, size);
 
-  const auto& queue = device.queue(Vulk::Device::QueueFamilyType::Graphics);
-  load(queue, stagingCommandBuffer, vertices.data(), size);
+  load(stagingCommandBuffer, vertices.data(), size);
 }
 
 MI_ENABLE_ENUM_BITWISE_OP(VertexBuffer::Property);

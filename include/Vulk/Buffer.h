@@ -42,8 +42,7 @@ class Buffer : public Sharable<Buffer>, private NotCopyable {
   void free();
 
   void load(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
-  void load(const Queue& queue,
-            const CommandBuffer& stagingCommandBuffer,
+  void load(const CommandBuffer& commandBuffer,
             const void* data,
             VkDeviceSize size,
             VkDeviceSize offset = 0);

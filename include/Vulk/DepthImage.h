@@ -42,7 +42,7 @@ class DepthImage : public Image {
   using Image::allocate;
   using Image::free;
 
-  void promoteLayout(const Queue& queue, const CommandBuffer& cmdBuffer, bool waitForFinish = true);
+  void promoteLayout(const CommandBuffer& cmdBuffer);
 
   [[nodiscard]] VkExtent2D extent() const { return {_extent.width, _extent.height}; }
 

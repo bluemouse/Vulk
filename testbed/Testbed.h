@@ -100,6 +100,7 @@ class Testbed : public MainWindow {
 
     Vulk::Semaphore::shared_ptr swapchainImageReady;
     Vulk::Semaphore::shared_ptr frameReady;
+    Vulk::Semaphore::shared_ptr presentReady;
   };
 
   std::vector<Frame> _frames;

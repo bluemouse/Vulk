@@ -5,6 +5,8 @@
 #include <Vulk/internal/base.h>
 
 #include <Vulk/Buffer.h>
+#include <Vulk/Semaphore.h>
+#include <Vulk/Fence.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
@@ -22,28 +24,32 @@ class StagingBuffer : public Buffer {
   void copyFromHost(const void* src, VkDeviceSize size) { copyFromHost(src, 0, size); }
   void copyFromHost(const void* src, VkDeviceSize offset, VkDeviceSize size);
 
-  void copyToBuffer(const Queue& queue,
-                    const CommandBuffer& commandBuffer,
+  void copyToBuffer(const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     const VkBufferCopy& roi,
-                    bool waitForFinish = true) const;
-  void copyToBuffer(const Queue& queue,
-                    const CommandBuffer& commandBuffer,
+                    const std::vector<Semaphore*>& waits   = {},
+                    const std::vector<Semaphore*>& signals = {},
+                    const Fence& fence                     = {}) const;
+  void copyToBuffer(const CommandBuffer& commandBuffer,
                     Buffer& dst,
                     VkDeviceSize size,
-                    bool waitForFinish = true) const;
+                    const std::vector<Semaphore*>& waits   = {},
+                    const std::vector<Semaphore*>& signals = {},
+                    const Fence& fence                     = {}) const;
 
-  void copyToImage(const Queue& queue,
-                   const CommandBuffer& commandBuffer,
+  void copyToImage(const CommandBuffer& commandBuffer,
                    Image& dst,
                    const VkBufferImageCopy& roi,
-                   bool waitForFinish = true) const;
-  void copyToImage(const Queue& queue,
-                   const CommandBuffer& commandBuffer,
+                   const std::vector<Semaphore*>& waits   = {},
+                   const std::vector<Semaphore*>& signals = {},
+                   const Fence& fence                     = {}) const;
+  void copyToImage(const CommandBuffer& commandBuffer,
                    Image& dst,
                    uint32_t width,
                    uint32_t height,
-                   bool waitForFinish = true) const;
+                   const std::vector<Semaphore*>& waits   = {},
+                   const std::vector<Semaphore*>& signals = {},
+                   const Fence& fence                     = {}) const;
 
   //
   // Override the sharable types and functions

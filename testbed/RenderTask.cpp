@@ -27,8 +27,6 @@ std::filesystem::path executablePath() {
 MI_NAMESPACE_BEGIN(Vulk)
 
 RenderTask::RenderTask(const Vulk::Context& context) : _context(context) {
-  const auto& commandPool = _context.commandPool(Device::QueueFamilyType::Graphics);
-  _commandBuffer          = CommandBuffer::make_shared(commandPool);
 }
 
 //
@@ -129,9 +127,8 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Vulk::Semaphor
   }
 }
 
-void TextureMappingTask::run() {
-  const auto& device  = _context.device();
-  auto& commandBuffer = *_commandBuffer;
+void TextureMappingTask::run(CommandBuffer& commandBuffer) {
+  const auto& device = _context.device();
 
   auto label = commandBuffer.queue().scopedLabel("TextureMappingTask::run()");
 
@@ -189,11 +186,10 @@ void TextureMappingTask::run() {
   }
   commandBuffer.endRecording();
 
-  const auto& queue = commandBuffer.queue();
-  queue.submitCommands(commandBuffer, _waits, _signals, *_fence);
+  commandBuffer.submitCommands(_waits, _signals, *_fence);
 
-  queue.waitIdle(); // TODO we need to remove this wait when the render graph is implemented
-
+  commandBuffer.queue().waitIdle(); // TODO: This is a temporary solution to reset the descriptor pool (or other
+                  // resources). My might re-org the task to be three phases: prepare, run, finish
   _descriptorPool->reset(); // Free all sets allocated from this pool
 }
 
@@ -215,8 +211,8 @@ void AcquireSwapchainImageTask::prepareSynchronization(const Vulk::Semaphore* si
   _signal = signal;
 }
 
-void AcquireSwapchainImageTask::run() {
-  auto label = _commandBuffer->queue().scopedLabel("AcquireSwapchainImageTask::run()");
+void AcquireSwapchainImageTask::run(CommandBuffer& commandBuffer) {
+  auto label = commandBuffer.queue().scopedLabel("AcquireSwapchainImageTask::run()");
 
   _context.swapchain().acquireNextImage(*_signal);
 }
@@ -234,21 +230,26 @@ void PresentTask::prepareInput(const Vulk::Image2D& frame) {
   _frame = frame.get_shared();
 }
 
-void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits) {
+void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
+                                         const std::vector<Vulk::Semaphore*> readyToPreset) {
   _waits = waits;
+  _readyToPresent = readyToPreset;
 }
 
-void PresentTask::run() {
-  auto& commandBuffer = *_commandBuffer;
-
+void PresentTask::run(CommandBuffer& commandBuffer) {
   auto label = commandBuffer.queue().scopedLabel("PresentTask::run()");
 
-  auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
-  swapchainFrame.blitFrom(commandBuffer.queue(), commandBuffer, *_frame);
-  swapchainFrame.transitToNewLayout(
-      commandBuffer.queue(), commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  commandBuffer.beginRecording();
+  {
+    // TODO: active swapchain image is not VK_IMAGE_LAYOUT_UNDEFINED after the 1 frame rendering!
+    auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
+    swapchainFrame.blitFrom(commandBuffer, *_frame, _waits);
+    swapchainFrame.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+  }
+  commandBuffer.endRecording();
+  commandBuffer.submitCommands(_waits, _readyToPresent);
 
-  _context.swapchain().present(_waits);
+  _context.swapchain().present(_readyToPresent);
 }
 
 MI_NAMESPACE_END(Vulk)

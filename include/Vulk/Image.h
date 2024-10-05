@@ -5,6 +5,8 @@
 #include <Vulk/internal/base.h>
 
 #include <Vulk/DeviceMemory.h>
+#include <Vulk/Semaphore.h>
+#include <Vulk/Fence.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
@@ -12,7 +14,6 @@ class Device;
 class CommandBuffer;
 class Queue;
 class StagingBuffer;
-class DeviceMemory;
 
 class Image : public Sharable<Image>, private NotCopyable {
  public:
@@ -30,18 +31,29 @@ class Image : public Sharable<Image>, private NotCopyable {
   virtual void* map(VkDeviceSize offset, VkDeviceSize size);
   virtual void unmap();
 
-  virtual void copyFrom(const Queue& queue,
-                        const CommandBuffer& cmdBuffer,
-                        const StagingBuffer& stagingBuffer);
-  virtual void copyFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
-  virtual void blitFrom(const Queue& queue, const CommandBuffer& cmdBuffer, const Image& srcImage);
+  virtual void copyFrom(const CommandBuffer& cmdBuffer,
+                        const StagingBuffer& stagingBuffer,
+                        const std::vector<Semaphore*>& waits   = {},
+                        const std::vector<Semaphore*>& signals = {},
+                        const Fence& fence                     = {});
 
-  void transitToNewLayout(const Queue& queue,
-                          const CommandBuffer& commandBuffer,
+  virtual void copyFrom(const CommandBuffer& cmdBuffer,
+                        const Image& srcImage,
+                        const std::vector<Semaphore*>& waits   = {},
+                        const std::vector<Semaphore*>& signals = {},
+                        const Fence& fence                     = {});
+
+  virtual void blitFrom(const CommandBuffer& cmdBuffer,
+                        const Image& srcImage,
+                        const std::vector<Semaphore*>& waits   = {},
+                        const std::vector<Semaphore*>& signals = {},
+                        const Fence& fence                     = {});
+
+  void transitToNewLayout(const CommandBuffer& commandBuffer,
                           VkImageLayout newLayout,
-                          bool waitForFinish = true) const;
-
-  void makeShaderReadable(const Queue& queue, const CommandBuffer& cmdBuffer) const;
+                          const std::vector<Semaphore*>& waits   = {},
+                          const std::vector<Semaphore*>& signals = {},
+                          const Fence& fence                     = {}) const;
 
   operator VkImage() const { return _image; }
 

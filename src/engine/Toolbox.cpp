@@ -25,10 +25,18 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
                                     Image2D::Usage::TRANSFER_DST);
 
   image->allocate();
-  CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
-  const auto& queue = _context.queue(Device::QueueFamilyType::Graphics);
-  image->copyFrom(queue, cmdBuffer, *stagingBuffer);
-  image->makeShaderReadable(queue, cmdBuffer);
+  CommandBuffer commandBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)}; //TODO: fix the local command buffer
+  commandBuffer.beginRecording(CommandBuffer::Usage::OneTimeSubmit);
+  {
+    image->copyFrom(commandBuffer, *stagingBuffer);
+    image->transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  }
+  commandBuffer.endRecording();
+
+  Fence fence{_context.device()};
+  commandBuffer.submitCommands({}, {}, fence); // TODO: support waits, signals, fence?
+  fence.wait(); //TODO: remove this after we fix the local command buffer
+  // TODO how to handle wait if this func is called within upper block of begin/endRecording()?
 
   return image;
 }
@@ -41,9 +49,11 @@ Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
                                         VkExtent2D{width, height},
                                         Image2D::Usage::TRANSFER_DST);
 
-  CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
-  const auto& queue = _context.queue(Device::QueueFamilyType::Graphics);
-  texture->copyFrom(queue, cmdBuffer, *stagingBuffer);
+  CommandBuffer commandBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};  //TODO: fix the local command buffer
+  Fence fence{_context.device()};
+  texture->copyFrom(commandBuffer, *stagingBuffer, {}, {}, fence);
+  fence.wait(); //TODO: remove this after we fix the local command buffer
+  // TODO how to handle wait if this func is called within upper block of begin/endRecording()?
 
   return texture;
 }
@@ -60,9 +70,11 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
   auto texture = Texture2D::make_shared(
       _context.device(), vkFormat, VkExtent2D{width, height}, Image2D::Usage::TRANSFER_DST);
 
-  CommandBuffer cmdBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};
-  const auto& queue = _context.queue(Device::QueueFamilyType::Graphics);
-  texture->copyFrom(queue, cmdBuffer, *stagingBuffer);
+  CommandBuffer commandBuffer{_context.commandPool(Device::QueueFamilyType::Graphics)};  //TODO: fix the local command buffer
+  Fence fence{_context.device()};
+  texture->copyFrom(commandBuffer, *stagingBuffer, {}, {}, fence);
+  fence.wait(); //TODO: remove this after we fix the local command buffer
+  // TODO how to handle wait if this func is called within upper block of begin/endRecording()?
 
   return texture;
 }

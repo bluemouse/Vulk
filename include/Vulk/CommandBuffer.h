@@ -26,6 +26,9 @@ class IndexBuffer;
 class DescriptorSet;
 class Queue;
 
+/// @brief
+/// CommandBuffer is a wrapper around VkCommandBuffer. It is not thread-safe so it should be used
+/// only in the thread where it was created.
 class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  public:
   enum class Level {
@@ -54,6 +57,10 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
 
   void beginRecording(Usage usage = Usage::Default) const;
   void endRecording() const;
+
+  void submitCommands(const std::vector<Semaphore*>& waits   = {},
+                      const std::vector<Semaphore*>& signals = {},
+                      const Fence& fence                     = {}) const;
 
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,
@@ -104,6 +111,10 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
 
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;
+
+  // When _recordingStack > 0 (i.e. there are outer begin/end recording), beginRecording(),
+  // endRecording() and submitCommands() are no-op.
+  mutable uint32_t _recordingStack = 0;
 
   std::weak_ptr<const CommandPool> _pool;
 };
