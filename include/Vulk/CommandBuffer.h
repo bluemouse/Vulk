@@ -43,6 +43,9 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
     Default            = 0
   };
 
+  // Command buffer lifecycle states
+  enum class State { Initial, Recording, Executable, Pending };
+
  public:
   CommandBuffer() = default;
   CommandBuffer(const CommandPool& commandPool, Level level = Level::Primary);
@@ -95,6 +98,8 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   void insertLabel(const char* label, const glm::vec4& color = {0.2F, 0.8F, 0.2F, 1.0F}) const;
   void endLabel() const;
 
+  State state() const { return _state; }
+
   struct ScopedLabel {
     ScopedLabel(const CommandBuffer& commandBuffer, const char* label, const glm::vec4& color)
         : _commandBuffer(commandBuffer) {
@@ -112,9 +117,11 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
  private:
   VkCommandBuffer _buffer = VK_NULL_HANDLE;
 
-  // When _recordingStack > 0 (i.e. there are outer begin/end recording), beginRecording(),
+  // When _recordingStack > 0 (i.e. there are outer begin/end recordings), beginRecording(),
   // endRecording() and submitCommands() are no-op.
   mutable uint32_t _recordingStack = 0;
+
+  mutable State _state = State::Initial;
 
   std::weak_ptr<const CommandPool> _pool;
 };

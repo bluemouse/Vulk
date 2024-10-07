@@ -1,6 +1,7 @@
 #include <Vulk/Buffer.h>
 
 #include <cstring>
+#include <thread>
 
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
@@ -85,25 +86,31 @@ void Buffer::allocate(VkMemoryPropertyFlags properties) {
   vkBindBufferMemory(device, _buffer, *_memory, 0);
 }
 
-void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset) {
+void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset, bool staging) {
   MI_VERIFY(isAllocated());
   MI_VERIFY(offset + size <= _size);
-  void* buffer = map(offset, size);
-  std::memcpy(buffer, data, size);
-  unmap();
-}
 
-void Buffer::load(const CommandBuffer& commandBuffer,
-                  const void* data,
-                  VkDeviceSize size,
-                  VkDeviceSize offset) {
-  MI_VERIFY(isAllocated());
-  MI_VERIFY(offset + size <= _size);
-  StagingBuffer stagingBuffer(device(), size);
-  stagingBuffer.copyFromHost(data, size);
-  stagingBuffer.copyToBuffer(commandBuffer, *this, {0, offset, size});
-  commandBuffer.queue().waitIdle(); //TODO: fix this hack.
-  // TODO What if load() was called within the upper block of begin/ednRecording()?
+  if (staging) {
+    const auto& commandPool = device().commandPool(Device::QueueFamilyType::Transfer);
+    CommandBuffer::shared_ptr commandBuffer = CommandBuffer::make_shared(commandPool);
+    StagingBuffer::shared_ptr stagingBuffer = StagingBuffer::make_shared(device(), size);
+    Fence::shared_ptr fence                 = Fence::make_shared(device());
+    stagingBuffer->copyFromHost(data, size);
+    stagingBuffer->copyToBuffer(*commandBuffer, *this, {0, offset, size}, *fence);
+
+    // The commandBuffer now should be submitted and in the pending state
+    MI_ASSERT(commandBuffer->state() == CommandBuffer::State::Pending);
+    // Start a new thread to wait for the fence to be signaled and then release the staging buffer
+    std::thread releaser([commandBuffer, stagingBuffer, fence]() {
+      fence->wait();
+      stagingBuffer->destroy();
+      commandBuffer->free();
+    });
+    releaser.detach();
+  } else {
+    std::memcpy(map(offset, size), data, size);
+    unmap();
+  }
 }
 
 void Buffer::free() {

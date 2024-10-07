@@ -41,11 +41,7 @@ class Buffer : public Sharable<Buffer>, private NotCopyable {
   void allocate(VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   void free();
 
-  void load(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
-  void load(const CommandBuffer& commandBuffer,
-            const void* data,
-            VkDeviceSize size,
-            VkDeviceSize offset = 0);
+  void load(const void* data, VkDeviceSize size, VkDeviceSize offset = 0, bool staging = true);
 
   void bind(DeviceMemory& memory, VkDeviceSize offset = 0);
 

@@ -209,6 +209,7 @@ void Testbed::createContext() {
   };
 
   createInfo.queueFamilies.graphics    = true;
+  createInfo.queueFamilies.transfer    = true;
   createInfo.queueFamilies.present     = true;
   createInfo.deviceExtensions          = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
   createInfo.hasPhysicalDeviceFeatures = [](VkPhysicalDeviceFeatures supportedFeatures) {
@@ -335,8 +336,7 @@ void Testbed::createDrawable() {
   } else {
     loadModel(_modelFile, vertices, indices);
   }
-  Vulk::CommandBuffer commandBuffer{_context.commandPool(Vulk::Device::QueueFamilyType::Graphics)}; // TODO: should't we use `Transfer`?
-  _drawable.create(_context.device(), commandBuffer, vertices, indices);
+  _drawable.create(_context.device(), vertices, indices);
 
   const bool is3DScene = !_modelFile.empty();
   initCamera(vertices, is3DScene);

@@ -18,27 +18,16 @@ class IndexBuffer : public Buffer {
  public:
   IndexBuffer(const Device& device, VkDeviceSize size, bool hostVisible = false);
   template <typename Index>
-  IndexBuffer(const Device& device, const std::vector<Index>& indices) {
-    create(device, indices);
-  }
-  template <typename Index>
-  IndexBuffer(const Device& device,
-              const CommandBuffer& stagingCommandBuffer,
-              const std::vector<Index>& indices) {
-    create(device, stagingCommandBuffer, indices);
+  IndexBuffer(const Device& device, const std::vector<Index>& indices, bool hostVisible = false) {
+    create(device, indices, hostVisible);
   }
 
   // Buffer will be device local and can only be loaded using a staging buffer
   void create(const Device& device, VkDeviceSize size, bool hostVisible = false);
-  // Buffer will be host visible and the data will be copied directly from host to buffer
-  template <typename Index>
-  void create(const Device& device, const std::vector<Index>& indices);
   // Buffer will be device local only and the data will be copied from host to buffer using a
   // staging buffer
   template <typename Index>
-  void create(const Device& device,
-              const CommandBuffer& stagingCommandBuffer,
-              const std::vector<Index>& indices);
+  void create(const Device& device, const std::vector<Index>& indices, bool hostVisible = false);
 
   VkIndexType indexType() const { return _indexType; }
 
@@ -52,22 +41,13 @@ class IndexBuffer : public Buffer {
 };
 
 template <typename Index>
-inline void IndexBuffer::create(const Device& device, const std::vector<Index>& indices) {
-  _indexType        = IndexTrait<Index>::type;
-  VkDeviceSize size = sizeof(Index) * indices.size();
-  create(device, size, true);
-  load(indices.data(), size);
-}
-
-template <typename Index>
 inline void IndexBuffer::create(const Device& device,
-                                const CommandBuffer& stagingCommandBuffer,
-                                const std::vector<Index>& indices) {
+                                const std::vector<Index>& indices,
+                                bool hostVisible) {
   _indexType        = IndexTrait<Index>::type;
   VkDeviceSize size = sizeof(Index) * indices.size();
-  create(device, size);
-
-  load(stagingCommandBuffer, indices.data(), size);
+  create(device, size, hostVisible);
+  load(indices.data(), size, 0, !hostVisible);
 }
 
 MI_NAMESPACE_END(Vulk)

@@ -39,10 +39,13 @@ void CommandBuffer::allocate(const CommandPool& commandPool, Level level) {
   allocInfo.commandBufferCount = 1;
 
   MI_VERIFY_VK_RESULT(vkAllocateCommandBuffers(commandPool.device(), &allocInfo, &_buffer));
+
+  _state = State::Initial;
 }
 
 void CommandBuffer::reset() {
   vkResetCommandBuffer(_buffer, VkCommandBufferResetFlagBits(0));
+  _state = State::Initial;
 }
 
 void CommandBuffer::free() {
@@ -68,6 +71,8 @@ void CommandBuffer::beginRecording(Usage usage) const {
     beginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
 
     MI_VERIFY_VK_RESULT(vkBeginCommandBuffer(_buffer, &beginInfo));
+
+    _state = State::Recording;
   }
   _recordingStack++;
 }
@@ -76,6 +81,8 @@ void CommandBuffer::endRecording() const {
   _recordingStack--;
   if (_recordingStack == 0) {
     MI_VERIFY_VK_RESULT(vkEndCommandBuffer(_buffer));
+
+    _state = State::Executable;
   }
 }
 
@@ -84,6 +91,7 @@ void CommandBuffer::submitCommands(const std::vector<Semaphore*>& waits,
                                    const Fence& fence) const {
   if (_recordingStack == 0) {
     queue().submitCommands(*this, waits, signals, fence);
+    _state = State::Pending;
   }
 }
 
