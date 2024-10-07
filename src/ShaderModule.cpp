@@ -256,14 +256,9 @@ void ShaderModule::addDescriptorSetLayoutBinding(const std::string& name,
       {name, type, {binding, descriptorType, 1, stageFlags, nullptr}});
 }
 
-#define MI_VERIFY_SPVREFLECT_CMD(cmd)                                    \
-  if (cmd != SPV_REFLECT_RESULT_SUCCESS) {                               \
-    throw std::runtime_error("Error: " #cmd " failed" _MI_AT_THIS_LINE); \
-  }
-
 void ShaderModule::reflectShader(const std::vector<char>& codes) {
   SpvReflectShaderModule module = {};
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectCreateShaderModule(codes.size(), codes.data(), &module));
+  MI_VERIFY_SPVREFLECT_RESULT(spvReflectCreateShaderModule(codes.size(), codes.data(), &module));
   _entry = module.entry_point_name;
 
   if (gEnablePrintReflection) {
@@ -277,9 +272,10 @@ void ShaderModule::reflectShader(const std::vector<char>& codes) {
   if (gEnablePrintReflection) {
     // OutputVariables
     uint32_t count = 0;
-    MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, nullptr));
+    MI_VERIFY_SPVREFLECT_RESULT(spvReflectEnumerateOutputVariables(&module, &count, nullptr));
     std::vector<SpvReflectInterfaceVariable*> outVars(count);
-    MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateOutputVariables(&module, &count, outVars.data()));
+    MI_VERIFY_SPVREFLECT_RESULT(
+        spvReflectEnumerateOutputVariables(&module, &count, outVars.data()));
 
     std::cout << "Output variables:\n";
     for (auto* var : outVars) {
@@ -297,9 +293,9 @@ void ShaderModule::reflectDescriptorSets(const SpvReflectShaderModule& module) {
   };
 
   uint32_t count = 0;
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateDescriptorSets(&module, &count, nullptr));
+  MI_VERIFY_SPVREFLECT_RESULT(spvReflectEnumerateDescriptorSets(&module, &count, nullptr));
   std::vector<SpvReflectDescriptorSet*> descriptorSets{count};
-  MI_VERIFY_SPVREFLECT_CMD(
+  MI_VERIFY_SPVREFLECT_RESULT(
       spvReflectEnumerateDescriptorSets(&module, &count, descriptorSets.data()));
 
   if (gEnablePrintReflection) {
@@ -332,9 +328,9 @@ void ShaderModule::reflectDescriptorSets(const SpvReflectShaderModule& module) {
 
 void ShaderModule::reflectVertexInputs(const SpvReflectShaderModule& module) {
   uint32_t count = 0;
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateInputVariables(&module, &count, nullptr));
+  MI_VERIFY_SPVREFLECT_RESULT(spvReflectEnumerateInputVariables(&module, &count, nullptr));
   std::vector<SpvReflectInterfaceVariable*> inVars(count);
-  MI_VERIFY_SPVREFLECT_CMD(spvReflectEnumerateInputVariables(&module, &count, inVars.data()));
+  MI_VERIFY_SPVREFLECT_RESULT(spvReflectEnumerateInputVariables(&module, &count, inVars.data()));
 
   if (gEnablePrintReflection) {
     std::cout << "Input variables:\n";

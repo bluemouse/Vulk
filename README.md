@@ -1,3 +1,6 @@
+## Dependencies
+- fmt: https://fmt.dev/ (`sudo apt install libfmt-dev`)
+
 ### Build Steps
 1. cmake -S . -B build -G "Ninja" -D CMAKE_BUILD_TYPE=debug|release
 2. cmake --build build -j 16
