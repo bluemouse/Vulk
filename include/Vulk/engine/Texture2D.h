@@ -62,6 +62,24 @@ class Texture2D : public Sharable<Texture2D>, private NotCopyable {
                 const std::vector<Semaphore*>& signals = {},
                 const Fence& fence                     = {});
 
+  void copyFrom(const CommandBuffer& cmdBuffer,
+                const StagingBuffer& stagingBuffer,
+                const Fence& fence) {
+    copyFrom(cmdBuffer, stagingBuffer, {}, {}, fence);
+  }
+  void copyFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage, const Fence& fence) {
+    copyFrom(cmdBuffer, srcImage, {}, {}, fence);
+  }
+  void copyFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture, const Fence& fence) {
+    copyFrom(cmdBuffer, srcTexture, {}, {}, fence);
+  }
+  void blitFrom(const CommandBuffer& cmdBuffer, const Image2D& srcImage, const Fence& fence) {
+    blitFrom(cmdBuffer, srcImage, {}, {}, fence);
+  }
+  void blitFrom(const CommandBuffer& cmdBuffer, const Texture2D& srcTexture, const Fence& fence) {
+    blitFrom(cmdBuffer, srcTexture, {}, {}, fence);
+  }
+
   const Image2D& image() const { return *_image; }
   const ImageView& view() const { return *_view; }
   const Sampler& sampler() const { return *_sampler; }

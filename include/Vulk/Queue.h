@@ -31,6 +31,10 @@ class Queue : public Sharable<Queue>, private NotCopyable {
                       const std::vector<Semaphore*>& waits   = {},
                       const std::vector<Semaphore*>& signals = {},
                       const Fence& fence                     = {}) const;
+  void submitCommands(const CommandBuffer& commandBuffer, const Fence& fence) const {
+    submitCommands(commandBuffer, {}, {}, fence);
+  }
+
   void waitIdle() const;
 
   const Device& device() const { return *_device.lock(); }

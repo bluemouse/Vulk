@@ -36,7 +36,6 @@ class StagingBuffer : public Buffer {
                     const std::vector<Semaphore*>& waits   = {},
                     const std::vector<Semaphore*>& signals = {},
                     const Fence& fence                     = {}) const;
-
   void copyToImage(const CommandBuffer& commandBuffer,
                    Image& dst,
                    const VkBufferImageCopy& roi,
@@ -50,6 +49,32 @@ class StagingBuffer : public Buffer {
                    const std::vector<Semaphore*>& waits   = {},
                    const std::vector<Semaphore*>& signals = {},
                    const Fence& fence                     = {}) const;
+
+  void copyToBuffer(const CommandBuffer& commandBuffer,
+                    Buffer& dst,
+                    const VkBufferCopy& roi,
+                    const Fence& fence) const {
+    copyToBuffer(commandBuffer, dst, roi, {}, {}, fence);
+  }
+  void copyToBuffer(const CommandBuffer& commandBuffer,
+                    Buffer& dst,
+                    VkDeviceSize size,
+                    const Fence& fence) const {
+    copyToBuffer(commandBuffer, dst, size, {}, {}, fence);
+  }
+  void copyToImage(const CommandBuffer& commandBuffer,
+                   Image& dst,
+                   const VkBufferImageCopy& roi,
+                   const Fence& fence) const {
+    copyToImage(commandBuffer, dst, roi, {}, {}, fence);
+  }
+  void copyToImage(const CommandBuffer& commandBuffer,
+                   Image& dst,
+                   uint32_t width,
+                   uint32_t height,
+                   const Fence& fence) const {
+    copyToImage(commandBuffer, dst, width, height, {}, {}, fence);
+  }
 
   //
   // Override the sharable types and functions

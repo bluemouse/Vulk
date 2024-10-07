@@ -36,7 +36,6 @@ class Image : public Sharable<Image>, private NotCopyable {
                         const std::vector<Semaphore*>& waits   = {},
                         const std::vector<Semaphore*>& signals = {},
                         const Fence& fence                     = {});
-
   virtual void copyFrom(const CommandBuffer& cmdBuffer,
                         const Image& srcImage,
                         const std::vector<Semaphore*>& waits   = {},
@@ -54,6 +53,25 @@ class Image : public Sharable<Image>, private NotCopyable {
                           const std::vector<Semaphore*>& waits   = {},
                           const std::vector<Semaphore*>& signals = {},
                           const Fence& fence                     = {}) const;
+
+  void copyFrom(const CommandBuffer& cmdBuffer,
+                const StagingBuffer& stagingBuffer,
+                const Fence& fence) {
+    copyFrom(cmdBuffer, stagingBuffer, {}, {}, fence);
+  }
+  void copyFrom(const CommandBuffer& cmdBuffer, const Image& srcImage, const Fence& fence) {
+    copyFrom(cmdBuffer, srcImage, {}, {}, fence);
+  }
+
+  void blitFrom(const CommandBuffer& cmdBuffer, const Image& srcImage, const Fence& fence) {
+    blitFrom(cmdBuffer, srcImage, {}, {}, fence);
+  }
+
+  void transitToNewLayout(const CommandBuffer& commandBuffer,
+                          VkImageLayout newLayout,
+                          const Fence& fence) const {
+    transitToNewLayout(commandBuffer, newLayout, {}, {}, fence);
+  }
 
   operator VkImage() const { return _image; }
 
