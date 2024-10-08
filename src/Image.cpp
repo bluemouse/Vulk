@@ -86,8 +86,9 @@ std::pair<VkPipelineStageFlags, VkAccessFlags> selectStageAccess(VkImageLayout l
       access = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+    case VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR:
       stage  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-      access = VK_ACCESS_MEMORY_READ_BIT;
+      access = VK_ACCESS_NONE;
       break;
     default: throw std::invalid_argument("Unsupported image layout!");
   }
@@ -193,7 +194,6 @@ void Image::copyFrom(const CommandBuffer& commandBuffer,
                      const std::vector<Semaphore*>& waits,
                      const std::vector<Semaphore*>& signals,
                      const Fence& fence) {
-
   auto& dstImage = *this;
   MI_VERIFY(srcImage.extent() == dstImage.extent());
   auto prevSrcLayout = srcImage._layout;
@@ -278,7 +278,7 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
                                VkImageLayout newLayout,
                                const std::vector<Semaphore*>& waits,
                                const std::vector<Semaphore*>& signals,
-                               const Fence& fence) const{
+                               const Fence& fence) const {
   if (_layout == newLayout) {
     return;
   }
@@ -310,8 +310,8 @@ void Image::transitToNewLayout(const CommandBuffer& commandBuffer,
   commandBuffer.endRecording();
   commandBuffer.submitCommands(waits, signals, fence);
 
-  // TODO there could be sync issue here. We should update the layout after the command buffer is
-  // executed.
+  // Potentially a sync issue here. Between the command submission and the command finishing,
+  // `_layout` is not really the new layout.
   _layout = newLayout;
 }
 

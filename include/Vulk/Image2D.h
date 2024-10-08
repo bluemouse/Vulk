@@ -16,12 +16,12 @@ class Device;
 class Image2D : public Image {
  public:
   enum Usage : uint8_t {
-    NONE = 0x00,
-    TRANSFER_SRC = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-    TRANSFER_DST = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    SAMPLED = VK_IMAGE_USAGE_SAMPLED_BIT, // Image2D is always sampled
-    STORAGE = VK_IMAGE_USAGE_STORAGE_BIT,
-    COLOR_ATTACHMENT = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    NONE                     = 0x00,
+    TRANSFER_SRC             = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+    TRANSFER_DST             = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+    SAMPLED                  = VK_IMAGE_USAGE_SAMPLED_BIT, // Image2D is always sampled
+    STORAGE                  = VK_IMAGE_USAGE_STORAGE_BIT,
+    COLOR_ATTACHMENT         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
     DEPTH_STENCIL_ATTACHMENT = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
   };
 
@@ -32,7 +32,7 @@ class Image2D : public Image {
   Image2D(const Device& device,
           VkFormat format,
           VkExtent2D extent,
-          Usage usage = Usage::NONE,
+          Usage usage                             = Usage::NONE,
           const ImageCreateInfoOverride& override = {});
   Image2D(const Device& device,
           VkFormat format,
@@ -41,14 +41,18 @@ class Image2D : public Image {
           VkMemoryPropertyFlags properties,
           const ImageCreateInfoOverride& override = {});
 
-  Image2D(VkImage image, VkFormat format, VkExtent2D extent); // special use by Swapchain
+  // Special use by Swapchain
+  Image2D(VkImage image,
+          VkFormat format,
+          VkExtent2D extent,
+          VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED);
 
   ~Image2D() override;
 
   void create(const Device& device,
               VkFormat format,
               VkExtent2D extent,
-              Usage usage = Usage::NONE,
+              Usage usage                             = Usage::NONE,
               const ImageCreateInfoOverride& override = {});
   void destroy() override;
 

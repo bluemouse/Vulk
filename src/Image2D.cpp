@@ -26,12 +26,13 @@ Image2D::Image2D(const Device& device,
   allocate(properties);
 }
 
-Image2D::Image2D(VkImage image, VkFormat format, VkExtent2D extent) : _external{true} {
+Image2D::Image2D(VkImage image, VkFormat format, VkExtent2D extent, VkImageLayout layout)
+    : _external{true} {
   _image  = image;
   _format = format;
   _extent = {extent.width, extent.height, 1};
 
-  //TODO what is the layout of the external image?
+  _layout = layout;
 }
 
 void Image2D::create(const Device& device,

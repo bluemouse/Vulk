@@ -77,6 +77,7 @@ class Swapchain : public Sharable<Swapchain>, private NotCopyable {
   // Acquire the next image from the swapchain and tag it as the active image. If failed,
   // throw exception.
   void acquireNextImage(const Vulk::Semaphore& signal = {}, const Fence& fence = {}) const;
+  void acquireNextImage(const Fence& fence) const { acquireNextImage({}, fence); }
 
   // Present the active image to the surface. If failed, throw exception.
   void present(const std::vector<Vulk::Semaphore*>& waits = {}) const;
