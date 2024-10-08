@@ -64,6 +64,7 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   void submitCommands(const std::vector<Semaphore*>& waits   = {},
                       const std::vector<Semaphore*>& signals = {},
                       const Fence& fence                     = {}) const;
+  void submitCommands(const Fence& fence) const { submitCommands({}, {}, fence); }
 
   void beginRenderPass(const RenderPass& renderPass,
                        const Framebuffer& framebuffer,

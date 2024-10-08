@@ -101,12 +101,16 @@ void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset, bool
     // The commandBuffer now should be submitted and in the pending state
     MI_ASSERT(commandBuffer->state() == CommandBuffer::State::Pending);
     // Start a new thread to wait for the fence to be signaled and then release the staging buffer
-    std::thread releaser([commandBuffer, stagingBuffer, fence]() {
+    auto releaser = [](CommandBuffer::shared_ptr commandBuffer,
+                       Fence::shared_ptr fence,
+                       StagingBuffer::shared_ptr stagingBuffer) {
       fence->wait();
-      stagingBuffer->destroy();
-      commandBuffer->free();
-    });
-    releaser.detach();
+
+      stagingBuffer.reset();
+      fence.reset();
+      commandBuffer.reset();
+    };
+    std::thread{releaser, commandBuffer, fence, stagingBuffer}.detach();
   } else {
     std::memcpy(map(offset, size), data, size);
     unmap();
