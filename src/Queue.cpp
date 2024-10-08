@@ -42,7 +42,9 @@ void Queue::submitCommands(const CommandBuffer& commandBuffer,
     waitSemaphores.reserve(waits.size());
     for (const auto& wait : waits) {
       waitSemaphores.push_back(*wait);
-      waitStages.push_back(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT); // TODO: how about other stages such as VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+      waitStages.push_back(
+          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT); // TODO: how about other stages such as
+                                               // VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     }
 
     submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
@@ -66,48 +68,38 @@ void Queue::waitIdle() const {
   vkQueueWaitIdle(_queue);
 }
 
-#if defined(ENABLE_VULKAN_DEBUG_UTILS)
-
 void Queue::beginLabel(const char* label, const glm::vec4& color) const {
-  VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-  labelInfo.pLabelName = label;
-  labelInfo.color[0]   = color.r;
-  labelInfo.color[1]   = color.g;
-  labelInfo.color[2]   = color.b;
-  labelInfo.color[3]   = color.a;
-  vkQueueBeginDebugUtilsLabelEXT(_queue, &labelInfo);
+  if (vkQueueBeginDebugUtilsLabelEXT) {
+    VkDebugUtilsLabelEXT labelInfo{};
+    labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pLabelName = label;
+    labelInfo.color[0]   = color.r;
+    labelInfo.color[1]   = color.g;
+    labelInfo.color[2]   = color.b;
+    labelInfo.color[3]   = color.a;
+    vkQueueBeginDebugUtilsLabelEXT(_queue, &labelInfo);
+  }
 }
 void Queue::insertLabel(const char* label, const glm::vec4& color) const {
-  VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-  labelInfo.pLabelName = label;
-  labelInfo.color[0]   = color.r;
-  labelInfo.color[1]   = color.g;
-  labelInfo.color[2]   = color.b;
-  labelInfo.color[3]   = color.a;
-  vkQueueInsertDebugUtilsLabelEXT(_queue, &labelInfo);
+  if (vkQueueInsertDebugUtilsLabelEXT) {
+    VkDebugUtilsLabelEXT labelInfo{};
+    labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pLabelName = label;
+    labelInfo.color[0]   = color.r;
+    labelInfo.color[1]   = color.g;
+    labelInfo.color[2]   = color.b;
+    labelInfo.color[3]   = color.a;
+    vkQueueInsertDebugUtilsLabelEXT(_queue, &labelInfo);
+  }
 }
 void Queue::endLabel() const {
-  vkQueueEndDebugUtilsLabelEXT(_queue);
+  if (vkQueueEndDebugUtilsLabelEXT) {
+    vkQueueEndDebugUtilsLabelEXT(_queue);
+  }
 }
 auto Queue::scopedLabel(const char* label, const glm::vec4& color) const
     -> std::unique_ptr<ScopedLabel> {
   return std::make_unique<ScopedLabel>(*this, label, color);
 }
-
-#else
-
-void Queue::beginLabel(const char*, const glm::vec4&) const {
-}
-void Queue::insertLabel(const char*, const glm::vec4&) const {
-}
-void Queue::endLabel() const {
-}
-auto Queue::scopedLabel(const char*, const glm::vec4&) const -> std::unique_ptr<ScopedLabel> {
-  return nullptr;
-}
-
-#endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
 MI_NAMESPACE_END(Vulk)

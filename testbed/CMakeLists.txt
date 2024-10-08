@@ -35,14 +35,6 @@ file(GLOB MODEL_FILES "resources/*.obj")
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 
-if(VULKAN_DEBUG_UTILS)
-  target_compile_definitions(${PROJECT_NAME}
-    PRIVATE
-      ENABLE_VULKAN_DEBUG_UTILS
-      ENABLE_VULKAN_DEBUG_LABEL
-  )
-endif()
-
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

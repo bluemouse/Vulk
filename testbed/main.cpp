@@ -29,12 +29,17 @@ int main(int argc, char** argv) {
       cxxopts::value<std::string>()
     )
     (
-      "v,validation-level",
+      "v, validation-level",
       "Set Vulkan validation level (0: none, 1: error, 2: warning, 3: info, 4: verbose)",
       cxxopts::value<int>()->default_value(kDefaultValidation)
     )
     (
-      "r,reflect-info",
+      "debug-utils",
+      "Enable Vulkan debug-utils extension to enable object tagging nad queue labeling. Enabled by default if validation-level is not 0",
+      cxxopts::value<bool>()->default_value("false")
+    )
+    (
+      "spirv-reflect-info",
       "Print SPIRV-Reflect information",
       cxxopts::value<bool>()->default_value("false")
     )
@@ -56,9 +61,10 @@ int main(int argc, char** argv) {
     return EXIT_SUCCESS;
   }
 
-  Testbed::setValidationLevel(
-      static_cast<Testbed::ValidationLevel>(options["validation-level"].as<int>()));
-  Testbed::setPrintReflect(options["reflect-info"].as<bool>());
+  auto validationLevel = options["validation-level"].as<int>();  ;
+  Testbed::setVulkanValidationLevel(static_cast<Testbed::ValidationLevel>(validationLevel));
+  Testbed::setVulkanDebugUtilsExt(validationLevel ? true : options["debug-utils"].as<bool>());
+  Testbed::setPrintSpirvReflect(options["spirv-reflect-info"].as<bool>());
   Testbed::setContinuousUpdate(options["continuous-update"].as<bool>());
 
   Testbed testbed;

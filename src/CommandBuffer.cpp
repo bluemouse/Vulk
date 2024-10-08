@@ -170,49 +170,38 @@ void CommandBuffer::drawIndexed(uint32_t indexCount) const {
   vkCmdDrawIndexed(_buffer, indexCount, 1, 0, 0, 0);
 }
 
-#if defined(ENABLE_VULKAN_DEBUG_UTILS)
-
 void CommandBuffer::beginLabel(const char* label, const glm::vec4& color) const {
-  VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-  labelInfo.pLabelName = label;
-  labelInfo.color[0]   = color.r;
-  labelInfo.color[1]   = color.g;
-  labelInfo.color[2]   = color.b;
-  labelInfo.color[3]   = color.a;
-  vkCmdBeginDebugUtilsLabelEXT(_buffer, &labelInfo);
+  if (vkCmdBeginDebugUtilsLabelEXT) {
+    VkDebugUtilsLabelEXT labelInfo{};
+    labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pLabelName = label;
+    labelInfo.color[0]   = color.r;
+    labelInfo.color[1]   = color.g;
+    labelInfo.color[2]   = color.b;
+    labelInfo.color[3]   = color.a;
+    vkCmdBeginDebugUtilsLabelEXT(_buffer, &labelInfo);
+  }
 }
 void CommandBuffer::insertLabel(const char* label, const glm::vec4& color) const {
-  VkDebugUtilsLabelEXT labelInfo{};
-  labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-  labelInfo.pLabelName = label;
-  labelInfo.color[0]   = color.r;
-  labelInfo.color[1]   = color.g;
-  labelInfo.color[2]   = color.b;
-  labelInfo.color[3]   = color.a;
-  vkCmdInsertDebugUtilsLabelEXT(_buffer, &labelInfo);
+  if (vkCmdBeginDebugUtilsLabelEXT) {
+    VkDebugUtilsLabelEXT labelInfo{};
+    labelInfo.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pLabelName = label;
+    labelInfo.color[0]   = color.r;
+    labelInfo.color[1]   = color.g;
+    labelInfo.color[2]   = color.b;
+    labelInfo.color[3]   = color.a;
+    vkCmdInsertDebugUtilsLabelEXT(_buffer, &labelInfo);
+  }
 }
 void CommandBuffer::endLabel() const {
-  vkCmdEndDebugUtilsLabelEXT(_buffer);
+  if (vkCmdEndDebugUtilsLabelEXT) {
+    vkCmdEndDebugUtilsLabelEXT(_buffer);
+  }
 }
 auto CommandBuffer::scopedLabel(const char* label, const glm::vec4& color) const
     -> std::unique_ptr<ScopedLabel> {
   return std::make_unique<ScopedLabel>(*this, label, color);
 }
-
-#else
-
-void CommandBuffer::beginLabel(const char*, const glm::vec4&) const {
-}
-void CommandBuffer::insertLabel(const char*, const glm::vec4&) const {
-}
-void CommandBuffer::endLabel() const {
-}
-auto CommandBuffer::scopedLabel(const char*, const glm::vec4&) const
-    -> std::unique_ptr<ScopedLabel> {
-  return nullptr;
-}
-
-#endif // defined(ENABLE_VULKAN_DEBUG_UTILS)
 
 MI_NAMESPACE_END(Vulk)

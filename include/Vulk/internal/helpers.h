@@ -34,4 +34,9 @@ inline bool operator==(const VkExtent3D& lhs, const VkExtent3D& rhs) {
   return lhs.width == rhs.width && lhs.height == rhs.height && lhs.depth == rhs.depth;
 }
 
+template <class Container, typename Element>
+bool contain(const Container& container, const Element& element) {
+  return std::find(container.begin(), container.end(), element) != container.end();
+}
+
 MI_NAMESPACE_END(Vulk)

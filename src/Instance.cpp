@@ -138,7 +138,9 @@ void Instance::create(int versionMajor,
       createInfo->enabledLayerCount   = static_cast<uint32_t>(_layers.size());
       createInfo->ppEnabledLayerNames = _layers.data();
 
-      extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+      if (contain(extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+      }
     }
     createInfo->enabledExtensionCount   = static_cast<uint32_t>(extensions.size());
     createInfo->ppEnabledExtensionNames = extensions.data();

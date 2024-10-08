@@ -43,12 +43,16 @@ struct hash<Testbed::Vertex> {
 };
 } // namespace std
 
-Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::Error;
+Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::None;
+bool Testbed::_debugUtilsEnabled = false;
 
-void Testbed::setValidationLevel(ValidationLevel level) {
+void Testbed::setVulkanValidationLevel(ValidationLevel level) {
   _validationLevel = level;
 }
-void Testbed::setPrintReflect(bool print) {
+void Testbed::setVulkanDebugUtilsExt(bool enable) {
+  _debugUtilsEnabled = enable;
+}
+void Testbed::setPrintSpirvReflect(bool print) {
   print ? Vulk::ShaderModule::enablePrintReflection()
         : Vulk::ShaderModule::disablePrintReflection();
 }
@@ -202,6 +206,9 @@ void Testbed::createContext() {
   createInfo.versionMajor       = 1;
   createInfo.versionMinor       = 0;
   createInfo.instanceExtensions = getRequiredInstanceExtensions();
+  if (_debugUtilsEnabled) {
+    createInfo.instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  }
   createInfo.validationLevel    = _validationLevel;
 
   createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {

@@ -11,7 +11,8 @@
       "program": "${command:cmake.launchTargetPath}",
       "args": [
         "-m", "models/dice.obj",
-        "-t", "textures/stary-night.jpg"
+        "-t", "textures/stary-night.jpg",
+        "--validation-level", "2"
       ],
       "stopAtEntry": false,
       "cwd": "${command:cmake.launchTargetDirectory}",

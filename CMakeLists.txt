@@ -6,7 +6,6 @@ project(Vulk
 )
 
 option(BUILD_TESTBED  "Build the testbed application" ON)
-option(VULKAN_DEBUG_UTILS "Enable VK_EXT_debug_utils and the debug macros" OFF)
 
 # @add the search path of CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -141,13 +140,6 @@ target_compile_definitions(${PROJECT_NAME}
     GLM_FORCE_RADIANS
     GLM_ENABLE_EXPERIMENTAL
 )
-if(VULKAN_DEBUG_UTILS)
-  target_compile_definitions(${PROJECT_NAME}
-    PRIVATE
-      ENABLE_VULKAN_DEBUG_UTILS
-      ENABLE_VULKAN_DEBUG_LABEL
-  )
-endif()
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC

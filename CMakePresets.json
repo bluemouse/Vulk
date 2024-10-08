@@ -14,7 +14,6 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "VULKAN_DEBUG_UTILS": "OFF"
       }
     },
     {
@@ -32,7 +31,6 @@
       "description": "Sets debug build type with Vulkan debug utils enabled",
       "inherits": "debug",
       "cacheVariables": {
-          "VULKAN_DEBUG_UTILS": "ON"
         }
       },
     {

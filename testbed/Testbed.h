@@ -38,8 +38,9 @@ class Testbed : public MainWindow {
 
   // Settings of the Testbed execution
   using ValidationLevel = Vulk::Context::ValidationLevel;
-  static void setValidationLevel(ValidationLevel level);
-  static void setPrintReflect(bool print);
+  static void setVulkanValidationLevel(ValidationLevel level);
+  static void setVulkanDebugUtilsExt(bool enable);
+  static void setPrintSpirvReflect(bool print);
 
  protected:
   void mainLoop() override;
@@ -111,6 +112,7 @@ class Testbed : public MainWindow {
 
   // Settings of the Testbed execution
   static ValidationLevel _validationLevel;
+  static bool _debugUtilsEnabled;
 
   // UI control variables
   float _zoomFactor = 1.0F;
