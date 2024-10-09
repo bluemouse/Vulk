@@ -128,10 +128,14 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore*> wa
   }
 }
 
-void TextureMappingTask::run(CommandBuffer& commandBuffer) {
+void TextureMappingTask::run() {
   const auto& device = _context.device();
+  auto& commandPool  = _context.commandPool(Device::QueueFamilyType::Graphics);
+  auto commandBuffer = CommandBuffer::make_shared(commandPool);
 
-  auto label = commandBuffer.queue().scopedLabel("TextureMappingTask::run()");
+  auto fence = Fence::make_shared(device);
+
+  auto label = commandBuffer->queue().scopedLabel("TextureMappingTask::run()");
 
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -162,37 +166,49 @@ void TextureMappingTask::run(CommandBuffer& commandBuffer) {
   // TODO We should cache and reuse framebuffers. For now, we create a new one for each frame.
   //      We need to call `queue.waitIdle()` at the end of the frame to ensure that the framebuffer
   //      is not in use anymore before we we can release it.
-  Framebuffer framebuffer{device, *_renderPass, *colorAttachment, *depthStencilAttachment};
+  auto framebuffer =
+      Framebuffer::make_shared(device, *_renderPass, *colorAttachment, *depthStencilAttachment);
 
-  commandBuffer.reset();
-
-  commandBuffer.beginRecording();
+  commandBuffer->beginRecording();
   {
-    auto label = commandBuffer.scopedLabel("Frame");
+    auto label = commandBuffer->scopedLabel("Frame");
 
-    commandBuffer.beginRenderPass(*_renderPass, framebuffer);
+    commandBuffer->beginRenderPass(*_renderPass, *framebuffer);
 
-    commandBuffer.bindPipeline(*_pipeline);
+    commandBuffer->bindPipeline(*_pipeline);
 
-    auto extent = framebuffer.extent();
-    commandBuffer.setViewport({0.0F, 0.0F}, {extent.width, extent.height});
+    auto extent = framebuffer->extent();
+    commandBuffer->setViewport({0.0F, 0.0F}, {extent.width, extent.height});
 
-    commandBuffer.bindVertexBuffer(*_vertexBuffer, _vertexBufferBinding);
-    commandBuffer.bindIndexBuffer(*_indexBuffer);
-    commandBuffer.bindDescriptorSet(*_pipeline, *descriptorSet);
+    commandBuffer->bindVertexBuffer(*_vertexBuffer, _vertexBufferBinding);
+    commandBuffer->bindIndexBuffer(*_indexBuffer);
+    commandBuffer->bindDescriptorSet(*_pipeline, *descriptorSet);
 
-    commandBuffer.drawIndexed(_numIndices);
+    commandBuffer->drawIndexed(_numIndices);
 
-    commandBuffer.endRenderpass();
+    commandBuffer->endRenderpass();
   }
-  commandBuffer.endRecording();
+  commandBuffer->endRecording();
+  commandBuffer->submitCommands(_waits, _signals, *fence);
 
-  commandBuffer.submitCommands(_waits, _signals, *_fence);
+  // Start a new thread to wait for the fence to be signaled and then release the resource
+  auto releaser = [](Fence::shared_ptr_const fence,
+                     CommandBuffer::shared_ptr commandBuffer,
+                     Framebuffer::shared_ptr framebuffer) {
+    fence->wait();
 
-  commandBuffer.queue()
-      .waitIdle(); // TODO: This is a temporary solution to reset the descriptor pool (or other
-                   // resources). My might re-org the task to be three phases: prepare, run, finish
+    fence.reset();
+    commandBuffer.reset();
+    framebuffer.reset();
+
+  };
+  std::thread{releaser, fence, commandBuffer, framebuffer}.detach();
+
+  // TODO _descriptorPool should bw reset after the frame is done. It (i.e. resources) should be
+  // managed outside the task. We need some kinda garbage collection mechanism to do this.
+  commandBuffer->queue().waitIdle();
   _descriptorPool->reset(); // Free all sets allocated from this pool
+
 }
 
 DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
@@ -218,8 +234,11 @@ void PresentTask::prepareSynchronization(const std::vector<Semaphore*> waits,
   _readyToPresent = readyToPreset;
 }
 
-void PresentTask::run(CommandBuffer& commandBuffer) {
-  auto label = commandBuffer.queue().scopedLabel("PresentTask::run()");
+void PresentTask::run() {
+  auto& commandPool  = _context.commandPool(Device::QueueFamilyType::Transfer);
+  auto commandBuffer = CommandBuffer::make_shared(commandPool);
+
+  auto label = commandBuffer->queue().scopedLabel("PresentTask::run()");
 
   Semaphore::shared_ptr swapchainImageReady = Semaphore::make_shared(device());
   _context.swapchain().acquireNextImage(*swapchainImageReady);
@@ -227,27 +246,28 @@ void PresentTask::run(CommandBuffer& commandBuffer) {
 
   Fence::shared_ptr fence = Fence::make_shared(device());
 
-  commandBuffer.beginRecording();
+  commandBuffer->beginRecording();
   {
-    // TODO: active swapchain image is not VK_IMAGE_LAYOUT_UNDEFINED after the 1 frame rendering!
     auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
-    swapchainFrame.blitFrom(commandBuffer, *_frame);
-    swapchainFrame.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    swapchainFrame.blitFrom(*commandBuffer, *_frame);
+    swapchainFrame.transitToNewLayout(*commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
   }
-  commandBuffer.endRecording();
-  commandBuffer.submitCommands(_waits, _readyToPresent, *fence);
+  commandBuffer->endRecording();
+  commandBuffer->submitCommands(_waits, _readyToPresent, *fence);
 
   _context.swapchain().present(_readyToPresent);
 
   // Start a new thread to wait for the fence to be signaled and then release the resource
   auto releaser = [](Fence::shared_ptr fence,
+                     CommandBuffer::shared_ptr commandBuffer,
                      Semaphore::shared_ptr swapchainImageReady) {
     fence->wait();
 
     fence.reset();
+    commandBuffer.reset();
     swapchainImageReady.reset();
   };
-  std::thread{releaser, fence, swapchainImageReady}.detach();
+  std::thread{releaser, fence, commandBuffer, swapchainImageReady}.detach();
 }
 
 MI_NAMESPACE_END(Vulk)

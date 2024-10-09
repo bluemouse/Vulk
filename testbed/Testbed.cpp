@@ -155,13 +155,10 @@ void Testbed::mainLoop() {
 }
 
 void Testbed::drawFrame() {
-  const auto& commandPool = _context.commandPool(Vulk::Device::QueueFamilyType::Graphics);
-  auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
-
   try {
     nextFrame(); // Move to the next frame. The new current frame may be in use.
 
-    auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
+    // TODO Label the drawFrame() function in the queue
 
     //
     // Texture Mapping Task
@@ -174,7 +171,7 @@ void Testbed::drawFrame() {
     _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
     _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
 
-    _textureMappingTask->run(*commandBuffer);
+    _textureMappingTask->run();
 
     //
     // Present Task
@@ -183,7 +180,10 @@ void Testbed::drawFrame() {
     _presentTask->prepareSynchronization({_currentFrame->frameReady.get()},
                                          {_currentFrame->presentReady.get()});
 
-    _presentTask->run(*commandBuffer);
+    _presentTask->run();
+
+    // TODO Wait on presentTask's fence to perform the cleanup (garbage collection, maybe?)
+
   } catch (const Vulk::Exception& e) {
     if (e.result() == VK_ERROR_OUT_OF_DATE_KHR || e.result() == VK_SUBOPTIMAL_KHR) {
       // The size or format of the swapchain image is not correct. We'll just ignore them
@@ -192,8 +192,6 @@ void Testbed::drawFrame() {
       throw e;
     }
   }
-
-  commandBuffer->queue().waitIdle(); // TODO fix this hack
 }
 
 void Testbed::createContext() {

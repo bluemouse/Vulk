@@ -27,7 +27,7 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
   explicit RenderTask(const Context& context);
   virtual ~RenderTask(){};
 
-  virtual void run(CommandBuffer& commandBuffer) = 0;
+  virtual void run() = 0;
 
   const Device& device() const { return _context.device(); }
 
@@ -58,7 +58,7 @@ class TextureMappingTask : public RenderTask {
 
   DescriptorSet::shared_ptr createDescriptorSet();
 
-  void run(CommandBuffer& commandBuffer) override;
+  void run() override;
 
   //
   // Override the sharable types and functions
@@ -106,7 +106,7 @@ class PresentTask : public RenderTask {
   void prepareSynchronization(const std::vector<Semaphore*> waits,
                               const std::vector<Semaphore*> readyToPreset);
 
-  void run(CommandBuffer& commandBuffer) override;
+  void run() override;
 
   //
   // Override the sharable types and functions
