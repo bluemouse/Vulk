@@ -84,7 +84,6 @@ class Testbed : public MainWindow {
  private:
   Vulk::Context _context;
 
-  Vulk::AcquireSwapchainImageTask::shared_ptr _acquireSwapchainImageTask;
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 
@@ -99,7 +98,6 @@ class Testbed : public MainWindow {
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
 
-    Vulk::Semaphore::shared_ptr swapchainImageReady;
     Vulk::Semaphore::shared_ptr frameReady;
     Vulk::Semaphore::shared_ptr presentReady;
   };

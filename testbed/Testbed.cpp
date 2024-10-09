@@ -44,7 +44,7 @@ struct hash<Testbed::Vertex> {
 } // namespace std
 
 Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::None;
-bool Testbed::_debugUtilsEnabled = false;
+bool Testbed::_debugUtilsEnabled                   = false;
 
 void Testbed::setVulkanValidationLevel(ValidationLevel level) {
   _validationLevel = level;
@@ -134,7 +134,6 @@ void Testbed::cleanup() {
   }
   _frames.clear();
 
-  _acquireSwapchainImageTask.reset();
   _textureMappingTask.reset();
   _presentTask.reset();
 
@@ -164,9 +163,6 @@ void Testbed::drawFrame() {
 
     auto label = _currentFrame->commandBuffer->queue().scopedLabel("Testbed::drawFrame()");
 
-    _acquireSwapchainImageTask->prepareSynchronization(_currentFrame->swapchainImageReady.get());
-    _acquireSwapchainImageTask->run(*commandBuffer);
-
     //
     // Texture Mapping Task
     //
@@ -184,9 +180,8 @@ void Testbed::drawFrame() {
     // Present Task
     //
     _presentTask->prepareInput(*_currentFrame->colorBuffer);
-    _presentTask->prepareSynchronization(
-        {_currentFrame->swapchainImageReady.get(), _currentFrame->frameReady.get()},
-        {_currentFrame->presentReady.get()});
+    _presentTask->prepareSynchronization({_currentFrame->frameReady.get()},
+                                         {_currentFrame->presentReady.get()});
 
     _presentTask->run(*commandBuffer);
   } catch (const Vulk::Exception& e) {
@@ -198,7 +193,7 @@ void Testbed::drawFrame() {
     }
   }
 
-  commandBuffer->queue().waitIdle(); //TODO fix this hack
+  commandBuffer->queue().waitIdle(); // TODO fix this hack
 }
 
 void Testbed::createContext() {
@@ -209,7 +204,7 @@ void Testbed::createContext() {
   if (_debugUtilsEnabled) {
     createInfo.instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
-  createInfo.validationLevel    = _validationLevel;
+  createInfo.validationLevel = _validationLevel;
 
   createInfo.createWindowSurface = [this](const Vulk::Instance& instance) {
     return MainWindow::createWindowSurface(instance);
@@ -233,9 +228,8 @@ void Testbed::createContext() {
 }
 
 void Testbed::createRenderTask() {
-  _acquireSwapchainImageTask = Vulk::AcquireSwapchainImageTask::make_shared(_context);
-  _textureMappingTask        = Vulk::TextureMappingTask::make_shared(_context);
-  _presentTask               = Vulk::PresentTask::make_shared(_context);
+  _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
+  _presentTask        = Vulk::PresentTask::make_shared(_context);
 }
 
 void Testbed::loadModel(const std::string& modelFile,
@@ -365,9 +359,8 @@ void Testbed::createFrames() {
     frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
 
-    frame.swapchainImageReady = Vulk::Semaphore::make_shared(device);
-    frame.frameReady          = Vulk::Semaphore::make_shared(device);
-    frame.presentReady        = Vulk::Semaphore::make_shared(device);
+    frame.frameReady   = Vulk::Semaphore::make_shared(device);
+    frame.presentReady = Vulk::Semaphore::make_shared(device);
 
     frame.colorBuffer->transitToNewLayout(*frame.commandBuffer,
                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <cstring>
+#include <thread>
 
 namespace {
 #if defined(__linux__)
@@ -188,33 +189,14 @@ void TextureMappingTask::run(CommandBuffer& commandBuffer) {
 
   commandBuffer.submitCommands(_waits, _signals, *_fence);
 
-  commandBuffer.queue().waitIdle(); // TODO: This is a temporary solution to reset the descriptor pool (or other
-                  // resources). My might re-org the task to be three phases: prepare, run, finish
+  commandBuffer.queue()
+      .waitIdle(); // TODO: This is a temporary solution to reset the descriptor pool (or other
+                   // resources). My might re-org the task to be three phases: prepare, run, finish
   _descriptorPool->reset(); // Free all sets allocated from this pool
 }
 
 Vulk::DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
   return Vulk::DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
-}
-
-//
-//
-//
-AcquireSwapchainImageTask::AcquireSwapchainImageTask(const Vulk::Context& context)
-    : RenderTask(context) {
-}
-
-AcquireSwapchainImageTask::~AcquireSwapchainImageTask() {
-}
-
-void AcquireSwapchainImageTask::prepareSynchronization(const Vulk::Semaphore* signal) {
-  _signal = signal;
-}
-
-void AcquireSwapchainImageTask::run(CommandBuffer& commandBuffer) {
-  auto label = commandBuffer.queue().scopedLabel("AcquireSwapchainImageTask::run()");
-
-  _context.swapchain().acquireNextImage(*_signal);
 }
 
 //
@@ -232,24 +214,40 @@ void PresentTask::prepareInput(const Vulk::Image2D& frame) {
 
 void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
                                          const std::vector<Vulk::Semaphore*> readyToPreset) {
-  _waits = waits;
+  _waits          = waits;
   _readyToPresent = readyToPreset;
 }
 
 void PresentTask::run(CommandBuffer& commandBuffer) {
   auto label = commandBuffer.queue().scopedLabel("PresentTask::run()");
 
+  Semaphore::shared_ptr swapchainImageReady = Vulk::Semaphore::make_shared(device());
+  _context.swapchain().acquireNextImage(*swapchainImageReady);
+  _waits.push_back(swapchainImageReady.get());
+
+  Fence::shared_ptr fence = Fence::make_shared(device());
+
   commandBuffer.beginRecording();
   {
     // TODO: active swapchain image is not VK_IMAGE_LAYOUT_UNDEFINED after the 1 frame rendering!
     auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
-    swapchainFrame.blitFrom(commandBuffer, *_frame, _waits);
+    swapchainFrame.blitFrom(commandBuffer, *_frame);
     swapchainFrame.transitToNewLayout(commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
   }
   commandBuffer.endRecording();
-  commandBuffer.submitCommands(_waits, _readyToPresent);
+  commandBuffer.submitCommands(_waits, _readyToPresent, *fence);
 
   _context.swapchain().present(_readyToPresent);
+
+  // Start a new thread to wait for the fence to be signaled and then release the resource
+  auto releaser = [](Fence::shared_ptr fence,
+                     Semaphore::shared_ptr swapchainImageReady) {
+    fence->wait();
+
+    fence.reset();
+    swapchainImageReady.reset();
+  };
+  std::thread{releaser, fence, swapchainImageReady}.detach();
 }
 
 MI_NAMESPACE_END(Vulk)

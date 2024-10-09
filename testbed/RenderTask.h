@@ -29,6 +29,8 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
 
   virtual void run(CommandBuffer& commandBuffer) = 0;
 
+  const Device& device() const { return _context.device(); }
+
  protected:
   const Context& _context;
 };
@@ -90,28 +92,6 @@ class TextureMappingTask : public RenderTask {
   std::vector<Semaphore*> _waits;
   std::vector<Semaphore*> _signals;
   Fence::shared_ptr_const _fence;
-};
-
-//
-//
-//
-class AcquireSwapchainImageTask : public RenderTask {
- public:
-  explicit AcquireSwapchainImageTask(const Context& context);
-  ~AcquireSwapchainImageTask() override;
-
-  void run(CommandBuffer& commandBuffer) override;
-
-  void prepareSynchronization(const Semaphore* signal);
-
-  //
-  // Override the sharable types and functions
-  //
-  MI_DEFINE_SHARED_PTR(AcquireSwapchainImageTask, RenderTask);
-
- private:
-  // Synchronizations
-  const Semaphore* _signal = nullptr;
 };
 
 //

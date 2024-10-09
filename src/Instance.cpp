@@ -203,6 +203,7 @@ bool Instance::checkLayerSupport(const std::vector<const char*>& layers) {
 }
 
 void Instance::initDefaultValidationCallback() {
+  // TODO refactor this callback to a function in debug.h to have better control on the format
   _validationCallback = [](VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                            VkDebugUtilsMessageTypeFlagsEXT messageType,
                            const VkDebugUtilsMessengerCallbackDataEXT* data) -> VkBool32 {
@@ -233,7 +234,7 @@ void Instance::initDefaultValidationCallback() {
     std::string message = std::string{"Vulkan ["} + type + " " + severity + "]: " + data->pMessage;
     if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
       std::cerr << message << std::endl;
-      // throw std::runtime_error(message);
+      throw std::runtime_error(message);
     } else {
       std::cerr << message << std::endl;
     }
