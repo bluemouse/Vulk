@@ -11,7 +11,7 @@ MI_NAMESPACE_BEGIN(Vulk)
 class Context {
  public:
   using ValidationLevel         = Instance::ValidationLevel;
-  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Vulk::Instance& instance)>;
+  using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Instance& instance)>;
 
  public:
   struct CreateInfo {
@@ -77,11 +77,11 @@ class Context {
                                const Swapchain::ChoosePresentModeFunc& choosePresentMode);
 
  protected:
-  Vulk::Instance::shared_ptr _instance;
+  Instance::shared_ptr _instance;
 
-  Vulk::Surface::shared_ptr _surface;
-  Vulk::Device::shared_ptr _device;
-  Vulk::Swapchain::shared_ptr _swapchain;
+  Surface::shared_ptr _surface;
+  Device::shared_ptr _device;
+  Swapchain::shared_ptr _swapchain;
 };
 
 MI_NAMESPACE_END(Vulk)

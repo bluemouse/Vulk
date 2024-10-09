@@ -37,7 +37,7 @@ class Toolbox {
   StagingBuffer::shared_ptr createStagingBuffer(const uint8_t* data, uint32_t size) const;
 
  private:
-  const Vulk::Context& _context;
+  const Context& _context;
 };
 
 MI_NAMESPACE_END(Vulk)

@@ -58,7 +58,7 @@ void PhysicalDevice::instantiate(
             return false;
           }
 
-          auto queueFamilies = Vulk::PhysicalDevice::findQueueFamilies(device, *surface);
+          auto queueFamilies = PhysicalDevice::findQueueFamilies(device, *surface);
           if (requiredQueueFamilies.graphics && !queueFamilies.graphics) {
             return false;
           }
@@ -111,7 +111,7 @@ void PhysicalDevice::reset() {
 std::shared_ptr<Device> PhysicalDevice::createDevice(
     const QueueFamilies& requiredQueueFamilies,
     const std::vector<const char*>& extensions) const {
-  return Vulk::Device::make_shared(*this, requiredQueueFamilies, extensions);
+  return Device::make_shared(*this, requiredQueueFamilies, extensions);
 }
 
 void PhysicalDevice::initQueueFamilies(const Surface& surface) {

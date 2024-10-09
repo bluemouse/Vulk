@@ -69,7 +69,7 @@ inline void StorageBuffer::create(const Device& device,
   VkDeviceSize size = sizeof(Element) * elements.size();
   create(device, size);
 
-  const auto& queue = device.queue(Vulk::Device::QueueFamilyType::Compute);
+  const auto& queue = device.queue(Device::QueueFamilyType::Compute);
   load(queue, stagingCommandBuffer, elements.data(), size);
 }
 

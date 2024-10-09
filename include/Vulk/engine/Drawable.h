@@ -19,7 +19,7 @@ class Drawable {
  public:
   Drawable() = default;
 
-  void create(const Vulk::Device& device,
+  void create(const Device& device,
               const std::vector<vertex_type>& vertices,
               const std::vector<index_type>& indices);
   void destroy();
@@ -37,7 +37,7 @@ class Drawable {
 };
 
 template <typename V, typename I>
-inline void Drawable<V, I>::create(const Vulk::Device& device,
+inline void Drawable<V, I>::create(const Device& device,
                                    const std::vector<vertex_type>& vertices,
                                    const std::vector<index_type>& indices) {
   _vertexBuffer = VertexBuffer::make_shared(device, vertices);

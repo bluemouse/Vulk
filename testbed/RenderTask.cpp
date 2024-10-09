@@ -27,7 +27,7 @@ std::filesystem::path executablePath() {
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-RenderTask::RenderTask(const Vulk::Context& context) : _context(context) {
+RenderTask::RenderTask(const Context& context) : _context(context) {
 }
 
 //
@@ -39,8 +39,8 @@ struct Uniforms {
   alignas(sizeof(glm::vec4)) glm::mat4 view;
   alignas(sizeof(glm::vec4)) glm::mat4 proj;
 
-  static Vulk::UniformBuffer::shared_ptr allocateBuffer(const Vulk::Device& device) {
-    return Vulk::UniformBuffer::make_shared(device, sizeof(Uniforms));
+  static UniformBuffer::shared_ptr allocateBuffer(const Device& device) {
+    return UniformBuffer::make_shared(device, sizeof(Uniforms));
   }
 
   static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
@@ -49,7 +49,7 @@ struct Uniforms {
 };
 } // namespace
 
-TextureMappingTask::TextureMappingTask(const Vulk::Context& context) : RenderTask(context) {
+TextureMappingTask::TextureMappingTask(const Context& context) : RenderTask(context) {
   const auto& device = _context.device();
 
   // Create render pass
@@ -82,8 +82,8 @@ TextureMappingTask::TextureMappingTask(const Vulk::Context& context) : RenderTas
 TextureMappingTask::~TextureMappingTask() {
 }
 
-void TextureMappingTask::prepareGeometry(const Vulk::VertexBuffer& vertexBuffer,
-                                         const Vulk::IndexBuffer& indexBuffer,
+void TextureMappingTask::prepareGeometry(const VertexBuffer& vertexBuffer,
+                                         const IndexBuffer& indexBuffer,
                                          size_t numIndices) {
   _vertexBuffer = vertexBuffer.get_shared();
   _indexBuffer  = indexBuffer.get_shared();
@@ -106,19 +106,19 @@ void TextureMappingTask::prepareUniforms(const glm::mat4& model2world,
   memcpy(_uniformBufferMapped[_currentUniformBufferIdx], &uniforms, sizeof(uniforms));
 }
 
-void TextureMappingTask::prepareInputs(const Vulk::Texture2D& texture) {
+void TextureMappingTask::prepareInputs(const Texture2D& texture) {
   _texture = texture.get_shared();
 }
 
-void TextureMappingTask::prepareOutputs(const Vulk::Image2D& colorBuffer,
-                                        const Vulk::DepthImage& depthStencilBuffer) {
+void TextureMappingTask::prepareOutputs(const Image2D& colorBuffer,
+                                        const DepthImage& depthStencilBuffer) {
   _colorBuffer        = colorBuffer.get_shared();
   _depthStencilBuffer = depthStencilBuffer.get_shared();
 }
 
-void TextureMappingTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
-                                                const std::vector<Vulk::Semaphore*> signals,
-                                                const Vulk::Fence& fence) {
+void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore*> waits,
+                                                const std::vector<Semaphore*> signals,
+                                                const Fence& fence) {
   _waits   = waits;
   _signals = signals;
   if (fence.isCreated()) {
@@ -145,7 +145,7 @@ void TextureMappingTask::run(CommandBuffer& commandBuffer) {
 
   // The order of bindings must match the order of bindings in shaders. The name and the type need
   // to match them in the shader as well.
-  std::vector<Vulk::DescriptorSet::Binding> bindings = {
+  std::vector<DescriptorSet::Binding> bindings = {
       {"xform", "Transformation", &transformationBufferInfo},
       {"texSampler", "sampler2D", &textureImageInfo}};
 
@@ -156,13 +156,13 @@ void TextureMappingTask::run(CommandBuffer& commandBuffer) {
 
   descriptorSet->bind(bindings);
 
-  auto colorAttachment        = Vulk::ImageView::make_shared(device, *_colorBuffer);
-  auto depthStencilAttachment = Vulk::ImageView::make_shared(device, *_depthStencilBuffer);
+  auto colorAttachment        = ImageView::make_shared(device, *_colorBuffer);
+  auto depthStencilAttachment = ImageView::make_shared(device, *_depthStencilBuffer);
 
   // TODO We should cache and reuse framebuffers. For now, we create a new one for each frame.
   //      We need to call `queue.waitIdle()` at the end of the frame to ensure that the framebuffer
   //      is not in use anymore before we we can release it.
-  Vulk::Framebuffer framebuffer{device, *_renderPass, *colorAttachment, *depthStencilAttachment};
+  Framebuffer framebuffer{device, *_renderPass, *colorAttachment, *depthStencilAttachment};
 
   commandBuffer.reset();
 
@@ -195,25 +195,25 @@ void TextureMappingTask::run(CommandBuffer& commandBuffer) {
   _descriptorPool->reset(); // Free all sets allocated from this pool
 }
 
-Vulk::DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
-  return Vulk::DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
+DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
+  return DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
 }
 
 //
 //
 //
-PresentTask::PresentTask(const Vulk::Context& context) : RenderTask(context) {
+PresentTask::PresentTask(const Context& context) : RenderTask(context) {
 }
 
 PresentTask::~PresentTask() {
 }
 
-void PresentTask::prepareInput(const Vulk::Image2D& frame) {
+void PresentTask::prepareInput(const Image2D& frame) {
   _frame = frame.get_shared();
 }
 
-void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> waits,
-                                         const std::vector<Vulk::Semaphore*> readyToPreset) {
+void PresentTask::prepareSynchronization(const std::vector<Semaphore*> waits,
+                                         const std::vector<Semaphore*> readyToPreset) {
   _waits          = waits;
   _readyToPresent = readyToPreset;
 }
@@ -221,7 +221,7 @@ void PresentTask::prepareSynchronization(const std::vector<Vulk::Semaphore*> wai
 void PresentTask::run(CommandBuffer& commandBuffer) {
   auto label = commandBuffer.queue().scopedLabel("PresentTask::run()");
 
-  Semaphore::shared_ptr swapchainImageReady = Vulk::Semaphore::make_shared(device());
+  Semaphore::shared_ptr swapchainImageReady = Semaphore::make_shared(device());
   _context.swapchain().acquireNextImage(*swapchainImageReady);
   _waits.push_back(swapchainImageReady.get());
 

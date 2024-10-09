@@ -90,10 +90,10 @@ void Swapchain::create(const Device& device,
   _images.reserve(minImageCount);
   _imageViews.reserve(minImageCount);
   for (auto& img : imgs) {
-    auto img2d = Vulk::Image2D::make_shared(img, _surfaceFormat.format, _surfaceExtent);
+    auto img2d = Image2D::make_shared(img, _surfaceFormat.format, _surfaceExtent);
     _images.push_back(img2d);
 
-    auto imgView = Vulk::ImageView::make_shared(device, *img2d);
+    auto imgView = ImageView::make_shared(device, *img2d);
     _imageViews.push_back(imgView);
   }
 

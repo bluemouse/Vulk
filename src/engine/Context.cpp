@@ -59,11 +59,11 @@ void Context::createInstance(int versionMajor,
                              int versionMinor,
                              const std::vector<const char*>& extensions,
                              ValidationLevel validation) {
-  _instance = Vulk::Instance::make_shared(versionMajor, versionMinor, extensions, validation);
+  _instance = Instance::make_shared(versionMajor, versionMinor, extensions, validation);
 }
 
 void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {
-  _surface = Vulk::Surface::make_shared(instance(), createWindowSurface(instance()));
+  _surface = Surface::make_shared(instance(), createWindowSurface(instance()));
 }
 
 void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
@@ -95,7 +95,7 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
   VkPresentModeKHR presentMode =
       choosePresentMode ? choosePresentMode(presentModes) : chooseDefaultPresentMode(presentModes);
 
-  _swapchain = Vulk::Swapchain::make_shared(device(), surface(), extent, format, presentMode);
+  _swapchain = Swapchain::make_shared(device(), surface(), extent, format, presentMode);
 }
 
 void Context::waitIdle() const {

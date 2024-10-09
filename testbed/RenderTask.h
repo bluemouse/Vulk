@@ -104,7 +104,7 @@ class PresentTask : public RenderTask {
 
   void prepareInput(const Image2D& frame);
   void prepareSynchronization(const std::vector<Semaphore*> waits,
-                              const std::vector<Vulk::Semaphore*> readyToPreset);
+                              const std::vector<Semaphore*> readyToPreset);
 
   void run(CommandBuffer& commandBuffer) override;
 
