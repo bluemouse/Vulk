@@ -93,8 +93,6 @@ class Testbed : public MainWindow {
   Vulk::Texture2D::shared_ptr _texture;
 
   struct Frame {
-    Vulk::CommandBuffer::shared_ptr commandBuffer;
-
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
 

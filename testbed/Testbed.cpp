@@ -6,6 +6,9 @@
 #include <Vulk/Framebuffer.h>
 #include <Vulk/Queue.h>
 #include <Vulk/Exception.h>
+#include <Vulk/CommandPool.h>
+#include <Vulk/CommandBuffer.h>
+#include <Vulk/Fence.h>
 
 #include <Vulk/engine/Toolbox.h>
 #include <Vulk/internal/debug.h>
@@ -32,6 +35,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
+#include <thread>
 
 namespace std {
 template <>
@@ -125,9 +129,16 @@ void Testbed::init(int width, int height) {
   createFrames();
 
   _zoomFactor = 1.0F;
+
+  // After we init all Vulkan resource and before the rendering, make sure the/ device is idle and
+  // all resource is ready.
+  _context.waitIdle();
 }
 
 void Testbed::cleanup() {
+  // Before we clean up all Vulkan resource, make sure the device is idle.
+  _context.waitIdle();
+
   for (auto& frame : _frames) {
     frame.colorBuffer->destroy();
     frame.depthBuffer->destroy();
@@ -151,7 +162,6 @@ void Testbed::run() {
 
 void Testbed::mainLoop() {
   MainWindow::mainLoop();
-  _context.waitIdle(); // Before we end the loop, we need to wait for the device to be idle.
 }
 
 void Testbed::drawFrame() {
@@ -345,10 +355,11 @@ void Testbed::createFrames() {
   const auto& device = _context.device();
   const auto& extent = _context.swapchain().surfaceExtent();
 
-  const auto& cmdPool = _context.commandPool(Vulk::Device::QueueFamilyType::Graphics);
-  for (auto& frame : _frames) {
-    frame.commandBuffer = Vulk::CommandBuffer::make_shared(cmdPool);
+  const auto& commandPool = _context.commandPool(Vulk::Device::QueueFamilyType::Transfer);
+  auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
 
+  commandBuffer->beginRecording();
+  for (auto& frame : _frames) {
     const auto usage  = Vulk::Image2D::Usage::COLOR_ATTACHMENT | Vulk::Image2D::Usage::TRANSFER_SRC;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
@@ -358,9 +369,19 @@ void Testbed::createFrames() {
     frame.frameReady   = Vulk::Semaphore::make_shared(device);
     frame.presentReady = Vulk::Semaphore::make_shared(device);
 
-    frame.colorBuffer->transitToNewLayout(*frame.commandBuffer,
-                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.colorBuffer->transitToNewLayout(*commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
+  commandBuffer->endRecording();
+
+  auto fence = Vulk::Fence::make_shared(device);
+  commandBuffer->submitCommands(*fence);
+
+  auto releaser = [](Vulk::Fence::shared_ptr fence, Vulk::CommandBuffer::shared_ptr commandBuffer) {
+    fence->wait();
+    fence->reset();
+    commandBuffer->reset();
+  };
+  std::thread{releaser, fence, commandBuffer}.detach();
 
   nextFrame();
 }
