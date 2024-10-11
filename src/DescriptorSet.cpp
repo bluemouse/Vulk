@@ -42,12 +42,12 @@ void DescriptorSet::allocate(const DescriptorPool& pool, const DescriptorSetLayo
 void DescriptorSet::free() {
   MI_VERIFY(isAllocated());
 
-  // TODO: Can only call free() if _pool is created with
-  // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
-  //  vkFreeDescriptorSets(_pool->device(), *_pool, 1, &_set);
-
+  // Can be freed only if `pool` is created with VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.
+  if (pool().setCanBeFreed()) {
+    const auto& pool = this->pool();
+    MI_VERIFY_VK_RESULT(vkFreeDescriptorSets(pool.device(), pool, 1, &_set));
+  }
   _set = VK_NULL_HANDLE;
-  _pool.reset();
 }
 
 void DescriptorSet::bind(const std::vector<Binding>& bindings) const {

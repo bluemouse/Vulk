@@ -160,6 +160,7 @@ void Testbed::drawFrame() {
 
     // TODO Label the drawFrame() function in the queue
 
+    _context.queue(Vulk::Device::QueueFamilyType::Graphics).waitIdle();
     //
     // Texture Mapping Task
     //
@@ -181,9 +182,6 @@ void Testbed::drawFrame() {
                                          {_currentFrame->presentReady.get()});
 
     _presentTask->run();
-
-    // TODO Wait on presentTask's fence to perform the cleanup (garbage collection, maybe?)
-
   } catch (const Vulk::Exception& e) {
     if (e.result() == VK_ERROR_OUT_OF_DATE_KHR || e.result() == VK_SUBOPTIMAL_KHR) {
       // The size or format of the swapchain image is not correct. We'll just ignore them

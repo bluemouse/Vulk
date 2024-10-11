@@ -154,7 +154,7 @@ void TextureMappingTask::run() {
       {"texSampler", "sampler2D", &textureImageInfo}};
 
   // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
-  //      reset the pool at the edn of the frame (see `_descriptorPool->reset()`).
+  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
   auto descriptorSet =
       DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
 
@@ -164,8 +164,6 @@ void TextureMappingTask::run() {
   auto depthStencilAttachment = ImageView::make_shared(device, *_depthStencilBuffer);
 
   // TODO We should cache and reuse framebuffers. For now, we create a new one for each frame.
-  //      We need to call `queue.waitIdle()` at the end of the frame to ensure that the framebuffer
-  //      is not in use anymore before we we can release it.
   auto framebuffer =
       Framebuffer::make_shared(device, *_renderPass, *colorAttachment, *depthStencilAttachment);
 
@@ -194,21 +192,27 @@ void TextureMappingTask::run() {
   // Start a new thread to wait for the fence to be signaled and then release the resource
   auto releaser = [](Fence::shared_ptr_const fence,
                      CommandBuffer::shared_ptr commandBuffer,
-                     Framebuffer::shared_ptr framebuffer) {
+                     Framebuffer::shared_ptr framebuffer,
+                     ImageView::shared_ptr colorAttachment,
+                     ImageView::shared_ptr depthStencilAttachment,
+                     DescriptorSet::shared_ptr descriptorSet) {
     fence->wait();
 
     fence.reset();
-    commandBuffer.reset();
     framebuffer.reset();
-
+    colorAttachment.reset();
+    depthStencilAttachment.reset();
+    descriptorSet.reset();
+    commandBuffer.reset();
   };
-  std::thread{releaser, fence, commandBuffer, framebuffer}.detach();
-
-  // TODO _descriptorPool should bw reset after the frame is done. It (i.e. resources) should be
-  // managed outside the task. We need some kinda garbage collection mechanism to do this.
-  commandBuffer->queue().waitIdle();
-  _descriptorPool->reset(); // Free all sets allocated from this pool
-
+  std::thread{releaser,
+              fence,
+              commandBuffer,
+              framebuffer,
+              colorAttachment,
+              depthStencilAttachment,
+              descriptorSet}
+      .detach();
 }
 
 DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
