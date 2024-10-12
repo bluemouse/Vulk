@@ -23,16 +23,25 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 //
 class RenderTask : public Sharable<RenderTask>, private NotCopyable {
- public:
-  explicit RenderTask(const Context& context);
-  virtual ~RenderTask(){};
+  public:
+   enum class Type {
+    Graphics,
+    Compute,
+    Transfer
+  };
 
-  virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
+  public:
+   explicit RenderTask(const Context& context, Type type);
+   virtual ~RenderTask() {};
 
-  const Device& device() const { return _context.device(); }
+   virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
 
- protected:
-  const Context& _context;
+   const Device& device() const { return _context.device(); }
+
+  protected:
+   const Context& _context;
+
+   CommandBuffer::shared_ptr _commandBuffer;
 };
 
 //
