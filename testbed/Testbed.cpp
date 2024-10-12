@@ -123,7 +123,7 @@ struct Uniforms {
 void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
-  createContext();
+  createDeviceContext();
   createDrawable();
   createRenderTask();
   createFrames();
@@ -132,12 +132,12 @@ void Testbed::init(int width, int height) {
 
   // After we init all Vulkan resource and before the rendering, make sure the/ device is idle and
   // all resource is ready.
-  _context.waitIdle();
+  _deviceContext->waitIdle();
 }
 
 void Testbed::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
-  _context.waitIdle();
+  _deviceContext->waitIdle();
 
   for (auto& frame : _frames) {
     frame.colorBuffer->destroy();
@@ -151,7 +151,7 @@ void Testbed::cleanup() {
   _texture->destroy();
   _drawable.destroy();
 
-  _context.destroy();
+  _deviceContext->destroy();
 
   MainWindow::cleanup();
 }
@@ -170,7 +170,16 @@ void Testbed::drawFrame() {
 
     // TODO Label the drawFrame() function in the queue
 
-    _context.queue(Vulk::Device::QueueFamilyType::Graphics).waitIdle();
+    // TODO DEBUG remove this after we fix the descript set management
+    _deviceContext->queue(Vulk::Device::QueueFamilyType::Graphics).waitIdle();
+
+    // Make sure the last time this frame is rendered to has been finished.
+    _currentFrame->context->waitFrameRendered();
+    _currentFrame->context->reset();
+
+    _textureMappingTask->setFrameContext(_currentFrame->context);
+    _presentTask->setFrameContext(_currentFrame->context);
+
     //
     // Texture Mapping Task
     //
@@ -190,7 +199,10 @@ void Testbed::drawFrame() {
     _presentTask->prepareInput(*_currentFrame->colorBuffer);
     _presentTask->prepareSynchronization({frameReady});
 
-    _presentTask->run();
+    auto [__, framePresented] = _presentTask->run();
+
+    _currentFrame->context->setFrameRendered(framePresented);
+
   } catch (const Vulk::Exception& e) {
     if (e.result() == VK_ERROR_OUT_OF_DATE_KHR || e.result() == VK_SUBOPTIMAL_KHR) {
       // The size or format of the swapchain image is not correct. We'll just ignore them
@@ -201,8 +213,8 @@ void Testbed::drawFrame() {
   }
 }
 
-void Testbed::createContext() {
-  Vulk::Context::CreateInfo createInfo;
+void Testbed::createDeviceContext() {
+  Vulk::DeviceContext::CreateInfo createInfo;
   createInfo.versionMajor       = 1;
   createInfo.versionMinor       = 0;
   createInfo.instanceExtensions = getRequiredInstanceExtensions();
@@ -215,9 +227,11 @@ void Testbed::createContext() {
     return MainWindow::createWindowSurface(instance);
   };
 
-  createInfo.queueFamilies.graphics    = true;
-  createInfo.queueFamilies.transfer    = true;
-  createInfo.queueFamilies.present     = true;
+  createInfo.queueFamilies.graphics = true;
+  // createInfo.queueFamilies.compute     = true;
+  createInfo.queueFamilies.transfer = true;
+  createInfo.queueFamilies.present  = true;
+
   createInfo.deviceExtensions          = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
   createInfo.hasPhysicalDeviceFeatures = [](VkPhysicalDeviceFeatures supportedFeatures) {
     return supportedFeatures.samplerAnisotropy != 0U;
@@ -229,12 +243,13 @@ void Testbed::createContext() {
   };
   createInfo.choosePresentMode = &Testbed::chooseSwapchainPresentMode;
 
-  _context.create(createInfo);
+  _deviceContext = Vulk::DeviceContext::make_shared();
+  _deviceContext->create(createInfo);
 }
 
 void Testbed::createRenderTask() {
-  _textureMappingTask = Vulk::TextureMappingTask::make_shared(_context);
-  _presentTask        = Vulk::PresentTask::make_shared(_context);
+  _textureMappingTask = Vulk::TextureMappingTask::make_shared(_deviceContext);
+  _presentTask        = Vulk::PresentTask::make_shared(_deviceContext);
 }
 
 void Testbed::loadModel(const std::string& modelFile,
@@ -280,7 +295,7 @@ void Testbed::initCamera(const std::vector<Vertex>& vertices, bool is3D) {
   }
   bbox.expandPlanarSide(1.0F);
 
-  auto extent = _context.swapchain().surfaceExtent();
+  auto extent = _deviceContext->swapchain().surfaceExtent();
   if (is3D) {
     _camera = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
   } else {
@@ -295,21 +310,22 @@ void Testbed::createDrawable() {
     const glm::uvec4 black{60, 60, 60, 255};
     const glm::uvec4 white{255, 255, 255, 255};
     Checkerboard checkerboard{numBlocks, blockSize, black, white};
-    _texture = Vulk::Toolbox(_context).createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
-                                                       checkerboard.data(),
-                                                       checkerboard.extent.x,
-                                                       checkerboard.extent.y);
+    _texture = Vulk::Toolbox(_deviceContext)
+                   .createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
+                                    checkerboard.data(),
+                                    checkerboard.extent.x,
+                                    checkerboard.extent.y);
 
     VkImage image = *_texture;
-    _context.device().setObjectName(
+    _deviceContext->device().setObjectName(
         VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "Created texture (checkerboard)");
   } else {
-    _texture = Vulk::Toolbox(_context).createTexture2D(_textureFile.c_str());
+    _texture = Vulk::Toolbox(_deviceContext).createTexture2D(_textureFile.c_str());
 
     std::string name;
     name          = "Loaded texture (" + _textureFile + ")";
     VkImage image = *_texture;
-    _context.device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
+    _deviceContext->device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
   }
 
   std::vector<Vertex> vertices;
@@ -342,7 +358,7 @@ void Testbed::createDrawable() {
   } else {
     loadModel(_modelFile, vertices, indices);
   }
-  _drawable.create(_context.device(), vertices, indices);
+  _drawable.create(_deviceContext->device(), vertices, indices);
 
   const bool is3DScene = !_modelFile.empty();
   initCamera(vertices, is3DScene);
@@ -351,14 +367,16 @@ void Testbed::createDrawable() {
 void Testbed::createFrames() {
   _frames.resize(_maxFramesInFlight);
 
-  const auto& device = _context.device();
-  const auto& extent = _context.swapchain().surfaceExtent();
+  const auto& device = _deviceContext->device();
+  const auto& extent = _deviceContext->swapchain().surfaceExtent();
 
-  const auto& commandPool = _context.commandPool(Vulk::Device::QueueFamilyType::Transfer);
+  const auto& commandPool = _deviceContext->commandPool(Vulk::Device::QueueFamilyType::Transfer);
   auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
 
   commandBuffer->beginRecording();
   for (auto& frame : _frames) {
+    frame.context = Vulk::FrameContext::make_shared(_deviceContext);
+
     const auto usage  = Vulk::Image2D::Usage::COLOR_ATTACHMENT | Vulk::Image2D::Usage::TRANSFER_SRC;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
@@ -386,12 +404,12 @@ void Testbed::resizeSwapchain() {
   if (isMinimized()) {
     return;
   }
-  _context.waitIdle();
-  _context.swapchain().resize(width(), height());
+  _deviceContext->waitIdle();
+  _deviceContext->swapchain().resize(width(), height());
 
   // We need to get the updated size from the surface directly. It is not guaranteed that the extent
   // is the same as the {width(), height()}.
-  auto extent = _context.swapchain().surfaceExtent();
+  auto extent = _deviceContext->swapchain().surfaceExtent();
   _camera->update(glm::vec2{extent.width, extent.height});
 
   setFramebufferResized(false);

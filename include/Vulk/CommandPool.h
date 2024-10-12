@@ -32,6 +32,8 @@ class CommandPool : public Sharable<CommandPool>, private NotCopyable {
 
   void destroy();
 
+  void reset(bool releaseResources = false);
+
   operator VkCommandPool() const { return _pool; }
 
   [[nodiscard]] bool isCreated() const { return _pool != VK_NULL_HANDLE; }

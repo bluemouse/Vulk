@@ -15,6 +15,7 @@ list(APPEND CMAKE_MODULE_PATH
 
 find_package(Vulkan REQUIRED)
 find_package(fmt REQUIRED)
+find_package(TBB REQUIRED)
 
 set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "")
 set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "")
@@ -155,6 +156,7 @@ target_link_libraries(${PROJECT_NAME}
     spirv-reflect::spirv-reflect
     # spirv-cross::c
     fmt::fmt
+    TBB::tbb
 )
 
 if(MSVC)

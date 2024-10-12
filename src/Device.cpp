@@ -106,14 +106,14 @@ void Device::create(const PhysicalDevice& physicalDevice,
 void Device::initQueues() {
   MI_VERIFY(isCreated());
   for (const auto& queueFamily : _queueFamilies) {
-    _queues[queueFamily.type] = std::make_shared<Queue>(*this, queueFamily.type, queueFamily.index);
+    _queues[queueFamily.type] = Queue::make_shared(*this, queueFamily.type, queueFamily.index);
   }
 }
 
 void Device::initCommandPools() {
   MI_VERIFY(isCreated());
   for (const auto& queueFamily : _queueFamilies) {
-    _commandPools[queueFamily.type] = std::make_shared<CommandPool>(*this, queueFamily.type);
+    _commandPools[queueFamily.type] = CommandPool::make_shared(*this, queueFamily.type);
   }
 }
 

@@ -56,9 +56,9 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
 
   using Recorder = std::function<void(const CommandBuffer& buffer)>;
   // Record the commands played by `recorder` into this command buffer
-  void recordCommands(const Recorder& recorder, Usage usage = Usage::Default) const;
+  void recordCommands(const Recorder& recorder, Usage usage = Usage::OneTimeSubmit) const;
 
-  void beginRecording(Usage usage = Usage::Default) const;
+  void beginRecording(Usage usage = Usage::OneTimeSubmit) const;
   void endRecording() const;
 
   void submitCommands(const std::vector<Semaphore*>& waits   = {},

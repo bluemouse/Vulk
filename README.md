@@ -1,5 +1,7 @@
 ## Dependencies
 - fmt: https://fmt.dev/ (`sudo apt install libfmt-dev`)
+- tbb: https://github.com/oneapi-src/oneTBB (`sudo apt-get install libtbb-dev`)
+- glfw: https://www.glfw.org/ (`sudo apt-get install libglfw3-dev`)
 
 ### Build Steps
 1. cmake -S . -B build -G "Ninja" -D CMAKE_BUILD_TYPE=debug|release

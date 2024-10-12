@@ -51,6 +51,11 @@ void CommandPool::destroy(VkDevice device) {
   _device.reset();
 }
 
+void CommandPool::reset(bool releaseResources) {
+  VkCommandPoolResetFlags flags = releaseResources ? VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT : 0;
+  MI_VERIFY_VK_RESULT(vkResetCommandPool(device(), _pool, flags));
+}
+
 std::shared_ptr<CommandBuffer> CommandPool::allocatePrimary() const {
   MI_VERIFY(isCreated());
   return CommandBuffer::make_shared(*this, CommandBuffer::Level::Primary);

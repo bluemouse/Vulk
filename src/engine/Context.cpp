@@ -35,7 +35,10 @@ VkPresentModeKHR chooseDefaultPresentMode(
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-void Context::create(const CreateInfo& createInfo) {
+//
+// DeviceContext
+//
+void DeviceContext::create(const CreateInfo& createInfo) {
   createInstance(createInfo.versionMajor,
                  createInfo.versionMinor,
                  createInfo.instanceExtensions,
@@ -46,42 +49,45 @@ void Context::create(const CreateInfo& createInfo) {
   createDevice(createInfo.queueFamilies, createInfo.deviceExtensions);
   createSwapchain(
       createInfo.chooseSurfaceExtent, createInfo.chooseSurfaceFormat, createInfo.choosePresentMode);
+
+  _queueFamilies = createInfo.queueFamilies;
 }
 
-void Context::destroy() {
+void DeviceContext::destroy() {
   _swapchain->destroy();
   _device->destroy();
   _surface->destroy();
   _instance->destroy();
 }
 
-void Context::createInstance(int versionMajor,
-                             int versionMinor,
-                             const std::vector<const char*>& extensions,
-                             ValidationLevel validation) {
+void DeviceContext::createInstance(int versionMajor,
+                                   int versionMinor,
+                                   const std::vector<const char*>& extensions,
+                                   ValidationLevel validation) {
   _instance = Instance::make_shared(versionMajor, versionMinor, extensions, validation);
 }
 
-void Context::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {
+void DeviceContext::createSurface(const CreateWindowSurfaceFunc& createWindowSurface) {
   _surface = Surface::make_shared(instance(), createWindowSurface(instance()));
 }
 
-void Context::pickPhysicalDevice(const PhysicalDevice::QueueFamilies& queueFamilies,
-                                 const std::vector<const char*>& deviceExtensions,
-                                 const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
+void DeviceContext::pickPhysicalDevice(
+    const PhysicalDevice::QueueFamilies& queueFamilies,
+    const std::vector<const char*>& deviceExtensions,
+    const PhysicalDevice::HasDeviceFeaturesFunc& hasDeviceFeatures) {
   _instance->pickPhysicalDevice(surface(), queueFamilies, deviceExtensions, hasDeviceFeatures);
 }
 
-void Context::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
-                           const std::vector<const char*>& deviceExtensions) {
+void DeviceContext::createDevice(const PhysicalDevice::QueueFamilies& requiredQueueFamilies,
+                                 const std::vector<const char*>& deviceExtensions) {
   _device = _instance->physicalDevice().createDevice(requiredQueueFamilies, deviceExtensions);
   _device->initQueues();
   _device->initCommandPools();
 }
 
-void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
-                              const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
-                              const Swapchain::ChoosePresentModeFunc& choosePresentMode) {
+void DeviceContext::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSurfaceExtent,
+                                    const Swapchain::ChooseSurfaceFormatFunc& chooseSurfaceFormat,
+                                    const Swapchain::ChoosePresentModeFunc& choosePresentMode) {
   const auto [capabilities, formats, presentModes] = surface().querySupports();
 
   VkExtent2D extent = chooseSurfaceExtent ? chooseSurfaceExtent(capabilities)
@@ -98,29 +104,113 @@ void Context::createSwapchain(const Swapchain::ChooseSurfaceExtentFunc& chooseSu
   _swapchain = Swapchain::make_shared(device(), surface(), extent, format, presentMode);
 }
 
-void Context::waitIdle() const {
+void DeviceContext::waitIdle() const {
   _device->waitIdle();
 }
 
-bool Context::isComplete() const {
+bool DeviceContext::isComplete() const {
   // TODO: Implement this
   return true;
 }
 
-Queue& Context::queue(Device::QueueFamilyType queueFamily) {
+Queue& DeviceContext::queue(Device::QueueFamilyType queueFamily) {
   return _device->queue(queueFamily);
 }
 
-const Queue& Context::queue(Device::QueueFamilyType queueFamily) const {
+const Queue& DeviceContext::queue(Device::QueueFamilyType queueFamily) const {
   return _device->queue(queueFamily);
 }
 
-CommandPool& Context::commandPool(Device::QueueFamilyType queueFamily) {
+CommandPool& DeviceContext::commandPool(Device::QueueFamilyType queueFamily) {
   return _device->commandPool(queueFamily);
 }
 
-const CommandPool& Context::commandPool(Device::QueueFamilyType queueFamily) const {
+const CommandPool& DeviceContext::commandPool(Device::QueueFamilyType queueFamily) const {
   return _device->commandPool(queueFamily);
+}
+
+bool DeviceContext::isQueueFamilySupported(Device::QueueFamilyType queueFamily) const {
+  switch (queueFamily) {
+    case Device::QueueFamilyType::Graphics:
+      return _queueFamilies.hasGraphics() || _queueFamilies.hasGraphicsAndCompute();
+    case Device::QueueFamilyType::Compute:
+      return _queueFamilies.hasCompute() || _queueFamilies.hasGraphicsAndCompute();
+    case Device::QueueFamilyType::Transfer: return _queueFamilies.hasTransfer();
+    default: break;
+  }
+  return false;
+}
+
+//
+// CommandBufferManager
+//
+void CommandBufferManager::allocate(const Device& device, Device::QueueFamilyType queueFamily) {
+  _commandPool = CommandPool::make_shared(device, queueFamily);
+}
+
+void CommandBufferManager::free() {
+  _availableCommandBuffers.clear();
+  _acquiredCommandBuffers.clear();
+  _commandPool = nullptr;
+}
+
+CommandBuffer::shared_ptr CommandBufferManager::acquireBuffer() {
+  if (_availableCommandBuffers.empty()) {
+    _availableCommandBuffers.push(CommandBuffer::make_shared(*_commandPool));
+  }
+  CommandBuffer::shared_ptr buffer;
+  _availableCommandBuffers.try_pop(buffer);
+  _acquiredCommandBuffers.push(buffer);
+  return buffer;
+}
+
+void CommandBufferManager::reset() {
+  _commandPool->reset();
+
+  // Move all elements in _acquiredCommandBuffers to _availableCommandBuffers
+  CommandBuffer::shared_ptr buffer;
+  while (_acquiredCommandBuffers.try_pop(buffer)) {
+    _availableCommandBuffers.push(buffer);
+  }
+  MI_ASSERT(_acquiredCommandBuffers.empty());
+}
+
+//
+// FrameContext
+//
+FrameContext::FrameContext(std::shared_ptr<DeviceContext> deviceContext)
+    : _deviceContext(deviceContext) {
+  const Device& device = deviceContext->device();
+
+  using Device::QueueFamilyType::Graphics;
+  if (_deviceContext->isQueueFamilySupported(Graphics)) {
+    _commandBufferManagers[Graphics] = std::make_shared<CommandBufferManager>();
+    _commandBufferManagers[Graphics]->allocate(device, Graphics);
+  }
+  using Device::QueueFamilyType::Compute;
+  if (_deviceContext->isQueueFamilySupported(Compute)) {
+    _commandBufferManagers[Compute] = std::make_shared<CommandBufferManager>();
+    _commandBufferManagers[Compute]->allocate(device, Compute);
+  }
+  using Device::QueueFamilyType::Transfer;
+  if (_deviceContext->isQueueFamilySupported(Transfer)) {
+    _commandBufferManagers[Transfer] = std::make_shared<CommandBufferManager>();
+    _commandBufferManagers[Transfer]->allocate(device, Transfer);
+  }
+
+  _frameRendered = Fence::make_shared(device, true /*signaled*/);
+}
+
+CommandBuffer::shared_ptr FrameContext::acquireCommandBuffer(Device::QueueFamilyType queueFamily) {
+  return _commandBufferManagers[static_cast<size_t>(queueFamily)]->acquireBuffer();
+}
+
+void FrameContext::reset() {
+  for (auto& manager : _commandBufferManagers) {
+    if (manager) {
+      manager->reset();
+    }
+  }
 }
 
 MI_NAMESPACE_END(Vulk)

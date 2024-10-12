@@ -23,25 +23,26 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 //
 class RenderTask : public Sharable<RenderTask>, private NotCopyable {
-  public:
-   enum class Type {
-    Graphics,
-    Compute,
-    Transfer
-  };
+ public:
+  enum class Type { Graphics, Compute, Transfer };
 
-  public:
-   explicit RenderTask(const Context& context, Type type);
-   virtual ~RenderTask() {};
+ public:
+  RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type);
+  virtual ~RenderTask(){};
 
-   virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
+  const Device& device() const { return _deviceContext->device(); }
 
-   const Device& device() const { return _context.device(); }
+  void setFrameContext(const FrameContext::shared_ptr& frameContext);
 
-  protected:
-   const Context& _context;
+  virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
 
-   CommandBuffer::shared_ptr _commandBuffer;
+ protected:
+  const DeviceContext::shared_ptr _deviceContext;
+  FrameContext::shared_ptr _frameContext;
+
+  Type _type;
+
+  CommandBuffer::shared_ptr _commandBuffer;
 };
 
 //
@@ -49,7 +50,7 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
 //
 class TextureMappingTask : public RenderTask {
  public:
-  explicit TextureMappingTask(const Context& context);
+  explicit TextureMappingTask(const DeviceContext::shared_ptr& deviceContext);
   ~TextureMappingTask() override;
 
   void prepareGeometry(const VertexBuffer& vertexBuffer,
@@ -104,7 +105,7 @@ class TextureMappingTask : public RenderTask {
 //
 class PresentTask : public RenderTask {
  public:
-  explicit PresentTask(const Context& context);
+  explicit PresentTask(const DeviceContext::shared_ptr& deviceContext);
   ~PresentTask() override;
 
   void prepareInput(const Image2D& frame);

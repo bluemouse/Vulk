@@ -6,9 +6,14 @@
 #include <Vulk/Swapchain.h>
 #include <Vulk/Device.h>
 
+#include <Vulk/CommandPool.h>
+#include <Vulk/CommandBuffer.h>
+
+#include <tbb/concurrent_queue.h>
+
 MI_NAMESPACE_BEGIN(Vulk)
 
-class Context {
+class DeviceContext : public Sharable<DeviceContext>, private NotCopyable {
  public:
   using ValidationLevel         = Instance::ValidationLevel;
   using CreateWindowSurfaceFunc = std::function<VkSurfaceKHR(const Instance& instance)>;
@@ -33,12 +38,8 @@ class Context {
   };
 
  public:
-  Context() = default;
-
-  virtual ~Context() = default;
-
-  Context(const Context& rhs)            = delete;
-  Context& operator=(const Context& rhs) = delete;
+  DeviceContext()          = default;
+  virtual ~DeviceContext() = default;
 
   virtual void create(const CreateInfo& createInfo);
   virtual void destroy();
@@ -61,6 +62,8 @@ class Context {
   [[nodiscard]] const Queue& queue(Device::QueueFamilyType queueFamily) const;
   [[nodiscard]] const CommandPool& commandPool(Device::QueueFamilyType queueFamily) const;
 
+  [[nodiscard]] bool isQueueFamilySupported(Device::QueueFamilyType queueFamily) const;
+
  protected:
   virtual void createInstance(int versionMajor,
                               int versionMinor,
@@ -82,6 +85,65 @@ class Context {
   Surface::shared_ptr _surface;
   Device::shared_ptr _device;
   Swapchain::shared_ptr _swapchain;
+
+  PhysicalDevice::QueueFamilies _queueFamilies;
+};
+
+class CommandBufferManager : public Sharable<CommandBufferManager>, private NotCopyable {
+ public:
+  CommandBufferManager() = default;
+  ~CommandBufferManager() { free(); }
+
+  void allocate(const Device& device, Device::QueueFamilyType queueFamily);
+  void free();
+
+  CommandBuffer::shared_ptr acquireBuffer();
+
+  void reset();
+
+ private:
+  CommandPool::shared_ptr _commandPool;
+  tbb::concurrent_queue<CommandBuffer::shared_ptr> _availableCommandBuffers;
+  tbb::concurrent_queue<CommandBuffer::shared_ptr> _acquiredCommandBuffers;
+};
+
+// class DescriptorSetManager {
+//  public:
+//   DescriptorSetManager() = default;
+//   ~DescriptorSetManager() { free(); }
+
+//   void allocate(const Device& device, const DescriptorSetLayout& layout);
+//   void free();
+
+//   DescriptorSet::shared_ptr acquireSet();
+//   void returnSet(DescriptorSet::shared_ptr&& descriptorSet);
+
+//   void reset();
+
+//  private:
+//   DescriptorPool::shared_ptr _descriptorPool;
+//   tbb::concurrent_vector<DescriptorSet::shared_ptr> _availableDescriptorSets;
+// };
+
+class FrameContext : public Sharable<FrameContext>, private NotCopyable {
+ public:
+  FrameContext(DeviceContext::shared_ptr deviceContext);
+  virtual ~FrameContext() = default;
+
+  [[nodiscard]] CommandBuffer::shared_ptr acquireCommandBuffer(Device::QueueFamilyType queueFamily);
+
+  void setFrameRendered(const Fence::shared_ptr& fence) { _frameRendered = fence; }
+  void waitFrameRendered() const { _frameRendered->wait(); }
+
+  void reset();
+
+ private:
+  DeviceContext::shared_ptr _deviceContext;
+
+  std::vector<CommandBufferManager::shared_ptr> _commandBufferManagers{
+      Device::QueueFamilyType::NUM_QUEUE_FAMILY_TYPES};
+
+  Fence::shared_ptr _frameRendered;
 };
 
 MI_NAMESPACE_END(Vulk)

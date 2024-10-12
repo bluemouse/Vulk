@@ -44,7 +44,7 @@ void CommandBuffer::allocate(const CommandPool& commandPool, Level level) {
 }
 
 void CommandBuffer::reset() {
-  vkResetCommandBuffer(_buffer, VkCommandBufferResetFlagBits(0));
+  MI_VERIFY_VK_RESULT(vkResetCommandBuffer(_buffer, VkCommandBufferResetFlagBits(0)));
   _state = State::Initial;
 }
 

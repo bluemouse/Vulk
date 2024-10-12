@@ -4,17 +4,19 @@
 
 #include <Vulk/Image2D.h>
 #include <Vulk/StagingBuffer.h>
+
+#include <Vulk/engine/Context.h>
 #include <Vulk/engine/Texture2D.h>
 
 #include <tuple>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-class Context;
+class DeviceContext;
 
 class Toolbox {
  public:
-  Toolbox(const Context& context);
+  Toolbox(const DeviceContext::shared_ptr& context);
   ~Toolbox() = default;
 
   Image2D::shared_ptr createImage2D(const char* imageFile) const;
@@ -37,7 +39,7 @@ class Toolbox {
   StagingBuffer::shared_ptr createStagingBuffer(const uint8_t* data, uint32_t size) const;
 
  private:
-  const Context& _context;
+  const DeviceContext::shared_ptr _context;
 };
 
 MI_NAMESPACE_END(Vulk)

@@ -27,20 +27,26 @@ std::filesystem::path executablePath() {
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-RenderTask::RenderTask(const Context& context, Type type) : _context(context) {
-  switch (type) {
-    case Type::Graphics:
-      _commandBuffer =
-          CommandBuffer::make_shared(_context.commandPool(Device::QueueFamilyType::Graphics));
-      break;
-    case Type::Compute:
-      _commandBuffer =
-          CommandBuffer::make_shared(_context.commandPool(Device::QueueFamilyType::Compute));
-      break;
-    case Type::Transfer:
-      _commandBuffer =
-          CommandBuffer::make_shared(_context.commandPool(Device::QueueFamilyType::Transfer));
-      break;
+RenderTask::RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type)
+    : _deviceContext(deviceContext), _type(type) {
+}
+
+void RenderTask::setFrameContext(const FrameContext::shared_ptr& frameContext) {
+  _frameContext = frameContext;
+
+  switch (_type)
+  {
+  case Type::Graphics:
+    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Graphics);
+    break;
+  case Type::Compute:
+    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Compute);
+    break;
+  case Type::Transfer:
+    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Transfer);
+    break;
+  default:
+    MI_LOG_ERROR("Unknown RenderTask type");
   }
 }
 
@@ -63,9 +69,9 @@ struct Uniforms {
 };
 } // namespace
 
-TextureMappingTask::TextureMappingTask(const Context& context)
-    : RenderTask(context, Type::Graphics) {
-  const auto& device = _context.device();
+TextureMappingTask::TextureMappingTask(const DeviceContext::shared_ptr& deviceContext)
+    : RenderTask(deviceContext, Type::Graphics) {
+  const auto& device = _deviceContext->device();
 
   // Create render pass
   const VkFormat colorFormat        = VK_FORMAT_B8G8R8A8_SRGB;
@@ -136,7 +142,7 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore::sha
 }
 
 std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
-  const auto& device = _context.device();
+  const auto& device = _deviceContext->device();
 
   auto fence  = Fence::make_shared(device);
   auto signal = Semaphore::make_shared(device);
@@ -240,10 +246,11 @@ DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
 //
 //
 //
-PresentTask::PresentTask(const Context& context) : RenderTask(context, Type::Transfer) {
-  _signals.resize(context.swapchain().images().size());
+PresentTask::PresentTask(const DeviceContext::shared_ptr& deviceContext)
+    : RenderTask(deviceContext, Type::Transfer) {
+  _signals.resize(deviceContext->swapchain().images().size());
   for (auto& signal : _signals) {
-    signal = Semaphore::make_shared(context.device());
+    signal = Semaphore::make_shared(deviceContext->device());
   }
 }
 
@@ -259,12 +266,12 @@ void PresentTask::prepareSynchronization(const std::vector<Semaphore::shared_ptr
 }
 
 std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
-  const auto& swapchain = _context.swapchain();
+  const auto& swapchain = _deviceContext->swapchain();
 
   auto label = _commandBuffer->queue().scopedLabel("PresentTask::run()");
 
   Semaphore::shared_ptr swapchainImageReady = Semaphore::make_shared(device());
-  _context.swapchain().acquireNextImage(*swapchainImageReady);
+  _deviceContext->swapchain().acquireNextImage(*swapchainImageReady);
 
   // Create a vector<Semaphore*> from _waits and swapchainImageReady
   std::vector<Semaphore*> waits;

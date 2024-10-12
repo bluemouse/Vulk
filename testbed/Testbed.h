@@ -37,7 +37,7 @@ class Testbed : public MainWindow {
   void setTextureFile(const std::string& textureFile);
 
   // Settings of the Testbed execution
-  using ValidationLevel = Vulk::Context::ValidationLevel;
+  using ValidationLevel = Vulk::DeviceContext::ValidationLevel;
   static void setVulkanValidationLevel(ValidationLevel level);
   static void setVulkanDebugUtilsExt(bool enable);
   static void setPrintSpirvReflect(bool print);
@@ -47,8 +47,8 @@ class Testbed : public MainWindow {
 
   void resizeSwapchain();
 
-  [[nodiscard]] Vulk::Context& context() { return _context; }
-  [[nodiscard]] const Vulk::Context& context() const { return _context; }
+  [[nodiscard]] Vulk::DeviceContext& context() { return *_deviceContext; }
+  [[nodiscard]] const Vulk::DeviceContext& context() const { return *_deviceContext; }
 
   // Callbacks to support creating Context
   [[nodiscard]] static VkExtent2D chooseSwapchainSurfaceExtent(const VkSurfaceCapabilitiesKHR& caps,
@@ -69,7 +69,7 @@ class Testbed : public MainWindow {
   void onFramebufferResize(int width, int height) override;
 
  private:
-  void createContext();
+  void createDeviceContext();
   void createDrawable();
   void createRenderTask();
   void createFrames();
@@ -82,7 +82,7 @@ class Testbed : public MainWindow {
   void initCamera(const std::vector<Vertex>& vertices, bool is3D);
 
  private:
-  Vulk::Context _context;
+  Vulk::DeviceContext::shared_ptr _deviceContext;
 
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
@@ -93,6 +93,8 @@ class Testbed : public MainWindow {
   Vulk::Texture2D::shared_ptr _texture;
 
   struct Frame {
+    Vulk::FrameContext::shared_ptr context;
+
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
   };
@@ -101,7 +103,7 @@ class Testbed : public MainWindow {
   Frame* _currentFrame = nullptr;
 
   constexpr static uint32_t _maxFramesInFlight = 3;
-  uint32_t _currentFrameIdx  = 0;
+  uint32_t _currentFrameIdx                    = 0;
 
   // Settings of the Testbed execution
   static ValidationLevel _validationLevel;
