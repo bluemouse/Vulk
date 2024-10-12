@@ -95,9 +95,6 @@ class Testbed : public MainWindow {
   struct Frame {
     Vulk::Image2D::shared_ptr colorBuffer;
     Vulk::DepthImage::shared_ptr depthBuffer;
-
-    Vulk::Semaphore::shared_ptr frameReady;
-    Vulk::Semaphore::shared_ptr presentReady;
   };
 
   std::vector<Frame> _frames;

@@ -27,7 +27,7 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
   explicit RenderTask(const Context& context);
   virtual ~RenderTask(){};
 
-  virtual void run() = 0;
+  virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
 
   const Device& device() const { return _context.device(); }
 
@@ -52,13 +52,11 @@ class TextureMappingTask : public RenderTask {
                        bool newFrame = true);
   void prepareInputs(const Texture2D& texture);
   void prepareOutputs(const Image2D& colorBuffer, const DepthImage& depthStencilBuffer);
-  void prepareSynchronization(const std::vector<Semaphore*> waits,
-                              const std::vector<Semaphore*> signals,
-                              const Fence& fence = {});
+  void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
 
   DescriptorSet::shared_ptr createDescriptorSet();
 
-  void run() override;
+  std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() override;
 
   //
   // Override the sharable types and functions
@@ -89,9 +87,7 @@ class TextureMappingTask : public RenderTask {
   DepthImage::shared_ptr_const _depthStencilBuffer; // TODO this could be internal managed as well.
 
   // Synchronizations
-  std::vector<Semaphore*> _waits;
-  std::vector<Semaphore*> _signals;
-  Fence::shared_ptr_const _fence;
+  std::vector<Semaphore::shared_ptr> _waits;
 };
 
 //
@@ -103,10 +99,9 @@ class PresentTask : public RenderTask {
   ~PresentTask() override;
 
   void prepareInput(const Image2D& frame);
-  void prepareSynchronization(const std::vector<Semaphore*> waits,
-                              const std::vector<Semaphore*> readyToPreset);
+  void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
 
-  void run() override;
+  std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() override;
 
   //
   // Override the sharable types and functions
@@ -118,8 +113,12 @@ class PresentTask : public RenderTask {
   Image2D::shared_ptr_const _frame;
 
   // Synchronizations
-  std::vector<Semaphore*> _waits;
-  std::vector<Semaphore*> _readyToPresent;
+  std::vector<Semaphore::shared_ptr> _waits;
+
+  // Store the signals for the each swapchain image. Index of the signal is the same as the index of
+  // the swapchain image being presented. We have to store (i.e hold) the signal semaphore since
+  // there is no way to sync on finishing presenting the current swapchain image.
+  std::vector<Semaphore::shared_ptr> _signals;
 };
 
 MI_NAMESPACE_END(Vulk)

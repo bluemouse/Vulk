@@ -180,16 +180,15 @@ void Testbed::drawFrame() {
         glm::mat4{1.0F}, _camera->viewMatrix(), _camera->projectionMatrix());
     _textureMappingTask->prepareInputs(*_texture);
     _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
-    _textureMappingTask->prepareSynchronization({}, {_currentFrame->frameReady.get()});
+    _textureMappingTask->prepareSynchronization();
 
-    _textureMappingTask->run();
+    auto [frameReady, _] = _textureMappingTask->run();
 
     //
     // Present Task
     //
     _presentTask->prepareInput(*_currentFrame->colorBuffer);
-    _presentTask->prepareSynchronization({_currentFrame->frameReady.get()},
-                                         {_currentFrame->presentReady.get()});
+    _presentTask->prepareSynchronization({frameReady});
 
     _presentTask->run();
   } catch (const Vulk::Exception& e) {
@@ -365,9 +364,6 @@ void Testbed::createFrames() {
     frame.colorBuffer->allocate();
     frame.depthBuffer = Vulk::DepthImage::make_shared(device, extent, chooseDepthFormat());
     frame.depthBuffer->allocate();
-
-    frame.frameReady   = Vulk::Semaphore::make_shared(device);
-    frame.presentReady = Vulk::Semaphore::make_shared(device);
 
     frame.colorBuffer->transitToNewLayout(*commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }

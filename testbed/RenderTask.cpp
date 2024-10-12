@@ -116,24 +116,23 @@ void TextureMappingTask::prepareOutputs(const Image2D& colorBuffer,
   _depthStencilBuffer = depthStencilBuffer.get_shared();
 }
 
-void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore*> waits,
-                                                const std::vector<Semaphore*> signals,
-                                                const Fence& fence) {
-  _waits   = waits;
-  _signals = signals;
-  if (fence.isCreated()) {
-    _fence = fence.get_shared();
-  } else {
-    _fence = Fence::make_shared();
-  }
+void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits) {
+  _waits = waits;
 }
 
-void TextureMappingTask::run() {
+std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   const auto& device = _context.device();
   auto& commandPool  = _context.commandPool(Device::QueueFamilyType::Graphics);
   auto commandBuffer = CommandBuffer::make_shared(commandPool);
 
-  auto fence = Fence::make_shared(device);
+  auto fence  = Fence::make_shared(device);
+  auto signal = Semaphore::make_shared(device);
+
+  std::vector<Semaphore*> waits;
+  waits.reserve(_waits.size());
+  for (const auto& semaphore : _waits) {
+    waits.push_back(semaphore.get());
+  }
 
   auto label = commandBuffer->queue().scopedLabel("TextureMappingTask::run()");
 
@@ -187,11 +186,13 @@ void TextureMappingTask::run() {
     commandBuffer->endRenderpass();
   }
   commandBuffer->endRecording();
-  commandBuffer->submitCommands(_waits, _signals, *fence);
+  commandBuffer->submitCommands(waits, {signal.get()}, *fence);
 
   // Start a new thread to wait for the fence to be signaled and then release the resource
   auto releaser = [](Fence::shared_ptr_const fence,
                      CommandBuffer::shared_ptr commandBuffer,
+                     Semaphore::shared_ptr signal,
+                     std::vector<Semaphore::shared_ptr> waits,
                      Framebuffer::shared_ptr framebuffer,
                      ImageView::shared_ptr colorAttachment,
                      ImageView::shared_ptr depthStencilAttachment,
@@ -199,20 +200,28 @@ void TextureMappingTask::run() {
     fence->wait();
 
     fence.reset();
+    signal.reset();
+    waits.clear();
+
     framebuffer.reset();
     colorAttachment.reset();
     depthStencilAttachment.reset();
     descriptorSet.reset();
+
     commandBuffer.reset();
   };
   std::thread{releaser,
               fence,
               commandBuffer,
+              signal,
+              _waits,
               framebuffer,
               colorAttachment,
               depthStencilAttachment,
               descriptorSet}
       .detach();
+
+  return {signal, fence};
 }
 
 DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
@@ -223,6 +232,10 @@ DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
 //
 //
 PresentTask::PresentTask(const Context& context) : RenderTask(context) {
+  _signals.resize(context.swapchain().images().size());
+  for (auto& signal : _signals) {
+    signal = Semaphore::make_shared(context.device());
+  }
 }
 
 PresentTask::~PresentTask() {
@@ -232,46 +245,60 @@ void PresentTask::prepareInput(const Image2D& frame) {
   _frame = frame.get_shared();
 }
 
-void PresentTask::prepareSynchronization(const std::vector<Semaphore*> waits,
-                                         const std::vector<Semaphore*> readyToPreset) {
-  _waits          = waits;
-  _readyToPresent = readyToPreset;
+void PresentTask::prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits) {
+  _waits = waits;
 }
 
-void PresentTask::run() {
+std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
   auto& commandPool  = _context.commandPool(Device::QueueFamilyType::Transfer);
   auto commandBuffer = CommandBuffer::make_shared(commandPool);
+
+  const auto& swapchain = _context.swapchain();
 
   auto label = commandBuffer->queue().scopedLabel("PresentTask::run()");
 
   Semaphore::shared_ptr swapchainImageReady = Semaphore::make_shared(device());
   _context.swapchain().acquireNextImage(*swapchainImageReady);
-  _waits.push_back(swapchainImageReady.get());
 
-  Fence::shared_ptr fence = Fence::make_shared(device());
+  // Create a vector<Semaphore*> from _waits and swapchainImageReady
+  std::vector<Semaphore*> waits;
+  waits.reserve(_waits.size() + 1);
+  for (const auto& semaphore : _waits) {
+    waits.push_back(semaphore.get());
+  }
+  waits.push_back(swapchainImageReady.get());
+
+  auto fence  = Fence::make_shared(device());
+
+  // Signal must've been un-signaled since we can acquire this swapchain image.
+  auto signal = _signals[swapchain.activeImageIndex()];
 
   commandBuffer->beginRecording();
   {
-    auto& swapchainFrame = const_cast<Image&>(_context.swapchain().activeImage());
+    auto& swapchainFrame = const_cast<Image&>(swapchain.activeImage());
     swapchainFrame.blitFrom(*commandBuffer, *_frame);
     swapchainFrame.transitToNewLayout(*commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
   }
   commandBuffer->endRecording();
-  commandBuffer->submitCommands(_waits, _readyToPresent, *fence);
+  commandBuffer->submitCommands(waits, {signal.get()}, *fence);
 
-  _context.swapchain().present(_readyToPresent);
+  swapchain.present({signal.get()});
 
   // Start a new thread to wait for the fence to be signaled and then release the resource
   auto releaser = [](Fence::shared_ptr fence,
                      CommandBuffer::shared_ptr commandBuffer,
+                     std::vector<Semaphore::shared_ptr> waits,
                      Semaphore::shared_ptr swapchainImageReady) {
     fence->wait();
 
     fence.reset();
     commandBuffer.reset();
+    waits.clear();
     swapchainImageReady.reset();
   };
-  std::thread{releaser, fence, commandBuffer, swapchainImageReady}.detach();
+  std::thread{releaser, fence, commandBuffer, _waits, swapchainImageReady}.detach();
+
+  return {signal, fence};
 }
 
 MI_NAMESPACE_END(Vulk)
