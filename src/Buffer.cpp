@@ -1,7 +1,6 @@
 #include <Vulk/Buffer.h>
 
 #include <cstring>
-#include <thread>
 
 #include <Vulk/Device.h>
 #include <Vulk/DeviceMemory.h>
@@ -92,25 +91,17 @@ void Buffer::load(const void* data, VkDeviceSize size, VkDeviceSize offset, bool
 
   if (staging) {
     const auto& commandPool = device().commandPool(Device::QueueFamilyType::Transfer);
+
     CommandBuffer::shared_ptr commandBuffer = CommandBuffer::make_shared(commandPool);
     StagingBuffer::shared_ptr stagingBuffer = StagingBuffer::make_shared(device(), size);
     Fence::shared_ptr fence                 = Fence::make_shared(device());
+
     stagingBuffer->copyFromHost(data, size);
     stagingBuffer->copyToBuffer(*commandBuffer, *this, {0, offset, size}, *fence);
 
     // The commandBuffer now should be submitted and in the pending state
     MI_ASSERT(commandBuffer->state() == CommandBuffer::State::Pending);
-    // Start a new thread to wait for the fence to be signaled and then release the staging buffer
-    auto releaser = [](CommandBuffer::shared_ptr commandBuffer,
-                       Fence::shared_ptr fence,
-                       StagingBuffer::shared_ptr stagingBuffer) {
-      fence->wait();
-
-      stagingBuffer.reset();
-      fence.reset();
-      commandBuffer.reset();
-    };
-    std::thread{releaser, commandBuffer, fence, stagingBuffer}.detach();
+    fence->wait();
   } else {
     std::memcpy(map(offset, size), data, size);
     unmap();

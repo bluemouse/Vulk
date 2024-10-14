@@ -35,7 +35,6 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
-#include <thread>
 
 namespace std {
 template <>
@@ -364,18 +363,22 @@ void Testbed::createDrawable() {
 void Testbed::createFrames() {
   _frames.resize(_maxFramesInFlight);
 
+  _currentFrameIdx = 0;
+  _currentFrame    = &_frames[_currentFrameIdx];
+
   const auto& device = _deviceContext->device();
   const auto& extent = _deviceContext->swapchain().surfaceExtent();
 
-  const auto& commandPool = _deviceContext->commandPool(Vulk::Device::QueueFamilyType::Transfer);
-  auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
-
   std::vector<Vulk::RenderTask*> tasks = {_textureMappingTask.get()};
+  for (auto& frame : _frames) {
+    frame.context = Vulk::FrameContext::make_shared(_deviceContext, tasks);
+  }
+
+  auto commandBuffer =
+      _currentFrame->context->acquireCommandBuffer(Vulk::Device::QueueFamilyType::Transfer);
 
   commandBuffer->beginRecording();
   for (auto& frame : _frames) {
-    frame.context = Vulk::FrameContext::make_shared(_deviceContext, tasks);
-
     const auto usage  = Vulk::Image2D::Usage::COLOR_ATTACHMENT | Vulk::Image2D::Usage::TRANSFER_SRC;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);
     frame.colorBuffer->allocate();
@@ -386,17 +389,9 @@ void Testbed::createFrames() {
   }
   commandBuffer->endRecording();
 
-  auto fence = Vulk::Fence::make_shared(device);
-  commandBuffer->submitCommands(*fence);
-
-  auto releaser = [](Vulk::Fence::shared_ptr fence, Vulk::CommandBuffer::shared_ptr commandBuffer) {
-    fence->wait();
-    fence->reset();
-    commandBuffer->reset();
-  };
-  std::thread{releaser, fence, commandBuffer}.detach();
-
-  nextFrame();
+  commandBuffer->submitCommands();
+  // No need to wait here since we are going to ait for the device idle after before the 1st
+  // frame rendering
 }
 
 void Testbed::resizeSwapchain() {

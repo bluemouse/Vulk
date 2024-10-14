@@ -1,7 +1,5 @@
 #include <Vulk/engine/Toolbox.h>
 
-#include <thread>
-
 #include <Vulk/CommandBuffer.h>
 #include <Vulk/CommandPool.h>
 #include <Vulk/Device.h>
@@ -15,26 +13,6 @@ MI_NAMESPACE_BEGIN(Vulk)
 
 Toolbox::Toolbox(const DeviceContext::shared_ptr& context) : _context(context) {
 }
-
-namespace {
-void releaseOnDone(CommandBuffer::shared_ptr commandBuffer,
-                   Fence::shared_ptr fence,
-                   StagingBuffer::shared_ptr stagingBuffer) {
-  // The commandBuffer now should be in the pending state
-  MI_ASSERT(commandBuffer->state() == CommandBuffer::State::Pending);
-  // Start a new thread to wait for the fence to be signaled and then release the staging buffer
-  auto releaser = [](CommandBuffer::shared_ptr commandBuffer,
-                     Fence::shared_ptr fence,
-                     StagingBuffer::shared_ptr stagingBuffer) {
-    fence->wait();
-
-    stagingBuffer.reset();
-    fence.reset();
-    commandBuffer.reset();
-  };
-  std::thread{releaser, commandBuffer, fence, stagingBuffer}.detach();
-}
-} // namespace
 
 Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
   const auto& device = _context->device();
@@ -57,7 +35,7 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
   commandBuffer->endRecording();
   commandBuffer->submitCommands(*fence);
 
-  releaseOnDone(commandBuffer, fence, stagingBuffer);
+  fence->wait();
 
   return image;
 }
@@ -77,7 +55,7 @@ Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
 
   texture->copyFrom(*commandBuffer, *stagingBuffer, *fence);
 
-  releaseOnDone(commandBuffer, fence, stagingBuffer);
+  fence->wait();
 
   return texture;
 }
@@ -102,7 +80,7 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
 
   texture->copyFrom(*commandBuffer, *stagingBuffer, *fence);
 
-  releaseOnDone(commandBuffer, fence, stagingBuffer);
+  fence->wait();
 
   return texture;
 }
