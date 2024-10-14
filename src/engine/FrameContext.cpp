@@ -39,7 +39,6 @@ void CommandBufferManager::reset() {
   while (_acquiredCommandBuffers.try_pop(buffer)) {
     _availableCommandBuffers.push(buffer);
   }
-  MI_ASSERT(_acquiredCommandBuffers.empty());
 }
 
 //
@@ -70,6 +69,61 @@ void DescriptorSetManager::reset() {
   _descriptorPool->reset();
 }
 
+
+//
+// SyncObjectManager
+//
+Semaphore::shared_ptr SyncObjectManager::acquireSemaphore() {
+  if (_availableSemaphores.empty()) {
+    _availableSemaphores.push(Semaphore::make_shared(_device));
+  }
+
+  Semaphore::shared_ptr semaphore;
+  _availableSemaphores.try_pop(semaphore);
+  _acquiredSemaphores.push(semaphore);
+  return semaphore;
+}
+
+Fence::shared_ptr SyncObjectManager::acquireFence() {
+  if (_availableFences.empty()) {
+    _availableFences.push(Fence::make_shared(_device));
+  }
+
+  Fence::shared_ptr fence;
+  _availableFences.try_pop(fence);
+  _acquiredFences.push(fence);
+  return fence;
+}
+
+void SyncObjectManager::reset() {
+  Semaphore::shared_ptr semaphore;
+  while (_acquiredSemaphores.try_pop(semaphore)) {
+    _availableSemaphores.push(semaphore);
+  }
+
+  Fence::shared_ptr fence;
+  while (_acquiredFences.try_pop(fence)) {
+    fence->reset();
+    _availableFences.push(fence);
+  }
+}
+
+
+//
+// FrameBufferManager
+//
+
+void FramebufferKeeper::registerFramebuffer(const Framebuffer::shared_ptr& framebuffer) {
+ _registeredFramebuffers.push(framebuffer);
+}
+
+void FramebufferKeeper::reset() {
+  Framebuffer::shared_ptr framebuffer;
+  while (_registeredFramebuffers.try_pop(framebuffer)) {
+    framebuffer.reset();
+  }
+}
+
 //
 // FrameContext
 //
@@ -95,6 +149,10 @@ FrameContext::FrameContext(std::shared_ptr<DeviceContext> deviceContext,
   }
   _descriptorSetManager = std::make_shared<DescriptorSetManager>(device, descriptorSetLayouts);
 
+  _syncObjectManager = std::make_shared<SyncObjectManager>(device);
+
+  _framebufferManager = std::make_shared<FramebufferKeeper>();
+
   // Initialize fence of finishing frame rendering
   _frameRendered = Fence::make_shared(device, true /*signaled*/);
 }
@@ -107,6 +165,18 @@ DescriptorSet::shared_ptr FrameContext::acquireDescriptorSet(const DescriptorSet
   return _descriptorSetManager->acquireSet(layout);
 }
 
+Semaphore::shared_ptr FrameContext::acquireSemaphore() {
+  return _syncObjectManager->acquireSemaphore();
+}
+
+Fence::shared_ptr FrameContext::acquireFence() {
+  return _syncObjectManager->acquireFence();
+}
+
+void FrameContext::registerFramebuffer(const Framebuffer::shared_ptr& framebuffer) {
+  _framebufferManager->registerFramebuffer(framebuffer);
+}
+
 void FrameContext::reset() {
   for (auto& manager : _commandBufferManagers) {
     if (manager) {
@@ -114,6 +184,9 @@ void FrameContext::reset() {
     }
   }
   _descriptorSetManager->reset();
+  _syncObjectManager->reset();
+
+  _framebufferManager->reset();
 }
 
 MI_NAMESPACE_END(Vulk)

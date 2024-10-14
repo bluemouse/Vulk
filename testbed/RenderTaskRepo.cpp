@@ -11,7 +11,6 @@
 
 #include <filesystem>
 #include <cstring>
-#include <thread>
 
 namespace {
 #if defined(__linux__)
@@ -30,22 +29,6 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 //
 //
-namespace {
-struct Uniforms {
-  alignas(sizeof(glm::vec4)) glm::mat4 model;
-  alignas(sizeof(glm::vec4)) glm::mat4 view;
-  alignas(sizeof(glm::vec4)) glm::mat4 proj;
-
-  static UniformBuffer::shared_ptr allocateBuffer(const Device& device) {
-    return UniformBuffer::make_shared(device, sizeof(Uniforms));
-  }
-
-  static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
-    return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
-  }
-};
-} // namespace
-
 TextureMappingTask::TextureMappingTask(const DeviceContext::shared_ptr& deviceContext)
     : RenderTask(deviceContext, Type::Graphics) {
   const auto& device = _deviceContext->device();
@@ -119,8 +102,8 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore::sha
 std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   const auto& device = _deviceContext->device();
 
-  auto fence  = Fence::make_shared(device);
-  auto signal = Semaphore::make_shared(device);
+  auto fence  = _frameContext->acquireFence();
+  auto signal = _frameContext->acquireSemaphore();
 
   std::vector<Semaphore*> waits;
   waits.reserve(_waits.size());
@@ -130,6 +113,12 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
 
   auto label = _commandBuffer->queue().scopedLabel("TextureMappingTask::run()");
 
+  // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
+  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
+  auto descriptorSet = _frameContext->acquireDescriptorSet(*_pipeline->descriptorSetLayout());
+
+  // TODO rework on how binding is done. We would like to specify the buffer/image directly instead
+  // of creating VkDescriptorXXXInfo.
   VkDescriptorImageInfo textureImageInfo{};
   textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   textureImageInfo.imageView   = _texture->view();
@@ -140,16 +129,11 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   transformationBufferInfo.range  = VK_WHOLE_SIZE;
   transformationBufferInfo.buffer = *_uniformBuffers[_currentUniformBufferIdx];
 
-  // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
-  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
-  auto descriptorSet = _frameContext->acquireDescriptorSet(*_pipeline->descriptorSetLayout());
-
   // The order of bindings must match the order of bindings in shaders. The name and the type need
   // to match them in the shader as well.
   std::vector<DescriptorSet::Binding> bindings = {
       {"xform", "Transformation", &transformationBufferInfo},
       {"texSampler", "sampler2D", &textureImageInfo}};
-
 
   descriptorSet->bind(bindings);
 
@@ -158,7 +142,9 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
 
   // TODO We should cache and reuse framebuffers. For nolayoutw, we create a new one for each frame.
   auto framebuffer =
-      Framebuffer::make_shared(device, *_renderPass, *colorAttachment, *depthStencilAttachment);
+      Framebuffer::make_shared(device, _renderPass, colorAttachment, depthStencilAttachment);
+
+  _frameContext->registerFramebuffer(framebuffer); // To keep it alive until the finish of the frame
 
   _commandBuffer->beginRecording();
   {
@@ -182,32 +168,6 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   _commandBuffer->endRecording();
   _commandBuffer->submitCommands(waits, {signal.get()}, *fence);
 
-  // Start a new thread to wait for the fence to be signaled and then release the resource
-  auto releaser = [](Fence::shared_ptr_const fence,
-                     Semaphore::shared_ptr signal,
-                     std::vector<Semaphore::shared_ptr> waits,
-                     Framebuffer::shared_ptr framebuffer,
-                     ImageView::shared_ptr colorAttachment,
-                     ImageView::shared_ptr depthStencilAttachment) {
-    fence->wait();
-
-    fence.reset();
-    signal.reset();
-    waits.clear();
-
-    framebuffer.reset();
-    colorAttachment.reset();
-    depthStencilAttachment.reset();
-  };
-  std::thread{releaser,
-              fence,
-              signal,
-              _waits,
-              framebuffer,
-              colorAttachment,
-              depthStencilAttachment}
-      .detach();
-
   return {signal, fence};
 }
 
@@ -220,10 +180,6 @@ DescriptorSetLayout::shared_ptr TextureMappingTask::descriptorSetLayout() {
 //
 PresentTask::PresentTask(const DeviceContext::shared_ptr& deviceContext)
     : RenderTask(deviceContext, Type::Transfer) {
-  _signals.resize(deviceContext->swapchain().images().size());
-  for (auto& signal : _signals) {
-    signal = Semaphore::make_shared(deviceContext->device());
-  }
 }
 
 PresentTask::~PresentTask() {
@@ -242,7 +198,7 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
 
   auto label = _commandBuffer->queue().scopedLabel("PresentTask::run()");
 
-  Semaphore::shared_ptr swapchainImageReady = Semaphore::make_shared(device());
+  auto swapchainImageReady = _frameContext->acquireSemaphore();
   _deviceContext->swapchain().acquireNextImage(*swapchainImageReady);
 
   // Create a vector<Semaphore*> from _waits and swapchainImageReady
@@ -253,10 +209,8 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
   }
   waits.push_back(swapchainImageReady.get());
 
-  auto fence = Fence::make_shared(device());
-
-  // Signal must've been un-signaled since we can acquire this swapchain image.
-  auto signal = _signals[swapchain.activeImageIndex()];
+  auto fence          = _frameContext->acquireFence();
+  auto readyToPresent = _frameContext->acquireSemaphore();
 
   _commandBuffer->beginRecording();
   {
@@ -265,23 +219,11 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
     swapchainFrame.transitToNewLayout(*_commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
   }
   _commandBuffer->endRecording();
-  _commandBuffer->submitCommands(waits, {signal.get()}, *fence);
+  _commandBuffer->submitCommands(waits, {readyToPresent.get()}, *fence);
 
-  swapchain.present({signal.get()});
+  swapchain.present({readyToPresent.get()});
 
-  // Start a new thread to wait for the fence to be signaled and then release the resource
-  auto releaser = [](Fence::shared_ptr fence,
-                     std::vector<Semaphore::shared_ptr> waits,
-                     Semaphore::shared_ptr swapchainImageReady) {
-    fence->wait();
-
-    fence.reset();
-    waits.clear();
-    swapchainImageReady.reset();
-  };
-  std::thread{releaser, fence, _waits, swapchainImageReady}.detach();
-
-  return {signal, fence};
+  return {readyToPresent, fence};
 }
 
 MI_NAMESPACE_END(Vulk)

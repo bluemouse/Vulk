@@ -5,28 +5,26 @@
 #include <memory>
 
 #include <Vulk/internal/base.h>
+#include <Vulk/ImageView.h>
+#include <Vulk/RenderPass.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
 class Device;
-class RenderPass;
-class ImageView;
 class Image;
 
 class Framebuffer : public Sharable<Framebuffer>, private NotCopyable {
  public:
-  Framebuffer(const Device& device, const RenderPass& renderPass, const ImageView& colorAttachment);
   Framebuffer(const Device& device,
-              const RenderPass& renderPass,
-              const ImageView& colorAttachment,
-              const ImageView& depthStencilAttachment);
+              const RenderPass::shared_ptr& renderPass,
+              const ImageView::shared_ptr& colorAttachment,
+              const ImageView::shared_ptr& depthStencilAttachment = nullptr);
   ~Framebuffer();
 
-  void create(const Device& device, const RenderPass& renderPass, const ImageView& colorAttachment);
   void create(const Device& device,
-              const RenderPass& renderPass,
-              const ImageView& colorAttachment,
-              const ImageView& depthStencilAttachment);
+              const RenderPass::shared_ptr& renderPass,
+              const ImageView::shared_ptr& colorAttachment,
+              const ImageView::shared_ptr& depthStencilAttachment = nullptr);
   void destroy();
 
   operator VkFramebuffer() const { return _buffer; }
@@ -36,25 +34,25 @@ class Framebuffer : public Sharable<Framebuffer>, private NotCopyable {
   [[nodiscard]] bool isCreated() const { return _buffer != VK_NULL_HANDLE; }
 
   [[nodiscard]] const Device& device() const { return *_device.lock(); }
-  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass.lock(); }
+  [[nodiscard]] const RenderPass& renderPass() const { return *_renderPass; }
 
   [[nodiscard]] const Image& colorBuffer() const;
 
  private:
   void create();
 
-  [[nodiscard]] const ImageView& colorAttachment() const { return *_colorAttachment.lock(); }
-  [[nodiscard]] const ImageView& depthStencilAttachment() const {
-    return *_depthStencilAttachment.lock();
-  }
+  [[nodiscard]] const ImageView& colorAttachment() const { return *_colorAttachment; }
+  [[nodiscard]] const ImageView& depthStencilAttachment() const { return *_depthStencilAttachment; }
 
  private:
   VkFramebuffer _buffer = VK_NULL_HANDLE;
 
   std::weak_ptr<const Device> _device;
-  std::weak_ptr<const RenderPass> _renderPass;
-  std::weak_ptr<const ImageView> _colorAttachment;
-  std::weak_ptr<const ImageView> _depthStencilAttachment;
+
+  RenderPass::shared_ptr _renderPass;
+
+  ImageView::shared_ptr _colorAttachment;
+  ImageView::shared_ptr _depthStencilAttachment;
 };
 
 MI_NAMESPACE_END(Vulk)

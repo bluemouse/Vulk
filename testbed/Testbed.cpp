@@ -165,11 +165,12 @@ void Testbed::mainLoop() {
 
 void Testbed::drawFrame() {
   try {
-    nextFrame(); // Move to the next frame. The new current frame may be in use.
+    nextFrame(); // Move to the next frame.
 
     // TODO Label the drawFrame() function in the queue
 
-    // Make sure the last time this frame is rendered to has been finished.
+    // The new current frame may be in use so make sure the last time this frame is rendered to has
+    // been finished.
     _currentFrame->context->waitFrameRendered();
     _currentFrame->context->reset();
 

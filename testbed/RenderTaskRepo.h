@@ -24,6 +24,21 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 class TextureMappingTask : public RenderTask {
  public:
+  struct Uniforms {
+    alignas(sizeof(glm::vec4)) glm::mat4 model;
+    alignas(sizeof(glm::vec4)) glm::mat4 view;
+    alignas(sizeof(glm::vec4)) glm::mat4 proj;
+
+    static UniformBuffer::shared_ptr allocateBuffer(const Device& device) {
+      return UniformBuffer::make_shared(device, sizeof(Uniforms));
+    }
+
+    static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
+      return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
+    }
+  };
+
+ public:
   explicit TextureMappingTask(const DeviceContext::shared_ptr& deviceContext);
   ~TextureMappingTask() override;
 
@@ -98,11 +113,6 @@ class PresentTask : public RenderTask {
 
   // Synchronizations
   std::vector<Semaphore::shared_ptr> _waits;
-
-  // Store the signals for the each swapchain image. Index of the signal is the same as the index of
-  // the swapchain image being presented. We have to store (i.e hold) the signal semaphore since
-  // there is no way to sync on finishing presenting the current swapchain image.
-  std::vector<Semaphore::shared_ptr> _signals;
 };
 
 MI_NAMESPACE_END(Vulk)
