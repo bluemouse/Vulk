@@ -14,14 +14,14 @@ class DescriptorSetLayout;
 
 class DescriptorPool : public Sharable<DescriptorPool>, private NotCopyable {
  public:
-  DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets, bool setCanBeFreed = true);
+  DescriptorPool(const DescriptorSetLayout& layout, uint32_t maxSets, bool setCanBeFreed = false);
   DescriptorPool(const Device& device,
                  std::vector<VkDescriptorPoolSize> poolSizes,
                  uint32_t maxSets,
                  bool setCanBeFreed = true);
   ~DescriptorPool() override;
 
-  void create(const DescriptorSetLayout& layout, uint32_t maxSets, bool setCanBeFreed = true);
+  void create(const DescriptorSetLayout& layout, uint32_t maxSets, bool setCanBeFreed = false);
   void create(const Device& device,
               std::vector<VkDescriptorPoolSize> poolSizes,
               uint32_t maxSets,

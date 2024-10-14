@@ -20,7 +20,7 @@
 #include <Vulk/engine/Vertex.h>
 #include <Vulk/engine/Camera.h>
 
-#include "RenderTask.h"
+#include "RenderTaskRepo.h"
 
 class Testbed : public MainWindow {
  public:

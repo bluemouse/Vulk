@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Vulk/engine/Context.h>
+#include <Vulk/engine/RenderTask.h>
 #include <Vulk/engine/Texture2D.h>
 
 #include <Vulk/RenderPass.h>
@@ -22,32 +22,6 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 //
 //
-class RenderTask : public Sharable<RenderTask>, private NotCopyable {
- public:
-  enum class Type { Graphics, Compute, Transfer };
-
- public:
-  RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type);
-  virtual ~RenderTask(){};
-
-  const Device& device() const { return _deviceContext->device(); }
-
-  void setFrameContext(const FrameContext::shared_ptr& frameContext);
-
-  virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
-
- protected:
-  const DeviceContext::shared_ptr _deviceContext;
-  FrameContext::shared_ptr _frameContext;
-
-  Type _type;
-
-  CommandBuffer::shared_ptr _commandBuffer;
-};
-
-//
-//
-//
 class TextureMappingTask : public RenderTask {
  public:
   explicit TextureMappingTask(const DeviceContext::shared_ptr& deviceContext);
@@ -64,9 +38,8 @@ class TextureMappingTask : public RenderTask {
   void prepareOutputs(const Image2D& colorBuffer, const DepthImage& depthStencilBuffer);
   void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
 
-  DescriptorSet::shared_ptr createDescriptorSet();
-
   std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() override;
+  DescriptorSetLayout::shared_ptr descriptorSetLayout() override;
 
   //
   // Override the sharable types and functions
@@ -76,7 +49,7 @@ class TextureMappingTask : public RenderTask {
  private:
   RenderPass::shared_ptr _renderPass;
   Pipeline::shared_ptr _pipeline;
-  DescriptorPool::shared_ptr _descriptorPool;
+
   uint32_t _vertexBufferBinding = 0U;
 
   // Geometry
@@ -112,6 +85,7 @@ class PresentTask : public RenderTask {
   void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
 
   std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() override;
+  DescriptorSetLayout::shared_ptr descriptorSetLayout() override { return nullptr; }
 
   //
   // Override the sharable types and functions

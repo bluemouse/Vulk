@@ -65,6 +65,7 @@ set(SRC_FILES
     src/engine/TypeTraits.cpp
     src/engine/Texture2D.cpp
     src/engine/Camera.cpp
+    src/engine/RenderTask.cpp
 )
 
 set(HEADER_FILES
@@ -116,7 +117,7 @@ set(HEADER_FILES
     include/Vulk/engine/Vertex.h
     include/Vulk/engine/Camera.h
     include/Vulk/engine/Bound.h
-
+    include/Vulk/engine/RenderTask.h
 )
 
 add_library(${PROJECT_NAME} SHARED

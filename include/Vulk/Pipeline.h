@@ -38,8 +38,8 @@ class Pipeline : public Sharable<Pipeline>, private NotCopyable {
 
   [[nodiscard]] bool isCreated() const { return _pipeline != VK_NULL_HANDLE; }
 
-  [[nodiscard]] const DescriptorSetLayout& descriptorSetLayout() const {
-    return *_descriptorSetLayout;
+  [[nodiscard]] const DescriptorSetLayout::shared_ptr& descriptorSetLayout() const {
+    return _descriptorSetLayout;
   }
 
   template <typename VertexInput>

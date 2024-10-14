@@ -8,10 +8,15 @@
 
 #include <Vulk/CommandPool.h>
 #include <Vulk/CommandBuffer.h>
+#include <Vulk/DescriptorPool.h>
+#include <Vulk/DescriptorSet.h>
+#include <Vulk/DescriptorSetLayout.h>
 
 #include <tbb/concurrent_queue.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
+
+class RenderTask;
 
 class DeviceContext : public Sharable<DeviceContext>, private NotCopyable {
  public:
@@ -107,30 +112,34 @@ class CommandBufferManager : public Sharable<CommandBufferManager>, private NotC
   tbb::concurrent_queue<CommandBuffer::shared_ptr> _acquiredCommandBuffers;
 };
 
-// class DescriptorSetManager {
-//  public:
-//   DescriptorSetManager() = default;
-//   ~DescriptorSetManager() { free(); }
+class DescriptorSetManager : public Sharable<DescriptorSetManager>, private NotCopyable {
+ public:
+  DescriptorSetManager() = default;
+  ~DescriptorSetManager() { free(); }
 
-//   void allocate(const Device& device, const DescriptorSetLayout& layout);
-//   void free();
+  void allocate(const Device& device, std::vector<DescriptorSetLayout::shared_ptr> layouts);
+  void free();
 
-//   DescriptorSet::shared_ptr acquireSet();
-//   void returnSet(DescriptorSet::shared_ptr&& descriptorSet);
+  DescriptorSet::shared_ptr acquireSet(const DescriptorSetLayout& layout);
 
-//   void reset();
+  void reset();
 
-//  private:
-//   DescriptorPool::shared_ptr _descriptorPool;
-//   tbb::concurrent_vector<DescriptorSet::shared_ptr> _availableDescriptorSets;
-// };
+ private:
+  DescriptorPool::shared_ptr _descriptorPool;
+  tbb::concurrent_queue<DescriptorSet::shared_ptr> _acquiredDescriptorSets;
+};
 
+//
+// Per frame context to manage the necessities (command buffers, descriptors, ..etc) iof rendering a
+// frame
+//
 class FrameContext : public Sharable<FrameContext>, private NotCopyable {
  public:
-  FrameContext(DeviceContext::shared_ptr deviceContext);
+  FrameContext(DeviceContext::shared_ptr deviceContext, std::vector<RenderTask*> tasks);
   virtual ~FrameContext() = default;
 
   [[nodiscard]] CommandBuffer::shared_ptr acquireCommandBuffer(Device::QueueFamilyType queueFamily);
+  [[nodiscard]] DescriptorSet::shared_ptr acquireDescriptorSet(const DescriptorSetLayout& layout);
 
   void setFrameRendered(const Fence::shared_ptr& fence) { _frameRendered = fence; }
   void waitFrameRendered() const { _frameRendered->wait(); }
@@ -142,6 +151,8 @@ class FrameContext : public Sharable<FrameContext>, private NotCopyable {
 
   std::vector<CommandBufferManager::shared_ptr> _commandBufferManagers{
       Device::QueueFamilyType::NUM_QUEUE_FAMILY_TYPES};
+
+  DescriptorSetManager::shared_ptr _descriptorSetManager;
 
   Fence::shared_ptr _frameRendered;
 };

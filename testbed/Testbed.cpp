@@ -170,9 +170,6 @@ void Testbed::drawFrame() {
 
     // TODO Label the drawFrame() function in the queue
 
-    // TODO DEBUG remove this after we fix the descript set management
-    _deviceContext->queue(Vulk::Device::QueueFamilyType::Graphics).waitIdle();
-
     // Make sure the last time this frame is rendered to has been finished.
     _currentFrame->context->waitFrameRendered();
     _currentFrame->context->reset();
@@ -373,9 +370,11 @@ void Testbed::createFrames() {
   const auto& commandPool = _deviceContext->commandPool(Vulk::Device::QueueFamilyType::Transfer);
   auto commandBuffer      = Vulk::CommandBuffer::make_shared(commandPool);
 
+  std::vector<Vulk::RenderTask*> tasks = {_textureMappingTask.get()};
+
   commandBuffer->beginRecording();
   for (auto& frame : _frames) {
-    frame.context = Vulk::FrameContext::make_shared(_deviceContext);
+    frame.context = Vulk::FrameContext::make_shared(_deviceContext, tasks);
 
     const auto usage  = Vulk::Image2D::Usage::COLOR_ATTACHMENT | Vulk::Image2D::Usage::TRANSFER_SRC;
     frame.colorBuffer = Vulk::Image2D::make_shared(device, VK_FORMAT_B8G8R8A8_SRGB, extent, usage);

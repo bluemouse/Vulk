@@ -1,4 +1,4 @@
-#include "RenderTask.h"
+#include "RenderTaskRepo.h"
 
 #include <Vulk/Device.h>
 #include <Vulk/CommandPool.h>
@@ -26,29 +26,6 @@ std::filesystem::path executablePath() {
 } // namespace
 
 MI_NAMESPACE_BEGIN(Vulk)
-
-RenderTask::RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type)
-    : _deviceContext(deviceContext), _type(type) {
-}
-
-void RenderTask::setFrameContext(const FrameContext::shared_ptr& frameContext) {
-  _frameContext = frameContext;
-
-  switch (_type)
-  {
-  case Type::Graphics:
-    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Graphics);
-    break;
-  case Type::Compute:
-    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Compute);
-    break;
-  case Type::Transfer:
-    _commandBuffer = _frameContext->acquireCommandBuffer(Device::QueueFamilyType::Transfer);
-    break;
-  default:
-    MI_LOG_ERROR("Unknown RenderTask type");
-  }
-}
 
 //
 //
@@ -85,11 +62,9 @@ TextureMappingTask::TextureMappingTask(const DeviceContext::shared_ptr& deviceCo
   FragmentShader fragShader{device, fragShaderFile.string().c_str()};
   _pipeline = Pipeline::make_shared(device, *_renderPass, vertShader, fragShader);
 
+  // TODO uniform buffers should be managed by FrameContext
   // Create descriptor pool
   constexpr int maxFramesInFlight = 3;
-  _descriptorPool =
-      DescriptorPool::make_shared(_pipeline->descriptorSetLayout(), maxFramesInFlight);
-
   for (int i = 0; i < maxFramesInFlight; ++i) {
     auto uniforms = Uniforms::allocateBuffer(device);
     _uniformBuffers.push_back(uniforms);
@@ -165,23 +140,23 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   transformationBufferInfo.range  = VK_WHOLE_SIZE;
   transformationBufferInfo.buffer = *_uniformBuffers[_currentUniformBufferIdx];
 
+  // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
+  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
+  auto descriptorSet = _frameContext->acquireDescriptorSet(*_pipeline->descriptorSetLayout());
+
   // The order of bindings must match the order of bindings in shaders. The name and the type need
   // to match them in the shader as well.
   std::vector<DescriptorSet::Binding> bindings = {
       {"xform", "Transformation", &transformationBufferInfo},
       {"texSampler", "sampler2D", &textureImageInfo}};
 
-  // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
-  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
-  auto descriptorSet =
-      DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
 
   descriptorSet->bind(bindings);
 
   auto colorAttachment        = ImageView::make_shared(device, *_colorBuffer);
   auto depthStencilAttachment = ImageView::make_shared(device, *_depthStencilBuffer);
 
-  // TODO We should cache and reuse framebuffers. For now, we create a new one for each frame.
+  // TODO We should cache and reuse framebuffers. For nolayoutw, we create a new one for each frame.
   auto framebuffer =
       Framebuffer::make_shared(device, *_renderPass, *colorAttachment, *depthStencilAttachment);
 
@@ -213,8 +188,7 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
                      std::vector<Semaphore::shared_ptr> waits,
                      Framebuffer::shared_ptr framebuffer,
                      ImageView::shared_ptr colorAttachment,
-                     ImageView::shared_ptr depthStencilAttachment,
-                     DescriptorSet::shared_ptr descriptorSet) {
+                     ImageView::shared_ptr depthStencilAttachment) {
     fence->wait();
 
     fence.reset();
@@ -224,7 +198,6 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
     framebuffer.reset();
     colorAttachment.reset();
     depthStencilAttachment.reset();
-    descriptorSet.reset();
   };
   std::thread{releaser,
               fence,
@@ -232,15 +205,14 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
               _waits,
               framebuffer,
               colorAttachment,
-              depthStencilAttachment,
-              descriptorSet}
+              depthStencilAttachment}
       .detach();
 
   return {signal, fence};
 }
 
-DescriptorSet::shared_ptr TextureMappingTask::createDescriptorSet() {
-  return DescriptorSet::make_shared(*_descriptorPool, _pipeline->descriptorSetLayout());
+DescriptorSetLayout::shared_ptr TextureMappingTask::descriptorSetLayout() {
+  return _pipeline->descriptorSetLayout();
 }
 
 //
