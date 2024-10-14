@@ -14,7 +14,8 @@
 #include <Vulk/DescriptorPool.h>
 #include <Vulk/UniformBuffer.h>
 
-#include <Vulk/engine/Context.h>
+#include <Vulk/engine/DeviceContext.h>
+#include <Vulk/engine/FrameContext.h>
 #include <Vulk/engine/Drawable.h>
 #include <Vulk/engine/Texture2D.h>
 #include <Vulk/engine/Vertex.h>

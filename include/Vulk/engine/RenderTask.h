@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Vulk/engine/Context.h>
+#include <Vulk/engine/DeviceContext.h>
+#include <Vulk/engine/FrameContext.h>
 
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/CommandBuffer.h>

@@ -60,7 +60,8 @@ set(SRC_FILES
     src/Semaphore.cpp
     src/Fence.cpp
     # Engine classes
-    src/engine/Context.cpp
+    src/engine/DeviceContext.cpp
+    src/engine/FrameContext.cpp
     src/engine/Toolbox.cpp
     src/engine/TypeTraits.cpp
     src/engine/Texture2D.cpp
@@ -109,7 +110,8 @@ set(HEADER_FILES
     include/Vulk/Fence.h
     include/Vulk/Exception.h
     # Engine classes
-    include/Vulk/engine/Context.h
+    include/Vulk/engine/DeviceContext.h
+    include/Vulk/engine/FrameContext.h
     include/Vulk/engine/Drawable.h
     include/Vulk/engine/Toolbox.h
     include/Vulk/engine/TypeTraits.h

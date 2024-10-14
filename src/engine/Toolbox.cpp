@@ -8,8 +8,6 @@
 #include <Vulk/StagingBuffer.h>
 #include <Vulk/internal/debug.h>
 
-#include <Vulk/engine/Context.h>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 

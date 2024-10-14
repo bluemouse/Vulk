@@ -5,7 +5,7 @@
 #include <Vulk/Image2D.h>
 #include <Vulk/StagingBuffer.h>
 
-#include <Vulk/engine/Context.h>
+#include <Vulk/engine/DeviceContext.h>
 #include <Vulk/engine/Texture2D.h>
 
 #include <tuple>
