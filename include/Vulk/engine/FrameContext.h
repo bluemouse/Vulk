@@ -8,6 +8,7 @@
 #include <Vulk/DescriptorSet.h>
 #include <Vulk/DescriptorSetLayout.h>
 #include <Vulk/Framebuffer.h>
+#include <Vulk/UniformBuffer.h>
 
 #include <Vulk/Semaphore.h>
 #include <Vulk/Fence.h>
@@ -15,6 +16,7 @@
 #include <Vulk/engine/DeviceContext.h>
 
 #include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_hash_map.h>
 
 MI_NAMESPACE_BEGIN(Vulk)
 
@@ -73,6 +75,22 @@ class SyncObjectManager : public Sharable<SyncObjectManager>, private NotCopyabl
   tbb::concurrent_queue<Fence::shared_ptr> _acquiredFences;
 };
 
+// Manager of uniform buffers that can be cached and reused
+class UniformBufferManager : public Sharable<UniformBufferManager>, private NotCopyable {
+ public:
+  UniformBufferManager(const Device& device);
+  ~UniformBufferManager();
+
+  UniformBuffer::shared_ptr acquireBuffer(uint32_t id, size_t size);
+
+  void reset();
+
+ private:
+  const Device& _device;
+
+  tbb::concurrent_hash_map<uint32_t,  UniformBuffer::shared_ptr> _buffers;
+};
+
 // Manager of framebuffers that when registered the framebuffer will be kept alive until the next
 // call of `reset()`
 class FramebufferKeeper : public Sharable<FramebufferKeeper>, private NotCopyable {
@@ -105,6 +123,9 @@ class FrameContext : public Sharable<FrameContext>, private NotCopyable {
 
   void registerFramebuffer(const Framebuffer::shared_ptr& framebuffer);
 
+  [[nodiscard]] UniformBuffer::shared_ptr acquireUniformBuffer(uint32_t id, size_t size);
+
+
   void setFrameRendered(const Fence::shared_ptr& fence) { _frameRendered = fence; }
   void waitFrameRendered() const { _frameRendered->wait(); }
 
@@ -118,10 +139,9 @@ class FrameContext : public Sharable<FrameContext>, private NotCopyable {
   std::vector<CommandBufferManager::shared_ptr> _commandBufferManagers{
       Device::QueueFamilyType::NUM_QUEUE_FAMILY_TYPES};
   DescriptorSetManager::shared_ptr _descriptorSetManager;
-
   SyncObjectManager::shared_ptr _syncObjectManager;
-
-  FramebufferKeeper::shared_ptr _framebufferManager;
+  FramebufferKeeper::shared_ptr _framebufferKeeper;
+  UniformBufferManager::shared_ptr _uniformBufferManager;
 
   Fence::shared_ptr _frameRendered;
 };

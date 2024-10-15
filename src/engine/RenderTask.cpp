@@ -4,8 +4,10 @@
 
 MI_NAMESPACE_BEGIN(Vulk)
 
+uint32_t RenderTask::_nextId = 1;
+
 RenderTask::RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type)
-    : _deviceContext(deviceContext), _type(type) {
+    : _deviceContext(deviceContext), _type(type), _id(_nextId++) {
 }
 
 void RenderTask::setFrameContext(const FrameContext::shared_ptr& frameContext) {

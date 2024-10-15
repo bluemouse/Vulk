@@ -29,10 +29,12 @@ class TextureMappingTask : public RenderTask {
     alignas(sizeof(glm::vec4)) glm::mat4 view;
     alignas(sizeof(glm::vec4)) glm::mat4 proj;
 
-    static UniformBuffer::shared_ptr allocateBuffer(const Device& device) {
-      return UniformBuffer::make_shared(device, sizeof(Uniforms));
+    static size_t size() {
+      return sizeof(Uniforms);
     }
-
+    static UniformBuffer::shared_ptr allocateBuffer(const Device& device) {
+      return UniformBuffer::make_shared(device, size());
+    }
     static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(uint32_t binding) {
       return {binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
     }
@@ -47,8 +49,7 @@ class TextureMappingTask : public RenderTask {
                        size_t numIndices);
   void prepareUniforms(const glm::mat4& model2world,
                        const glm::mat4& world2view,
-                       const glm::mat4& project,
-                       bool newFrame = true);
+                       const glm::mat4& project);
   void prepareInputs(const Texture2D& texture);
   void prepareOutputs(const Image2D& colorBuffer, const DepthImage& depthStencilBuffer);
   void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
@@ -75,10 +76,8 @@ class TextureMappingTask : public RenderTask {
   // Inputs
   Texture2D::shared_ptr_const _texture;
 
-  // Uniforms: the buffers and mapped memory are internal managed
-  std::vector<UniformBuffer::shared_ptr> _uniformBuffers;
-  std::vector<void*> _uniformBufferMapped;
-  size_t _currentUniformBufferIdx = 0;
+  // Uniforms
+  UniformBuffer::shared_ptr _uniformBuffer;
 
   // Outputs
   Image2D::shared_ptr_const _colorBuffer;

@@ -45,14 +45,6 @@ TextureMappingTask::TextureMappingTask(const DeviceContext::shared_ptr& deviceCo
   FragmentShader fragShader{device, fragShaderFile.string().c_str()};
   _pipeline = Pipeline::make_shared(device, *_renderPass, vertShader, fragShader);
 
-  // TODO uniform buffers should be managed by FrameContext
-  // Create descriptor pool
-  constexpr int maxFramesInFlight = 3;
-  for (int i = 0; i < maxFramesInFlight; ++i) {
-    auto uniforms = Uniforms::allocateBuffer(device);
-    _uniformBuffers.push_back(uniforms);
-    _uniformBufferMapped.push_back(uniforms->map());
-  }
   // For now, we only have one vertex buffer binding (hence, 0 indexed). Check
   // `ShaderModule::reflectVertexInputs` to see how `_vertexInputBindings` are reflected.
   _vertexBufferBinding = 0U;
@@ -71,18 +63,16 @@ void TextureMappingTask::prepareGeometry(const VertexBuffer& vertexBuffer,
 
 void TextureMappingTask::prepareUniforms(const glm::mat4& model2world,
                                          const glm::mat4& world2view,
-                                         const glm::mat4& projection,
-                                         bool newFrame) {
+                                         const glm::mat4& projection) {
   Uniforms uniforms{};
 
   uniforms.model = model2world;
   uniforms.view  = world2view;
   uniforms.proj  = projection;
 
-  if (newFrame) {
-    _currentUniformBufferIdx = (_currentUniformBufferIdx + 1) % _uniformBuffers.size();
-  }
-  memcpy(_uniformBufferMapped[_currentUniformBufferIdx], &uniforms, sizeof(uniforms));
+  _uniformBuffer = _frameContext->acquireUniformBuffer(id(), uniforms.size());
+  memcpy(_uniformBuffer->map(), &uniforms, sizeof(uniforms));
+  _uniformBuffer->unmap();
 }
 
 void TextureMappingTask::prepareInputs(const Texture2D& texture) {
@@ -127,7 +117,7 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
   VkDescriptorBufferInfo transformationBufferInfo{};
   transformationBufferInfo.offset = 0;
   transformationBufferInfo.range  = VK_WHOLE_SIZE;
-  transformationBufferInfo.buffer = *_uniformBuffers[_currentUniformBufferIdx];
+  transformationBufferInfo.buffer = *_uniformBuffer;
 
   // The order of bindings must match the order of bindings in shaders. The name and the type need
   // to match them in the shader as well.

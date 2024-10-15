@@ -69,7 +69,6 @@ void DescriptorSetManager::reset() {
   _descriptorPool->reset();
 }
 
-
 //
 // SyncObjectManager
 //
@@ -108,13 +107,11 @@ void SyncObjectManager::reset() {
   }
 }
 
-
 //
-// FrameBufferManager
+// FrameBufferKeeper
 //
-
 void FramebufferKeeper::registerFramebuffer(const Framebuffer::shared_ptr& framebuffer) {
- _registeredFramebuffers.push(framebuffer);
+  _registeredFramebuffers.push(framebuffer);
 }
 
 void FramebufferKeeper::reset() {
@@ -122,6 +119,33 @@ void FramebufferKeeper::reset() {
   while (_registeredFramebuffers.try_pop(framebuffer)) {
     framebuffer.reset();
   }
+}
+
+//
+// UniformBufferManager
+//
+UniformBufferManager::UniformBufferManager(const Device& device) : _device(device) {
+}
+
+UniformBufferManager::~UniformBufferManager() {
+}
+
+UniformBuffer::shared_ptr UniformBufferManager::acquireBuffer(uint32_t id, size_t size) {
+  tbb::concurrent_hash_map<uint32_t,  UniformBuffer::shared_ptr>::const_accessor accessor;
+  if (tbb::concurrent_hash_map<uint32_t, UniformBuffer::shared_ptr>::const_accessor accessor;
+      _buffers.find(accessor, id)) {
+    MI_ASSERT_MSG(size == accessor->second->size(),
+                  "Uniform buffer with id does not match the requested size");
+    return accessor->second;
+  }
+
+  auto buffer = UniformBuffer::make_shared(_device, size);
+  _buffers.insert({id, buffer});
+  return buffer;
+}
+
+void UniformBufferManager::reset() {
+  _buffers.clear();
 }
 
 //
@@ -148,10 +172,9 @@ FrameContext::FrameContext(std::shared_ptr<DeviceContext> deviceContext,
     descriptorSetLayouts.push_back(task->descriptorSetLayout());
   }
   _descriptorSetManager = std::make_shared<DescriptorSetManager>(device, descriptorSetLayouts);
-
-  _syncObjectManager = std::make_shared<SyncObjectManager>(device);
-
-  _framebufferManager = std::make_shared<FramebufferKeeper>();
+  _syncObjectManager    = std::make_shared<SyncObjectManager>(device);
+  _framebufferKeeper    = std::make_shared<FramebufferKeeper>();
+  _uniformBufferManager = std::make_shared<UniformBufferManager>(device);
 
   // Initialize fence of finishing frame rendering
   _frameRendered = Fence::make_shared(device, true /*signaled*/);
@@ -173,8 +196,12 @@ Fence::shared_ptr FrameContext::acquireFence() {
   return _syncObjectManager->acquireFence();
 }
 
+UniformBuffer::shared_ptr FrameContext::acquireUniformBuffer(uint32_t id, size_t size) {
+  return _uniformBufferManager->acquireBuffer(id, size);
+}
+
 void FrameContext::registerFramebuffer(const Framebuffer::shared_ptr& framebuffer) {
-  _framebufferManager->registerFramebuffer(framebuffer);
+  _framebufferKeeper->registerFramebuffer(framebuffer);
 }
 
 void FrameContext::reset() {
@@ -186,7 +213,7 @@ void FrameContext::reset() {
   _descriptorSetManager->reset();
   _syncObjectManager->reset();
 
-  _framebufferManager->reset();
+  _framebufferKeeper->reset();
 }
 
 MI_NAMESPACE_END(Vulk)
