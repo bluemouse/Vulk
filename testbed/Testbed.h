@@ -2,26 +2,11 @@
 
 #include "MainWindow.h"
 
-#include <Vulk/Framebuffer.h>
-#include <Vulk/Fence.h>
-#include <Vulk/Image2D.h>
-#include <Vulk/DepthImage.h>
-#include <Vulk/RenderPass.h>
-#include <Vulk/Pipeline.h>
-#include <Vulk/VertexShader.h>
-#include <Vulk/FragmentShader.h>
-#include <Vulk/DescriptorSet.h>
-#include <Vulk/DescriptorPool.h>
-#include <Vulk/UniformBuffer.h>
-
 #include <Vulk/engine/DeviceContext.h>
-#include <Vulk/engine/FrameContext.h>
-#include <Vulk/engine/Drawable.h>
-#include <Vulk/engine/Texture2D.h>
-#include <Vulk/engine/Vertex.h>
-#include <Vulk/engine/Camera.h>
 
-#include "RenderTaskRepo.h"
+#include "RenderModule.h"
+
+#include <filesystem>
 
 class Testbed : public MainWindow {
  public:
@@ -61,8 +46,6 @@ class Testbed : public MainWindow {
   [[nodiscard]] static VkPresentModeKHR chooseSwapchainPresentMode(
       const std::vector<VkPresentModeKHR>& availablePresentModes);
 
-  [[nodiscard]] static VkFormat chooseDepthFormat();
-
   void onKeyInput(int key, int action, int mods) override;
   void onMouseMove(double xpos, double ypos) override;
   void onMouseButton(int button, int action, int mods) override;
@@ -71,9 +54,6 @@ class Testbed : public MainWindow {
 
  private:
   void createDeviceContext();
-  void createDrawable();
-  void createRenderTask();
-  void createFrames();
 
   void nextFrame();
 
@@ -85,35 +65,16 @@ class Testbed : public MainWindow {
  private:
   Vulk::DeviceContext::shared_ptr _deviceContext;
 
-  Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
-  Vulk::PresentTask::shared_ptr _presentTask;
-
-  Vulk::Camera::shared_ptr _camera;
-
-  Vulk::Drawable<Vertex, uint32_t> _drawable;
-  Vulk::Texture2D::shared_ptr _texture;
-
-  struct Frame {
-    Vulk::FrameContext::shared_ptr context;
-
-    Vulk::Image2D::shared_ptr colorBuffer;
-    Vulk::DepthImage::shared_ptr depthBuffer;
-  };
-
-  std::vector<Frame> _frames;
-  Frame* _currentFrame = nullptr;
-
-  constexpr static uint32_t _maxFramesInFlight = 3;
-  uint32_t _currentFrameIdx                    = 0;
-
   // Settings of the Testbed execution
   static ValidationLevel _validationLevel;
   static bool _debugUtilsEnabled;
+
+  std::shared_ptr<RenderModule> _renderModule;
 
   // UI control variables
   float _zoomFactor = 1.0F;
 
   // Input data
-  std::string _modelFile{};
-  std::string _textureFile{};
+  std::filesystem::path _modelFile{};
+  std::filesystem::path _textureFile{};
 };

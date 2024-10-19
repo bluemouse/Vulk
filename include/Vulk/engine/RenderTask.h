@@ -19,22 +19,22 @@ class RenderTask : public Sharable<RenderTask>, private NotCopyable {
   enum class Type { Graphics, Compute, Transfer };
 
  public:
-  RenderTask(const DeviceContext::shared_ptr& deviceContext, Type type);
+  RenderTask(const DeviceContext& deviceContext, Type type);
   virtual ~RenderTask(){};
 
-  const Device& device() const { return _deviceContext->device(); }
+  const Device& device() const { return _deviceContext.device(); }
 
   virtual std::pair<Semaphore::shared_ptr, Fence::shared_ptr> run() = 0;
   [[nodiscard]] virtual DescriptorSetLayout::shared_ptr descriptorSetLayout() = 0;
 
   // Before each frame pass, you need to call this function to set the active frame context.
-  void setFrameContext(const FrameContext::shared_ptr& frameContext);
+  void setFrameContext(FrameContext& frameContext);
 
   [[nodiscard]] uint32_t id() const { return _id; }
 
  protected:
-  const DeviceContext::shared_ptr _deviceContext;
-  FrameContext::shared_ptr _frameContext;
+  const DeviceContext& _deviceContext;
+  FrameContext* _frameContext;
 
   Type _type;
   uint32_t _id = 0; // Unique ID for each render task. 0 indicates invalid ID.

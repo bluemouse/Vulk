@@ -4,6 +4,10 @@
 
 #include <stdexcept>
 
+// Helper macro to convert an integer to a string
+#define CONCATENATE(prefix, line) prefix##line
+#define MAKE_UNIQUE(prefix, line) CONCATENATE(prefix, line)
+
 #if defined(_NDEBUG) || defined(NDEBUG)
 
 #define MI_NOT_TESTED() ((void)0)
@@ -97,6 +101,15 @@
       __helpers_debug__::spvreflect_call_fail(__FILE__, __LINE__, #call, result); \
     }                                                                             \
   } while (0)
+
+//
+// Label and Name macros (Vulkan)
+//
+#define MI_BEGIN_LABEL(queue, label, color) queue.beginLabel(label, color)
+#define MI_END_LABEL(queue, label, color) queue.endLabel(label, color)
+#define MI_INSERT_LABEL(queue, label, color) queue.insertLabel(label, color)
+#define MI_SCOPED_LABEL(queue, label, color) auto __##__LINE__ = queue.scopedLabel(label, color)
+#define MI_SET_NAME(device, type, object, name) device.setDebugObjectName(type, object, name)
 
 //
 // Helper functions

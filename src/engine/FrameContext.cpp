@@ -151,17 +151,17 @@ void UniformBufferManager::reset() {
 //
 // FrameContext
 //
-FrameContext::FrameContext(std::shared_ptr<DeviceContext> deviceContext,
+FrameContext::FrameContext(const DeviceContext& deviceContext,
                            std::vector<RenderTask*> tasks)
     : _deviceContext(deviceContext) {
-  const Device& device = deviceContext->device();
+  const Device& device = _deviceContext.device();
 
   // Initialize command buffer managers
   Device::QueueFamilyType queueFamilies[] = {Device::QueueFamilyType::Graphics,
                                              Device::QueueFamilyType::Compute,
                                              Device::QueueFamilyType::Transfer};
   for (auto family : queueFamilies) {
-    if (deviceContext->isQueueFamilySupported(family)) {
+    if (_deviceContext.isQueueFamilySupported(family)) {
       _commandBufferManagers[family] = std::make_shared<CommandBufferManager>(device, family);
     }
   }

@@ -16,12 +16,14 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
+  RenderModule.cpp
   RenderTaskRepo.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
+  RenderModule.h
   RenderTaskRepo.h
 )
 

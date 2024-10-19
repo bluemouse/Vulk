@@ -41,7 +41,7 @@ class TextureMappingTask : public RenderTask {
   };
 
  public:
-  explicit TextureMappingTask(const DeviceContext::shared_ptr& deviceContext);
+  explicit TextureMappingTask(const DeviceContext& deviceContext);
   ~TextureMappingTask() override;
 
   void prepareGeometry(const VertexBuffer& vertexBuffer,
@@ -92,7 +92,7 @@ class TextureMappingTask : public RenderTask {
 //
 class PresentTask : public RenderTask {
  public:
-  explicit PresentTask(const DeviceContext::shared_ptr& deviceContext);
+  explicit PresentTask(const DeviceContext& deviceContext);
   ~PresentTask() override;
 
   void prepareInput(const Image2D& frame);

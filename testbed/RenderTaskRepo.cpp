@@ -29,21 +29,20 @@ MI_NAMESPACE_BEGIN(Vulk)
 //
 //
 //
-TextureMappingTask::TextureMappingTask(const DeviceContext::shared_ptr& deviceContext)
+TextureMappingTask::TextureMappingTask(const DeviceContext& deviceContext)
     : RenderTask(deviceContext, Type::Graphics) {
-  const auto& device = _deviceContext->device();
 
   // Create render pass
   const VkFormat colorFormat        = VK_FORMAT_B8G8R8A8_SRGB;
   const VkFormat depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-  _renderPass = RenderPass::make_shared(device, colorFormat, depthStencilFormat);
+  _renderPass = RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
 
   // Create pipeline
   auto vertShaderFile = executablePath() / "shaders/vert.spv";
-  VertexShader vertShader{device, vertShaderFile.string().c_str()};
+  VertexShader vertShader{device(), vertShaderFile.string().c_str()};
   auto fragShaderFile = executablePath() / "shaders/frag.spv";
-  FragmentShader fragShader{device, fragShaderFile.string().c_str()};
-  _pipeline = Pipeline::make_shared(device, *_renderPass, vertShader, fragShader);
+  FragmentShader fragShader{device(), fragShaderFile.string().c_str()};
+  _pipeline = Pipeline::make_shared(device(), *_renderPass, vertShader, fragShader);
 
   // For now, we only have one vertex buffer binding (hence, 0 indexed). Check
   // `ShaderModule::reflectVertexInputs` to see how `_vertexInputBindings` are reflected.
@@ -90,8 +89,6 @@ void TextureMappingTask::prepareSynchronization(const std::vector<Semaphore::sha
 }
 
 std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
-  const auto& device = _deviceContext->device();
-
   auto fence  = _frameContext->acquireFence();
   auto signal = _frameContext->acquireSemaphore();
 
@@ -127,12 +124,12 @@ std::pair<Semaphore::shared_ptr, Fence::shared_ptr> TextureMappingTask::run() {
 
   descriptorSet->bind(bindings);
 
-  auto colorAttachment        = ImageView::make_shared(device, *_colorBuffer);
-  auto depthStencilAttachment = ImageView::make_shared(device, *_depthStencilBuffer);
+  auto colorAttachment        = ImageView::make_shared(device(), *_colorBuffer);
+  auto depthStencilAttachment = ImageView::make_shared(device(), *_depthStencilBuffer);
 
   // TODO We should cache and reuse framebuffers. For nolayoutw, we create a new one for each frame.
   auto framebuffer =
-      Framebuffer::make_shared(device, _renderPass, colorAttachment, depthStencilAttachment);
+      Framebuffer::make_shared(device(), _renderPass, colorAttachment, depthStencilAttachment);
 
   _frameContext->registerFramebuffer(framebuffer); // To keep it alive until the finish of the frame
 
@@ -168,7 +165,7 @@ DescriptorSetLayout::shared_ptr TextureMappingTask::descriptorSetLayout() {
 //
 //
 //
-PresentTask::PresentTask(const DeviceContext::shared_ptr& deviceContext)
+PresentTask::PresentTask(const DeviceContext& deviceContext)
     : RenderTask(deviceContext, Type::Transfer) {
 }
 
@@ -184,12 +181,12 @@ void PresentTask::prepareSynchronization(const std::vector<Semaphore::shared_ptr
 }
 
 std::pair<Semaphore::shared_ptr, Fence::shared_ptr> PresentTask::run() {
-  const auto& swapchain = _deviceContext->swapchain();
+  const auto& swapchain = _deviceContext.swapchain();
 
   auto label = _commandBuffer->queue().scopedLabel("PresentTask::run()");
 
   auto swapchainImageReady = _frameContext->acquireSemaphore();
-  _deviceContext->swapchain().acquireNextImage(*swapchainImageReady);
+  swapchain.acquireNextImage(*swapchainImageReady);
 
   // Create a vector<Semaphore*> from _waits and swapchainImageReady
   std::vector<Semaphore*> waits;

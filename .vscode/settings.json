@@ -70,7 +70,9 @@
     "stop_token": "cpp",
     "thread": "cpp",
     "variant": "cpp",
-    "list": "cpp"
+    "list": "cpp",
+    "shared_mutex": "cpp",
+    "cfenv": "cpp"
   },
   "cSpell.words": [
     "STRINGIZE",

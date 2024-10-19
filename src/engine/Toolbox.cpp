@@ -11,11 +11,11 @@
 
 MI_NAMESPACE_BEGIN(Vulk)
 
-Toolbox::Toolbox(const DeviceContext::shared_ptr& context) : _context(context) {
+Toolbox::Toolbox(const DeviceContext& context) : _context(context) {
 }
 
 Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
-  const auto& device = _context->device();
+  const auto& device = _context.device();
 
   auto [stagingBuffer, width, height] = createStagingBuffer(imageFile);
   auto image                          = Image2D::make_shared(
@@ -41,10 +41,10 @@ Image2D::shared_ptr Toolbox::createImage2D(const char* imageFile) const {
 }
 
 Texture2D::shared_ptr Toolbox::createTexture2D(const char* textureFile) const {
-  const auto& device = _context->device();
+  const auto& device = _context.device();
 
   auto [stagingBuffer, width, height] = createStagingBuffer(textureFile);
-  auto texture                        = Texture2D::make_shared(_context->device(),
+  auto texture                        = Texture2D::make_shared(device,
                                         VK_FORMAT_R8G8B8A8_SRGB,
                                         VkExtent2D{width, height},
                                         Image2D::Usage::TRANSFER_DST);
@@ -64,7 +64,7 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
                                                const uint8_t* data,
                                                uint32_t width,
                                                uint32_t height) const {
-  const auto& device = _context->device();
+  const auto& device = _context.device();
 
   const uint32_t size = width * height * (format == TextureFormat::RGBA ? 4 : 3);
   auto stagingBuffer  = createStagingBuffer(data, size);
@@ -72,7 +72,7 @@ Texture2D::shared_ptr Toolbox::createTexture2D(TextureFormat format,
   const auto vkFormat =
       format == TextureFormat::RGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8_SRGB;
   auto texture = Texture2D::make_shared(
-      _context->device(), vkFormat, VkExtent2D{width, height}, Image2D::Usage::TRANSFER_DST);
+      _context.device(), vkFormat, VkExtent2D{width, height}, Image2D::Usage::TRANSFER_DST);
 
   const auto& commandPool                 = device.commandPool(Device::QueueFamilyType::Transfer);
   CommandBuffer::shared_ptr commandBuffer = CommandBuffer::make_shared(commandPool);
@@ -96,7 +96,7 @@ auto Toolbox::createStagingBuffer(const char* imageFile) const
 
   auto imageSize = static_cast<VkDeviceSize>(texWidth * texHeight * 4);
 
-  auto stagingBuffer = StagingBuffer::make_shared(_context->device(), imageSize, pixels);
+  auto stagingBuffer = StagingBuffer::make_shared(_context.device(), imageSize, pixels);
 
   stbi_image_free(pixels);
 
@@ -104,7 +104,7 @@ auto Toolbox::createStagingBuffer(const char* imageFile) const
 }
 
 StagingBuffer::shared_ptr Toolbox::createStagingBuffer(const uint8_t* data, uint32_t size) const {
-  return StagingBuffer::make_shared(_context->device(), size, data);
+  return StagingBuffer::make_shared(_context.device(), size, data);
 }
 
 MI_NAMESPACE_END(Vulk)

@@ -112,7 +112,7 @@ class FramebufferKeeper : public Sharable<FramebufferKeeper>, private NotCopyabl
 //
 class FrameContext : public Sharable<FrameContext>, private NotCopyable {
  public:
-  FrameContext(DeviceContext::shared_ptr deviceContext, std::vector<RenderTask*> tasks);
+  FrameContext(const DeviceContext& deviceContext, std::vector<RenderTask*> tasks);
   virtual ~FrameContext() = default;
 
   [[nodiscard]] CommandBuffer::shared_ptr acquireCommandBuffer(Device::QueueFamilyType queueFamily);
@@ -134,7 +134,7 @@ class FrameContext : public Sharable<FrameContext>, private NotCopyable {
   void reset();
 
  private:
-  DeviceContext::shared_ptr _deviceContext;
+  const DeviceContext& _deviceContext;
 
   std::vector<CommandBufferManager::shared_ptr> _commandBufferManagers{
       Device::QueueFamilyType::NUM_QUEUE_FAMILY_TYPES};

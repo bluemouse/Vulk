@@ -16,7 +16,7 @@ class DeviceContext;
 
 class Toolbox {
  public:
-  Toolbox(const DeviceContext::shared_ptr& context);
+  Toolbox(const DeviceContext& context);
   ~Toolbox() = default;
 
   Image2D::shared_ptr createImage2D(const char* imageFile) const;
@@ -39,7 +39,7 @@ class Toolbox {
   StagingBuffer::shared_ptr createStagingBuffer(const uint8_t* data, uint32_t size) const;
 
  private:
-  const DeviceContext::shared_ptr _context;
+  const DeviceContext& _context;
 };
 
 MI_NAMESPACE_END(Vulk)
