@@ -1,10 +1,9 @@
 #pragma once
 
 #include "MainWindow.h"
+#include "apps/App.h"
 
 #include <Vulk/engine/DeviceContext.h>
-
-#include "RenderModule.h"
 
 #include <filesystem>
 
@@ -69,7 +68,7 @@ class Testbed : public MainWindow {
   static ValidationLevel _validationLevel;
   static bool _debugUtilsEnabled;
 
-  std::shared_ptr<RenderModule> _renderModule;
+  std::shared_ptr<App> _app;
 
   // UI control variables
   float _zoomFactor = 1.0F;

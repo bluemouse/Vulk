@@ -16,15 +16,21 @@ set(SRC_FILES
   main.cpp
   MainWindow.cpp
   Testbed.cpp
-  RenderModule.cpp
   RenderTaskRepo.cpp
+  #
+  apps/App.cpp
+  apps/ModelViewer.cpp
+  apps/ImageViewer.cpp
 )
 
 set(HEADER_FILES
   MainWindow.h
   Testbed.h
-  RenderModule.h
   RenderTaskRepo.h
+  #
+  apps/App.h
+  apps/ModelViewer.h
+  apps/ImageViewer.h
 )
 
 set(SHADER_FILES
@@ -34,6 +40,8 @@ set(SHADER_FILES
 
 file(GLOB TEXTURE_FILES "resources/*.jpg" "resources/*.png")
 file(GLOB MODEL_FILES "resources/*.obj")
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 

@@ -1,4 +1,4 @@
-#include "RenderModule.h"
+#include "ModelViewer.h"
 
 #include <Vulk/Exception.h>
 
@@ -14,8 +14,8 @@
 
 namespace std {
 template <>
-struct hash<_3DRenderModule::Vertex> {
-  size_t operator()(const _3DRenderModule::Vertex& vertex) const {
+struct hash<ModelViewer::Vertex> {
+  size_t operator()(const ModelViewer::Vertex& vertex) const {
     return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
            (hash<glm::vec2>()(vertex.texCoord) << 1);
   }
@@ -71,11 +71,11 @@ struct Uniforms {
 };
 } // namespace
 
-_3DRenderModule::_3DRenderModule(Vulk::DeviceContext::shared_ptr deviceContext)
+ModelViewer::ModelViewer(Vulk::DeviceContext::shared_ptr deviceContext)
     : _deviceContext{deviceContext.get()} {
 }
 
-void _3DRenderModule::init(const Params& params) {
+void ModelViewer::init(const Params& params) {
   auto* modelFile   = params[PARAM_MODEL_FILE];
   auto* textureFile = params[PARAM_TEXTURE_FILE];
   createDrawable(modelFile ? modelFile->value<std::filesystem::path>() : "",
@@ -88,7 +88,7 @@ void _3DRenderModule::init(const Params& params) {
   _deviceContext->waitIdle();
 }
 
-void _3DRenderModule::cleanup() {
+void ModelViewer::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
   _deviceContext->waitIdle();
 
@@ -105,15 +105,15 @@ void _3DRenderModule::cleanup() {
   _frames.clear();
 }
 
-void _3DRenderModule::render() {
+void ModelViewer::render() {
   drawFrame();
 }
 
-void _3DRenderModule::resize(uint width, uint height) {
+void ModelViewer::resize(uint width, uint height) {
   _camera->update(glm::vec2{width, height});
 }
 
-void _3DRenderModule::drawFrame() {
+void ModelViewer::drawFrame() {
   try {
     nextFrame(); // Move to the next frame.
 
@@ -160,14 +160,14 @@ void _3DRenderModule::drawFrame() {
   }
 }
 
-void _3DRenderModule::createRenderTask() {
+void ModelViewer::createRenderTask() {
   _textureMappingTask = Vulk::TextureMappingTask::make_shared(*_deviceContext);
   _presentTask        = Vulk::PresentTask::make_shared(*_deviceContext);
 }
 
-void _3DRenderModule::loadModel(const std::filesystem::path& modelFile,
-                                std::vector<Vertex>& vertices,
-                                std::vector<uint32_t>& indices) {
+void ModelViewer::loadModel(const std::filesystem::path& modelFile,
+                            std::vector<Vertex>& vertices,
+                            std::vector<uint32_t>& indices) {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
@@ -201,23 +201,19 @@ void _3DRenderModule::loadModel(const std::filesystem::path& modelFile,
   }
 }
 
-void _3DRenderModule::initCamera(const std::vector<Vertex>& vertices, bool is3D) {
-  auto bbox = Vulk::ArcCamera::BBox::null();
+void ModelViewer::initCamera(const std::vector<Vertex>& vertices) {
+  auto bbox = Vulk::Camera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
   }
   bbox.expandPlanarSide(1.0F);
 
   auto extent = _deviceContext->swapchain().surfaceExtent();
-  if (is3D) {
-    _camera = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
-  } else {
-    _camera = Vulk::FlatCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
-  }
+  _camera     = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
-void _3DRenderModule::createDrawable(const std::filesystem::path& modelFile,
-                                     const std::filesystem::path& textureFile) {
+void ModelViewer::createDrawable(const std::filesystem::path& modelFile,
+                                 const std::filesystem::path& textureFile) {
   if (textureFile.empty()) {
     const glm::uvec2 numBlocks{4, 4};
     const glm::uvec2 blockSize{128, 128};
@@ -273,11 +269,10 @@ void _3DRenderModule::createDrawable(const std::filesystem::path& modelFile,
   }
   _drawable.create(_deviceContext->device(), vertices, indices);
 
-  const bool is3DScene = !modelFile.empty();
-  initCamera(vertices, is3DScene);
+  initCamera(vertices);
 }
 
-void _3DRenderModule::createFrames() {
+void ModelViewer::createFrames() {
   _frames.resize(_maxFramesInFlight);
 
   _currentFrameIdx = 0;
@@ -315,7 +310,7 @@ void _3DRenderModule::createFrames() {
   // frame rendering
 }
 
-void _3DRenderModule::nextFrame() {
+void ModelViewer::nextFrame() {
   _currentFrameIdx = (_currentFrameIdx + 1) % _maxFramesInFlight;
   _currentFrame    = &_frames[_currentFrameIdx];
 }

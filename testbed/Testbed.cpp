@@ -1,5 +1,8 @@
 #include "Testbed.h"
 
+#include "apps/ModelViewer.h"
+#include "apps/ImageViewer.h"
+
 #include <GLFW/glfw3.h>
 
 #include <queue>
@@ -24,12 +27,13 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createDeviceContext();
-  _renderModule = std::make_shared<_3DRenderModule>(_deviceContext);
+  _app = std::make_shared<ModelViewer>(_deviceContext);
+  //_app = std::make_shared<ImageViewer>(_deviceContext);
 
-  RenderModule::Params params;
-  params.add(RenderModule::PARAM_MODEL_FILE, _modelFile);
-  params.add(RenderModule::PARAM_TEXTURE_FILE, _textureFile);
-  _renderModule->init(params);
+  App::Params params;
+  params.add(App::PARAM_MODEL_FILE, _modelFile);
+  params.add(App::PARAM_TEXTURE_FILE, _textureFile);
+  _app->init(params);
 
   _zoomFactor = 1.0F;
 
@@ -42,7 +46,7 @@ void Testbed::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
   _deviceContext->waitIdle();
 
-  _renderModule->cleanup();
+  _app->cleanup();
 
   _deviceContext->destroy();
 
@@ -58,7 +62,7 @@ void Testbed::mainLoop() {
 }
 
 void Testbed::drawFrame() {
-  _renderModule->render();
+  _app->render();
 }
 
 void Testbed::createDeviceContext() {
@@ -105,7 +109,7 @@ void Testbed::resizeSwapchain() {
   // We need to get the updated size from the surface directly. It is not guaranteed that the extent
   // is the same as the {width(), height()}.
   auto extent = _deviceContext->swapchain().surfaceExtent();
-  _renderModule->resize(extent.width, extent.height);
+  _app->resize(extent.width, extent.height);
 
   setFramebufferResized(false);
 
@@ -151,15 +155,15 @@ void Testbed::onKeyInput(int key, int action, int mods) {
 
   if (action == GLFW_PRESS) {
     if (key == GLFW_KEY_EQUAL && mods == GLFW_MOD_CONTROL) {
-      _renderModule->camera().zoom(_zoomFactor = 1.0F);
+      _app->camera().zoom(_zoomFactor = 1.0F);
     } else if (key == GLFW_KEY_UP && mods == GLFW_MOD_CONTROL) {
-      _renderModule->camera().orbitVertical(M_PI / 2.0F);
+      _app->camera().orbitVertical(M_PI / 2.0F);
     } else if (key == GLFW_KEY_DOWN && mods == GLFW_MOD_CONTROL) {
-      _renderModule->camera().orbitVertical(-M_PI / 2.0F);
+      _app->camera().orbitVertical(-M_PI / 2.0F);
     } else if (key == GLFW_KEY_RIGHT && mods == GLFW_MOD_CONTROL) {
-      _renderModule->camera().orbitHorizontal(M_PI / 2.0F);
+      _app->camera().orbitHorizontal(M_PI / 2.0F);
     } else if (key == GLFW_KEY_LEFT && mods == GLFW_MOD_CONTROL) {
-      _renderModule->camera().orbitHorizontal(-M_PI / 2.0F);
+      _app->camera().orbitHorizontal(-M_PI / 2.0F);
     }
   }
 }
@@ -174,12 +178,12 @@ void Testbed::onMouseMove(double xpos, double ypos) {
 
   int button = getMouseButton();
   if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-    _renderModule->camera().move(mousePosHistory.front(), {xpos, ypos});
+    _app->camera().move(mousePosHistory.front(), {xpos, ypos});
     mousePosHistory.pop();
     mousePosHistory.push({xpos, ypos});
   } else if (button == GLFW_MOUSE_BUTTON_LEFT) {
     if (mousePosHistory.size() >= 2) {
-      _renderModule->camera().rotate(mousePosHistory.front(), {xpos, ypos});
+      _app->camera().rotate(mousePosHistory.front(), {xpos, ypos});
       mousePosHistory = {};
       mousePosHistory.push({xpos, ypos});
     } else {
@@ -212,9 +216,9 @@ void Testbed::onScroll(double xoffset, double yoffset) {
   }
 
   if (yoffset > 0.0F) {
-    _renderModule->camera().zoom(_zoomFactor *= (1.0F + delta));
+    _app->camera().zoom(_zoomFactor *= (1.0F + delta));
   } else {
-    _renderModule->camera().zoom(_zoomFactor *= (1.0F - delta));
+    _app->camera().zoom(_zoomFactor *= (1.0F - delta));
   }
 }
 
