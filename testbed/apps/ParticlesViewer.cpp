@@ -1,4 +1,4 @@
-#include "ParticleViewer.h"
+#include "ParticlesViewer.h"
 
 #include <Vulk/Exception.h>
 
@@ -14,8 +14,8 @@
 
 namespace std {
 template <>
-struct hash<ParticleViewer::Vertex> {
-  size_t operator()(const ParticleViewer::Vertex& vertex) const {
+struct hash<ParticlesViewer::Vertex> {
+  size_t operator()(const ParticlesViewer::Vertex& vertex) const {
     return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
            (hash<glm::vec2>()(vertex.texCoord) << 1);
   }
@@ -71,10 +71,10 @@ struct Uniforms {
 };
 } // namespace
 
-ParticleViewer::ParticleViewer() : App{ID, DESCRIPTION} {
+ParticlesViewer::ParticlesViewer() : App{ID, DESCRIPTION} {
 }
 
-void ParticleViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) {
+void ParticlesViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) {
   App::init(deviceContext, params);
 
   auto* modelFile   = params[PARAM_MODEL_FILE];
@@ -89,11 +89,11 @@ void ParticleViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const P
   deviceContext->waitIdle();
 }
 
-void ParticleViewer::cleanup() {
+void ParticlesViewer::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
   deviceContext().waitIdle();
 
-  _textureMappingTask.reset();
+  _particlesRenderingTask.reset();
   _presentTask.reset();
 
   _texture->destroy();
@@ -106,15 +106,15 @@ void ParticleViewer::cleanup() {
   _frames.clear();
 }
 
-void ParticleViewer::render() {
+void ParticlesViewer::render() {
   drawFrame();
 }
 
-void ParticleViewer::resize(uint width, uint height) {
+void ParticlesViewer::resize(uint width, uint height) {
   _camera->update(glm::vec2{width, height});
 }
 
-void ParticleViewer::drawFrame() {
+void ParticlesViewer::drawFrame() {
   try {
     nextFrame(); // Move to the next frame.
 
@@ -125,21 +125,22 @@ void ParticleViewer::drawFrame() {
     _currentFrame->context->waitFrameRendered();
     _currentFrame->context->reset();
 
-    _textureMappingTask->setFrameContext(*_currentFrame->context);
+    _particlesRenderingTask->setFrameContext(*_currentFrame->context);
     _presentTask->setFrameContext(*_currentFrame->context);
 
     //
     // Texture Mapping Task
     //
-    _textureMappingTask->prepareGeometry(
+    _particlesRenderingTask->prepareGeometry(
         _drawable.vertexBuffer(), _drawable.indexBuffer(), _drawable.numIndices());
-    _textureMappingTask->prepareUniforms(
+    _particlesRenderingTask->prepareUniforms(
         glm::mat4{1.0F}, _camera->viewMatrix(), _camera->projectionMatrix());
-    _textureMappingTask->prepareInputs(*_texture);
-    _textureMappingTask->prepareOutputs(*_currentFrame->colorBuffer, *_currentFrame->depthBuffer);
-    _textureMappingTask->prepareSynchronization();
+    _particlesRenderingTask->prepareInputs(*_texture);
+    _particlesRenderingTask->prepareOutputs(*_currentFrame->colorBuffer,
+                                            *_currentFrame->depthBuffer);
+    _particlesRenderingTask->prepareSynchronization();
 
-    auto [frameReady, _] = _textureMappingTask->run();
+    auto [frameReady, _] = _particlesRenderingTask->run();
 
     //
     // Present Task
@@ -161,14 +162,14 @@ void ParticleViewer::drawFrame() {
   }
 }
 
-void ParticleViewer::createRenderTask() {
-  _textureMappingTask = Vulk::TextureMappingTask::make_shared(deviceContext());
-  _presentTask        = Vulk::PresentTask::make_shared(deviceContext());
+void ParticlesViewer::createRenderTask() {
+  _particlesRenderingTask = Vulk::ParticlesRenderingTask::make_shared(deviceContext());
+  _presentTask            = Vulk::PresentTask::make_shared(deviceContext());
 }
 
-void ParticleViewer::loadModel(const std::filesystem::path& modelFile,
-                            std::vector<Vertex>& vertices,
-                            std::vector<uint32_t>& indices) {
+void ParticlesViewer::loadModel(const std::filesystem::path& modelFile,
+                               std::vector<Vertex>& vertices,
+                               std::vector<uint32_t>& indices) {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
@@ -202,7 +203,7 @@ void ParticleViewer::loadModel(const std::filesystem::path& modelFile,
   }
 }
 
-void ParticleViewer::initCamera(const std::vector<Vertex>& vertices) {
+void ParticlesViewer::initCamera(const std::vector<Vertex>& vertices) {
   auto bbox = Vulk::Camera::BBox::null();
   for (const auto& vertex : vertices) {
     bbox += vertex.pos;
@@ -213,8 +214,8 @@ void ParticleViewer::initCamera(const std::vector<Vertex>& vertices) {
   _camera     = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
-void ParticleViewer::createDrawable(const std::filesystem::path& modelFile,
-                                 const std::filesystem::path& textureFile) {
+void ParticlesViewer::createDrawable(const std::filesystem::path& modelFile,
+                                    const std::filesystem::path& textureFile) {
   if (textureFile.empty()) {
     const glm::uvec2 numBlocks{4, 4};
     const glm::uvec2 blockSize{128, 128};
@@ -273,7 +274,7 @@ void ParticleViewer::createDrawable(const std::filesystem::path& modelFile,
   initCamera(vertices);
 }
 
-void ParticleViewer::createFrames() {
+void ParticlesViewer::createFrames() {
   _frames.resize(_maxFramesInFlight);
 
   _currentFrameIdx = 0;
@@ -282,7 +283,7 @@ void ParticleViewer::createFrames() {
   const auto& device = deviceContext().device();
   const auto& extent = deviceContext().swapchain().surfaceExtent();
 
-  std::vector<Vulk::RenderTask*> tasks = {_textureMappingTask.get()};
+  std::vector<Vulk::RenderTask*> tasks = {_particlesRenderingTask.get()};
   for (auto& frame : _frames) {
     frame.context = Vulk::FrameContext::make_shared(deviceContext(), tasks);
   }
@@ -311,7 +312,7 @@ void ParticleViewer::createFrames() {
   // frame rendering
 }
 
-void ParticleViewer::nextFrame() {
+void ParticlesViewer::nextFrame() {
   _currentFrameIdx = (_currentFrameIdx + 1) % _maxFramesInFlight;
   _currentFrame    = &_frames[_currentFrameIdx];
 }

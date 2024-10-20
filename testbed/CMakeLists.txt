@@ -21,7 +21,7 @@ set(SRC_FILES
   apps/App.cpp
   apps/ModelViewer.cpp
   apps/ImageViewer.cpp
-  apps/ParticleViewer.cpp
+  apps/ParticlesViewer.cpp
 )
 
 set(HEADER_FILES
@@ -32,12 +32,14 @@ set(HEADER_FILES
   apps/App.h
   apps/ModelViewer.h
   apps/ImageViewer.h
-  apps/ParticleViewer.h
+  apps/ParticlesViewer.h
 )
 
 set(GLSL_FILES
   shaders/textureMapping.vert
   shaders/textureMapping.frag
+  shaders/particles.vert
+  shaders/particles.frag
 )
 
 file(GLOB TEXTURE_FILES "resources/*.jpg" "resources/*.png")

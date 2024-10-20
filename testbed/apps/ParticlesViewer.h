@@ -11,12 +11,12 @@
 
 #include <filesystem>
 
-class ParticleViewer : public App {
+class ParticlesViewer : public App {
  public:
   using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
 
  public:
-  ParticleViewer();
+  ParticlesViewer();
 
   void init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) override;
   void render() override;
@@ -25,7 +25,7 @@ class ParticleViewer : public App {
 
   Vulk::Camera& camera() override { return *_camera; }
 
-  static constexpr const char* ID = "ParticleViewer";
+  static constexpr const char* ID          = "ParticlesViewer";
   static constexpr const char* DESCRIPTION = "Basic viewer of the particle system";
 
  protected:
@@ -45,7 +45,7 @@ class ParticleViewer : public App {
   void initCamera(const std::vector<Vertex>& vertices);
 
  private:
-  Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
+  Vulk::ParticlesRenderingTask::shared_ptr _particlesRenderingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 
   Vulk::Camera::shared_ptr _camera;

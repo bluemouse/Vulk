@@ -165,6 +165,142 @@ DescriptorSetLayout::shared_ptr TextureMappingTask::descriptorSetLayout() {
 //
 //
 //
+ParticlesRenderingTask::ParticlesRenderingTask(const DeviceContext& deviceContext)
+    : RenderTask(deviceContext, Type::Graphics) {
+
+  // Create render pass
+  const VkFormat colorFormat        = VK_FORMAT_B8G8R8A8_SRGB;
+  const VkFormat depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+  _renderPass = RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
+
+  // Create pipeline
+  auto vertShaderFile = executablePath() / "shaders/textureMapping.vert.spv";
+  VertexShader vertShader{device(), vertShaderFile.string().c_str()};
+  auto fragShaderFile = executablePath() / "shaders/textureMapping.frag.spv";
+  FragmentShader fragShader{device(), fragShaderFile.string().c_str()};
+  _pipeline = Pipeline::make_shared(device(), *_renderPass, vertShader, fragShader);
+
+  // For now, we only have one vertex buffer binding (hence, 0 indexed). Check
+  // `ShaderModule::reflectVertexInputs` to see how `_vertexInputBindings` are reflected.
+  _vertexBufferBinding = 0U;
+}
+
+ParticlesRenderingTask::~ParticlesRenderingTask() {
+}
+
+void ParticlesRenderingTask::prepareGeometry(const VertexBuffer& vertexBuffer,
+                                         const IndexBuffer& indexBuffer,
+                                         size_t numIndices) {
+  _vertexBuffer = vertexBuffer.get_shared();
+  _indexBuffer  = indexBuffer.get_shared();
+  _numIndices   = numIndices;
+}
+
+void ParticlesRenderingTask::prepareUniforms(const glm::mat4& model2world,
+                                         const glm::mat4& world2view,
+                                         const glm::mat4& projection) {
+  Uniforms uniforms{};
+
+  uniforms.model = model2world;
+  uniforms.view  = world2view;
+  uniforms.proj  = projection;
+
+  _uniformBuffer = _frameContext->acquireUniformBuffer(id(), uniforms.size());
+  memcpy(_uniformBuffer->map(), &uniforms, sizeof(uniforms));
+  _uniformBuffer->unmap();
+}
+
+void ParticlesRenderingTask::prepareInputs(const Texture2D& texture) {
+  _texture = texture.get_shared();
+}
+
+void ParticlesRenderingTask::prepareOutputs(const Image2D& colorBuffer,
+                                        const DepthImage& depthStencilBuffer) {
+  _colorBuffer        = colorBuffer.get_shared();
+  _depthStencilBuffer = depthStencilBuffer.get_shared();
+}
+
+void ParticlesRenderingTask::prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits) {
+  _waits = waits;
+}
+
+std::pair<Semaphore::shared_ptr, Fence::shared_ptr> ParticlesRenderingTask::run() {
+  auto fence  = _frameContext->acquireFence();
+  auto signal = _frameContext->acquireSemaphore();
+
+  std::vector<Semaphore*> waits;
+  waits.reserve(_waits.size());
+  for (const auto& semaphore : _waits) {
+    waits.push_back(semaphore.get());
+  }
+
+  auto label = _commandBuffer->queue().scopedLabel("ParticlesRenderingTask::run()");
+
+  // TODO We should cache and reuse descriptor sets. For now, we create a new one for each frame and
+  //      reset the pool at the end of the frame (see `_descriptorPool->reset()`).
+  auto descriptorSet = _frameContext->acquireDescriptorSet(*_pipeline->descriptorSetLayout());
+
+  // TODO rework on how binding is done. We would like to specify the buffer/image directly instead
+  // of creating VkDescriptorXXXInfo.
+  VkDescriptorImageInfo textureImageInfo{};
+  textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  textureImageInfo.imageView   = _texture->view();
+  textureImageInfo.sampler     = _texture->sampler();
+
+  VkDescriptorBufferInfo transformationBufferInfo{};
+  transformationBufferInfo.offset = 0;
+  transformationBufferInfo.range  = VK_WHOLE_SIZE;
+  transformationBufferInfo.buffer = *_uniformBuffer;
+
+  // The order of bindings must match the order of bindings in shaders. The name and the type need
+  // to match them in the shader as well.
+  std::vector<DescriptorSet::Binding> bindings = {
+      {"xform", "Transformation", &transformationBufferInfo},
+      {"texSampler", "sampler2D", &textureImageInfo}};
+
+  descriptorSet->bind(bindings);
+
+  auto colorAttachment        = ImageView::make_shared(device(), *_colorBuffer);
+  auto depthStencilAttachment = ImageView::make_shared(device(), *_depthStencilBuffer);
+
+  // TODO We should cache and reuse framebuffers. For nolayoutw, we create a new one for each frame.
+  auto framebuffer =
+      Framebuffer::make_shared(device(), _renderPass, colorAttachment, depthStencilAttachment);
+
+  _frameContext->registerFramebuffer(framebuffer); // To keep it alive until the finish of the frame
+
+  _commandBuffer->beginRecording();
+  {
+    auto label = _commandBuffer->scopedLabel("Frame");
+
+    _commandBuffer->beginRenderPass(*_renderPass, *framebuffer);
+
+    _commandBuffer->bindPipeline(*_pipeline);
+
+    auto extent = framebuffer->extent();
+    _commandBuffer->setViewport({0.0F, 0.0F}, {extent.width, extent.height});
+
+    _commandBuffer->bindVertexBuffer(*_vertexBuffer, _vertexBufferBinding);
+    _commandBuffer->bindIndexBuffer(*_indexBuffer);
+    _commandBuffer->bindDescriptorSet(*_pipeline, *descriptorSet);
+
+    _commandBuffer->drawIndexed(_numIndices);
+
+    _commandBuffer->endRenderpass();
+  }
+  _commandBuffer->endRecording();
+  _commandBuffer->submitCommands(waits, {signal.get()}, *fence);
+
+  return {signal, fence};
+}
+
+DescriptorSetLayout::shared_ptr ParticlesRenderingTask::descriptorSetLayout() {
+  return _pipeline->descriptorSetLayout();
+}
+
+//
+//
+//
 PresentTask::PresentTask(const DeviceContext& deviceContext)
     : RenderTask(deviceContext, Type::Transfer) {
 }
