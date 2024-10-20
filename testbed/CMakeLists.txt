@@ -21,6 +21,7 @@ set(SRC_FILES
   apps/App.cpp
   apps/ModelViewer.cpp
   apps/ImageViewer.cpp
+  apps/ParticleViewer.cpp
 )
 
 set(HEADER_FILES
@@ -31,6 +32,7 @@ set(HEADER_FILES
   apps/App.h
   apps/ModelViewer.h
   apps/ImageViewer.h
+  apps/ParticleViewer.h
 )
 
 set(GLSL_FILES

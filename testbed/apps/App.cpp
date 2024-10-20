@@ -11,9 +11,11 @@ App::Registry& App::registry() {
 
 #include "ModelViewer.h"
 #include "ImageViewer.h"
+#include "ParticleViewer.h"
 App::Registry::Registry() {
   add<ModelViewer>();
   add<ImageViewer>();
+  add<ParticleViewer>();
 }
 
 App* App::Registry::get(const std::string& id) const {
