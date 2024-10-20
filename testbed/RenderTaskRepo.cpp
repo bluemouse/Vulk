@@ -38,9 +38,9 @@ TextureMappingTask::TextureMappingTask(const DeviceContext& deviceContext)
   _renderPass = RenderPass::make_shared(device(), colorFormat, depthStencilFormat);
 
   // Create pipeline
-  auto vertShaderFile = executablePath() / "shaders/vert.spv";
+  auto vertShaderFile = executablePath() / "shaders/textureMapping.vert.spv";
   VertexShader vertShader{device(), vertShaderFile.string().c_str()};
-  auto fragShaderFile = executablePath() / "shaders/frag.spv";
+  auto fragShaderFile = executablePath() / "shaders/textureMapping.frag.spv";
   FragmentShader fragShader{device(), fragShaderFile.string().c_str()};
   _pipeline = Pipeline::make_shared(device(), *_renderPass, vertShader, fragShader);
 

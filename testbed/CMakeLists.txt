@@ -33,9 +33,9 @@ set(HEADER_FILES
   apps/ImageViewer.h
 )
 
-set(SHADER_FILES
-  shaders/shader.vert
-  shaders/shader.frag
+set(GLSL_FILES
+  shaders/textureMapping.vert
+  shaders/textureMapping.frag
 )
 
 file(GLOB TEXTURE_FILES "resources/*.jpg" "resources/*.png")
@@ -73,12 +73,15 @@ else()
   )
 endif()
 
-include(AddShadersTarget)
-add_shaders_target(SPIR-V
-  SOURCES ${SHADER_FILES}
-  OUTPUT_DIR ${RUNTIME_OUTPUT_DIRECTORY}/shaders
+set(SPIRV_OUTPUT_DIR ${RUNTIME_OUTPUT_DIRECTORY}/shaders)
+
+include(AddSPIRVTarget)
+add_SPIRV_target(convert-GLSL-to-SPIRV
+  TARGET_ENV vulkan1.0
+  SOURCES ${GLSL_FILES}
+  OUTPUT_DIR ${SPIRV_OUTPUT_DIR}
 )
-add_dependencies(${PROJECT_NAME} SPIR-V)
+add_dependencies(${PROJECT_NAME} convert-GLSL-to-SPIRV)
 
 file(COPY ${TEXTURE_FILES} DESTINATION ${RUNTIME_OUTPUT_DIRECTORY}/textures)
 file(COPY ${MODEL_FILES} DESTINATION ${RUNTIME_OUTPUT_DIRECTORY}/models)
