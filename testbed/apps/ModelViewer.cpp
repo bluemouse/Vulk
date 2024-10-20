@@ -71,11 +71,12 @@ struct Uniforms {
 };
 } // namespace
 
-ModelViewer::ModelViewer(Vulk::DeviceContext::shared_ptr deviceContext)
-    : _deviceContext{deviceContext.get()} {
+ModelViewer::ModelViewer() : App{ID, DESCRIPTION} {
 }
 
-void ModelViewer::init(const Params& params) {
+void ModelViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) {
+  App::init(deviceContext, params);
+
   auto* modelFile   = params[PARAM_MODEL_FILE];
   auto* textureFile = params[PARAM_TEXTURE_FILE];
   createDrawable(modelFile ? modelFile->value<std::filesystem::path>() : "",
@@ -85,12 +86,12 @@ void ModelViewer::init(const Params& params) {
 
   // After we init all Vulkan resource and before the rendering, make sure the/ device is idle and
   // all resource is ready.
-  _deviceContext->waitIdle();
+  deviceContext->waitIdle();
 }
 
 void ModelViewer::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
-  _deviceContext->waitIdle();
+  deviceContext().waitIdle();
 
   _textureMappingTask.reset();
   _presentTask.reset();
@@ -161,8 +162,8 @@ void ModelViewer::drawFrame() {
 }
 
 void ModelViewer::createRenderTask() {
-  _textureMappingTask = Vulk::TextureMappingTask::make_shared(*_deviceContext);
-  _presentTask        = Vulk::PresentTask::make_shared(*_deviceContext);
+  _textureMappingTask = Vulk::TextureMappingTask::make_shared(deviceContext());
+  _presentTask        = Vulk::PresentTask::make_shared(deviceContext());
 }
 
 void ModelViewer::loadModel(const std::filesystem::path& modelFile,
@@ -208,7 +209,7 @@ void ModelViewer::initCamera(const std::vector<Vertex>& vertices) {
   }
   bbox.expandPlanarSide(1.0F);
 
-  auto extent = _deviceContext->swapchain().surfaceExtent();
+  auto extent = deviceContext().swapchain().surfaceExtent();
   _camera     = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
@@ -220,21 +221,21 @@ void ModelViewer::createDrawable(const std::filesystem::path& modelFile,
     const glm::uvec4 black{60, 60, 60, 255};
     const glm::uvec4 white{255, 255, 255, 255};
     Checkerboard checkerboard{numBlocks, blockSize, black, white};
-    _texture = Vulk::Toolbox(*_deviceContext)
+    _texture = Vulk::Toolbox(deviceContext())
                    .createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
                                     checkerboard.data(),
                                     checkerboard.extent.x,
                                     checkerboard.extent.y);
 
     VkImage image = *_texture;
-    _deviceContext->device().setObjectName(
+    deviceContext().device().setObjectName(
         VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "Created texture (checkerboard)");
   } else {
-    _texture = Vulk::Toolbox(*_deviceContext).createTexture2D(textureFile.c_str());
+    _texture = Vulk::Toolbox(deviceContext()).createTexture2D(textureFile.c_str());
 
     std::string name = "Loaded texture (" + textureFile.string() + ")";
     VkImage image    = *_texture;
-    _deviceContext->device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
+    deviceContext().device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
   }
 
   std::vector<Vertex> vertices;
@@ -267,7 +268,7 @@ void ModelViewer::createDrawable(const std::filesystem::path& modelFile,
   } else {
     loadModel(modelFile, vertices, indices);
   }
-  _drawable.create(_deviceContext->device(), vertices, indices);
+  _drawable.create(deviceContext().device(), vertices, indices);
 
   initCamera(vertices);
 }
@@ -278,12 +279,12 @@ void ModelViewer::createFrames() {
   _currentFrameIdx = 0;
   _currentFrame    = &_frames[_currentFrameIdx];
 
-  const auto& device = _deviceContext->device();
-  const auto& extent = _deviceContext->swapchain().surfaceExtent();
+  const auto& device = deviceContext().device();
+  const auto& extent = deviceContext().swapchain().surfaceExtent();
 
   std::vector<Vulk::RenderTask*> tasks = {_textureMappingTask.get()};
   for (auto& frame : _frames) {
-    frame.context = Vulk::FrameContext::make_shared(*_deviceContext, tasks);
+    frame.context = Vulk::FrameContext::make_shared(deviceContext(), tasks);
   }
 
   constexpr uint32_t depthBits   = 24U;

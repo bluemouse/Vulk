@@ -71,26 +71,25 @@ struct Uniforms {
 };
 } // namespace
 
-ImageViewer::ImageViewer(Vulk::DeviceContext::shared_ptr deviceContext)
-    : _deviceContext{deviceContext.get()} {
+ImageViewer::ImageViewer() : App{ID, DESCRIPTION} {
 }
 
-void ImageViewer::init(const Params& params) {
-  auto* modelFile   = params[PARAM_MODEL_FILE];
+void ImageViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) {
+  App::init(deviceContext, params);
+
   auto* textureFile = params[PARAM_TEXTURE_FILE];
-  createDrawable(modelFile ? modelFile->value<std::filesystem::path>() : "",
-                 textureFile ? textureFile->value<std::filesystem::path>() : "");
+  createDrawable(textureFile ? textureFile->value<std::filesystem::path>() : "");
   createRenderTask();
   createFrames();
 
   // After we init all Vulkan resource and before the rendering, make sure the/ device is idle and
   // all resource is ready.
-  _deviceContext->waitIdle();
+  deviceContext->waitIdle();
 }
 
 void ImageViewer::cleanup() {
   // Before we clean up all Vulkan resource, make sure the device is idle.
-  _deviceContext->waitIdle();
+  deviceContext().waitIdle();
 
   _textureMappingTask.reset();
   _presentTask.reset();
@@ -161,44 +160,8 @@ void ImageViewer::drawFrame() {
 }
 
 void ImageViewer::createRenderTask() {
-  _textureMappingTask = Vulk::TextureMappingTask::make_shared(*_deviceContext);
-  _presentTask        = Vulk::PresentTask::make_shared(*_deviceContext);
-}
-
-void ImageViewer::loadModel(const std::filesystem::path& modelFile,
-                                std::vector<Vertex>& vertices,
-                                std::vector<uint32_t>& indices) {
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string warn, err;
-
-  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelFile.c_str())) {
-    throw std::runtime_error(warn + err);
-  }
-
-  std::unordered_map<Vertex, uint32_t> uniqueVertices;
-
-  for (const auto& shape : shapes) {
-    for (const auto& index : shape.mesh.indices) {
-      Vertex vertex{};
-
-      vertex.pos = {attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]};
-
-      vertex.texCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
-                         attrib.texcoords[2 * index.texcoord_index + 1]};
-
-      vertex.color = {1.0F, 1.0F, 1.0F};
-
-      if (uniqueVertices.count(vertex) == 0) {
-        uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-        vertices.push_back(vertex);
-      }
-      indices.push_back(uniqueVertices[vertex]);
-    }
-  }
+  _textureMappingTask = Vulk::TextureMappingTask::make_shared(deviceContext());
+  _presentTask        = Vulk::PresentTask::make_shared(deviceContext());
 }
 
 void ImageViewer::initCamera(const std::vector<Vertex>& vertices) {
@@ -208,66 +171,61 @@ void ImageViewer::initCamera(const std::vector<Vertex>& vertices) {
   }
   bbox.expandPlanarSide(1.0F);
 
-  auto extent = _deviceContext->swapchain().surfaceExtent();
-  _camera = Vulk::FlatCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
+  auto extent = deviceContext().swapchain().surfaceExtent();
+  _camera     = Vulk::FlatCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
-void ImageViewer::createDrawable(const std::filesystem::path& modelFile,
-                                     const std::filesystem::path& textureFile) {
+void ImageViewer::createDrawable(const std::filesystem::path& textureFile) {
   if (textureFile.empty()) {
     const glm::uvec2 numBlocks{4, 4};
     const glm::uvec2 blockSize{128, 128};
     const glm::uvec4 black{60, 60, 60, 255};
     const glm::uvec4 white{255, 255, 255, 255};
     Checkerboard checkerboard{numBlocks, blockSize, black, white};
-    _texture = Vulk::Toolbox(*_deviceContext)
+    _texture = Vulk::Toolbox(deviceContext())
                    .createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
                                     checkerboard.data(),
                                     checkerboard.extent.x,
                                     checkerboard.extent.y);
 
     VkImage image = *_texture;
-    _deviceContext->device().setObjectName(
+    deviceContext().device().setObjectName(
         VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "Created texture (checkerboard)");
   } else {
-    _texture = Vulk::Toolbox(*_deviceContext).createTexture2D(textureFile.c_str());
+    _texture = Vulk::Toolbox(deviceContext()).createTexture2D(textureFile.c_str());
 
     std::string name = "Loaded texture (" + textureFile.string() + ")";
     VkImage image    = *_texture;
-    _deviceContext->device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
+    deviceContext().device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
   }
 
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
-  if (modelFile.empty()) {
-    float left{-1.0F};
-    float right{1.0F};
-    float bottom{-1.0F};
-    float top{1.0F};
+  float left{-1.0F};
+  float right{1.0F};
+  float bottom{-1.0F};
+  float top{1.0F};
 
-    if (_texture->isValid()) {
-      // to make sure the texture and the quad has the same aspect ratio
-      auto [textureW, textureH] = _texture->extent();
-      const float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
+  if (_texture->isValid()) {
+    // to make sure the texture and the quad has the same aspect ratio
+    auto [textureW, textureH] = _texture->extent();
+    const float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
 
-      if (textureAspect > 1.0F) {
-        left  = -textureAspect;
-        right = textureAspect;
-      } else {
-        bottom = -1.0F / textureAspect;
-        top    = 1.0F / textureAspect;
-      }
+    if (textureAspect > 1.0F) {
+      left  = -textureAspect;
+      right = textureAspect;
+    } else {
+      bottom = -1.0F / textureAspect;
+      top    = 1.0F / textureAspect;
     }
-    vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F}},
-                {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
-                {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 0.0F}},
-                {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
-    indices  = {0, 1, 2, 2, 3, 0};
-
-  } else {
-    loadModel(modelFile, vertices, indices);
   }
-  _drawable.create(_deviceContext->device(), vertices, indices);
+  vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F}},
+              {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
+              {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 0.0F}},
+              {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
+  indices  = {0, 1, 2, 2, 3, 0};
+
+  _drawable.create(deviceContext().device(), vertices, indices);
 
   initCamera(vertices);
 }
@@ -278,12 +236,12 @@ void ImageViewer::createFrames() {
   _currentFrameIdx = 0;
   _currentFrame    = &_frames[_currentFrameIdx];
 
-  const auto& device = _deviceContext->device();
-  const auto& extent = _deviceContext->swapchain().surfaceExtent();
+  const auto& device = deviceContext().device();
+  const auto& extent = deviceContext().swapchain().surfaceExtent();
 
   std::vector<Vulk::RenderTask*> tasks = {_textureMappingTask.get()};
   for (auto& frame : _frames) {
-    frame.context = Vulk::FrameContext::make_shared(*_deviceContext, tasks);
+    frame.context = Vulk::FrameContext::make_shared(deviceContext(), tasks);
   }
 
   constexpr uint32_t depthBits   = 24U;

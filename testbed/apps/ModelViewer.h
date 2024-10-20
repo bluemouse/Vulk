@@ -16,20 +16,20 @@ class ModelViewer : public App {
   using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
 
  public:
-  explicit ModelViewer(Vulk::DeviceContext::shared_ptr deviceContext);
+  ModelViewer();
 
-  void init(const Params& params) override;
+  void init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) override;
   void render() override;
   void cleanup() override;
   void resize(uint width, uint height) override;
 
   Vulk::Camera& camera() override { return *_camera; }
 
+  static constexpr const char* ID = "ModelViewer";
+  static constexpr const char* DESCRIPTION = "Basic viewer of a texture mapped model";
+
  protected:
   void drawFrame();
-
-  [[nodiscard]] Vulk::DeviceContext& context() { return *_deviceContext; }
-  [[nodiscard]] const Vulk::DeviceContext& context() const { return *_deviceContext; }
 
  private:
   void createDrawable(const std::filesystem::path& modelFile   = {},
@@ -45,8 +45,6 @@ class ModelViewer : public App {
   void initCamera(const std::vector<Vertex>& vertices);
 
  private:
-  Vulk::DeviceContext* _deviceContext;
-
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 

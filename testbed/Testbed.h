@@ -18,6 +18,7 @@ class Testbed : public MainWindow {
 
   void drawFrame() override;
 
+  void setApp(const std::string& appName);
   void setModelFile(const std::string& modelFile);
   void setTextureFile(const std::string& textureFile);
 
@@ -68,7 +69,7 @@ class Testbed : public MainWindow {
   static ValidationLevel _validationLevel;
   static bool _debugUtilsEnabled;
 
-  std::shared_ptr<App> _app;
+  App* _app = nullptr;
 
   // UI control variables
   float _zoomFactor = 1.0F;

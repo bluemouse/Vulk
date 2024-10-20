@@ -16,37 +16,31 @@ class ImageViewer : public App {
   using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
 
  public:
-  explicit ImageViewer(Vulk::DeviceContext::shared_ptr deviceContext);
+  ImageViewer();
 
-  void init(const Params& params) override;
+  void init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) override;
   void render() override;
   void cleanup() override;
   void resize(uint width, uint height) override;
 
-  Vulk::Camera& camera() override { return *_camera; }
+  [[nodiscard]] Vulk::Camera& camera() override { return *_camera; }
+
+  static constexpr const char* ID = "ImageViewer";
+  static constexpr const char* DESCRIPTION = "Basic image viewer";
 
  protected:
   void drawFrame();
 
-  [[nodiscard]] Vulk::DeviceContext& context() { return *_deviceContext; }
-  [[nodiscard]] const Vulk::DeviceContext& context() const { return *_deviceContext; }
-
  private:
-  void createDrawable(const std::filesystem::path& modelFile   = {},
-                      const std::filesystem::path& textureFile = {});
+  void createDrawable(const std::filesystem::path& textureFile = {});
   void createRenderTask();
   void createFrames();
 
   void nextFrame();
 
-  void loadModel(const std::filesystem::path& modelFile,
-                 std::vector<Vertex>& vertices,
-                 std::vector<uint32_t>& indices);
   void initCamera(const std::vector<Vertex>& vertices);
 
  private:
-  Vulk::DeviceContext* _deviceContext;
-
   Vulk::TextureMappingTask::shared_ptr _textureMappingTask;
   Vulk::PresentTask::shared_ptr _presentTask;
 

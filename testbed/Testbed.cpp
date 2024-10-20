@@ -9,6 +9,8 @@
 #include <iostream>
 #include <filesystem>
 
+#include <Vulk/internal/debug.h>
+
 Testbed::ValidationLevel Testbed::_validationLevel = ValidationLevel::None;
 bool Testbed::_debugUtilsEnabled                   = false;
 
@@ -27,13 +29,16 @@ void Testbed::init(int width, int height) {
   MainWindow::init(width, height);
 
   createDeviceContext();
-  _app = std::make_shared<ModelViewer>(_deviceContext);
-  //_app = std::make_shared<ImageViewer>(_deviceContext);
+
+  if (!_app) {
+    MI_LOG_INFO("No app selected. Default to [ModelViewer].");
+    _app = App::registry().get(ModelViewer::ID);
+  }
 
   App::Params params;
   params.add(App::PARAM_MODEL_FILE, _modelFile);
   params.add(App::PARAM_TEXTURE_FILE, _textureFile);
-  _app->init(params);
+  _app->init(_deviceContext, params);
 
   _zoomFactor = 1.0F;
 
@@ -227,6 +232,15 @@ void Testbed::onFramebufferResize(int width, int height) {
   resizeSwapchain();
 }
 
+void Testbed::setApp(const std::string& appName) {
+  _app = App::registry().get(appName);
+  if (_app) {
+    MI_LOG_INFO("App [%s] selected.", appName.c_str());
+  } else {
+    MI_LOG_WARNING("App [%s] not found! Will default to [ModelViewer].", appName.c_str());
+  }
+}
+
 namespace {
 
 #if defined(__linux__)
@@ -258,8 +272,7 @@ void Testbed::setModelFile(const std::string& modelFile) {
   if (_modelFile.empty()) {
     throw std::runtime_error("Error: model file [" + modelFile + "] does not exist!");
   }
-
-  std::cout << "Model file: " << _modelFile << std::endl;
+  MI_LOG_INFO("Model file: %s", _modelFile.c_str());
 }
 void Testbed::setTextureFile(const std::string& textureFile) {
   _textureFile = locateFile(textureFile);
@@ -267,5 +280,5 @@ void Testbed::setTextureFile(const std::string& textureFile) {
     throw std::runtime_error("Error: texture file [" + textureFile + "] does not exist!");
   }
 
-  std::cout << "Texture file: " << _textureFile << std::endl;
+  MI_LOG_INFO("Texture file: %s", _textureFile.c_str());
 }

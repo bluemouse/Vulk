@@ -19,6 +19,15 @@ int main(int argc, char** argv) {
   // clang-format off
   supportedOptions.add_options()
     (
+      "app",
+      "Select the app to run",
+      cxxopts::value<std::string>()
+    )
+    (
+      "list-apps",
+      "List all available apps"
+    )
+    (
       "m,model",
       "Set the input model file (.obj file only)",
       cxxopts::value<std::string>()
@@ -61,6 +70,11 @@ int main(int argc, char** argv) {
     return EXIT_SUCCESS;
   }
 
+  if (options.count("list-apps")) {
+    App::registry().print(std::cout);
+    return EXIT_SUCCESS;
+  }
+
   auto validationLevel = options["validation-level"].as<int>();  ;
   Testbed::setVulkanValidationLevel(static_cast<Testbed::ValidationLevel>(validationLevel));
   Testbed::setVulkanDebugUtilsExt(validationLevel ? true : options["debug-utils"].as<bool>());
@@ -69,6 +83,9 @@ int main(int argc, char** argv) {
 
   Testbed testbed;
 
+  if (options.count("app")) {
+    testbed.setApp(options["app"].as<std::string>());
+  }
   if (options.count("model")) {
     testbed.setModelFile(options["model"].as<std::string>());
   }

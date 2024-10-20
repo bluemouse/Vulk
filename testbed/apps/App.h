@@ -6,6 +6,7 @@
 #include <Vulk/engine/Vertex.h>
 #include <Vulk/engine/Camera.h>
 
+#include <map>
 #include <filesystem>
 
 class App {
@@ -13,55 +14,94 @@ class App {
   constexpr static std::string PARAM_MODEL_FILE   = "model";
   constexpr static std::string PARAM_TEXTURE_FILE = "texture";
 
+  class Params;
+
  public:
-  class Param {
+  App(const std::string& id, const std::string& description) : _id{id}, _description{description} {}
+  virtual ~App() = default;
+
+  virtual void init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params);
+  virtual void render()                        = 0;
+  virtual void cleanup()                       = 0;
+  virtual void resize(uint width, uint height) = 0;
+
+  [[nodiscard]] virtual Vulk::Camera& camera() = 0;
+
+  [[nodiscard]] const std::string& id() const { return _id; }
+  [[nodiscard]] const std::string& description() const { return _description; }
+
+ protected:
+  [[nodiscard]] Vulk::DeviceContext& deviceContext() { return *_deviceContext; }
+  [[nodiscard]] const Vulk::DeviceContext& deviceContext() const { return *_deviceContext; }
+
+ private:
+  std::string _id;
+  std::string _description;
+
+  Vulk::DeviceContext* _deviceContext = nullptr;
+
+ private:
+  class _Param {
    public:
-    virtual ~Param() = default;
+    _Param(const std::string& name) : _name{name} {}
+    virtual ~_Param() = default;
+
+    const std::string& name() const { return _name; }
 
     template <typename T>
     const T& value() const {
-      return dynamic_cast<const Parameter<T>&>(*this).value;
+      return dynamic_cast<const _Parameter<T>&>(*this)._value;
     }
+
+   private:
+    std::string _name;
   };
 
   template <typename T>
-  class Parameter : public Param {
+  class _Parameter : public _Param {
    public:
-    Parameter(const T& value) : value(value) {}
+    _Parameter(const std::string& name, const T& value) : _Param{name}, _value{value} {}
 
    private:
-    T value;
+    T _value;
 
-    friend class Param;
+    friend class _Param;
   };
 
-  struct Params : public std::map<std::string, const Param*> {
+ public:
+  class Params : public std::map<std::string, const _Param*> {
+   public:
     ~Params() {
       for (auto& pair : *this) {
         delete pair.second;
       }
     }
-    const Param* operator[](const std::string& name) const {
+    const _Param* operator[](const std::string& paramName) const {
       try {
-        return at(name);
+        return at(paramName);
       } catch (const std::out_of_range&) {
         return nullptr;
       }
     }
 
     template <typename T>
-    void add(const std::string& name, const T& param) {
-      insert({name, new Parameter<T>{param}});
+    void add(const std::string& paramName, const T& paramValue) {
+      insert({paramName, new _Parameter<T>{paramName, paramValue}});
     }
   };
 
- public:
-  virtual ~App() = default;
+  class Registry : private std::map<std::string, App*> {
+   public:
+    Registry();
 
-  virtual void init(const Params& params)      = 0;
-  virtual void render()                        = 0;
-  virtual void cleanup()                       = 0;
-  virtual void resize(uint width, uint height) = 0;
+    template <class App>
+    void add() {
+      App* app = new App;
+      insert({app->id(), app});
+    }
+    [[nodiscard]] App* get(const std::string& id) const;
 
-  virtual Vulk::Camera& camera() = 0;
+    void print(std::ostream& os) const;
+  };
+  static Registry& registry();
 };
