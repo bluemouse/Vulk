@@ -112,13 +112,11 @@ class ParticlesRenderingTask : public RenderTask {
   explicit ParticlesRenderingTask(const DeviceContext& deviceContext);
   ~ParticlesRenderingTask() override;
 
-  void prepareGeometry(const VertexBuffer& vertexBuffer,
-                       const IndexBuffer& indexBuffer,
-                       size_t numIndices);
+  void prepareGeometry(const VertexBuffer& vertexBuffer);
   void prepareUniforms(const glm::mat4& model2world,
                        const glm::mat4& world2view,
                        const glm::mat4& project);
-  void prepareInputs(const Texture2D& texture);
+  void prepareInputs();
   void prepareOutputs(const Image2D& colorBuffer, const DepthImage& depthStencilBuffer);
   void prepareSynchronization(const std::vector<Semaphore::shared_ptr>& waits = {});
 
@@ -138,11 +136,8 @@ class ParticlesRenderingTask : public RenderTask {
 
   // Geometry
   VertexBuffer::shared_ptr_const _vertexBuffer;
-  IndexBuffer::shared_ptr_const _indexBuffer;
-  size_t _numIndices;
 
   // Inputs
-  Texture2D::shared_ptr_const _texture;
 
   // Uniforms
   UniformBuffer::shared_ptr _uniformBuffer;

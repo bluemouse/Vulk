@@ -9,9 +9,6 @@
 
 class Testbed : public MainWindow {
  public:
-  using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
-
- public:
   void init(int width, int height) override;
   void cleanup() override;
   void run() override;
@@ -56,11 +53,6 @@ class Testbed : public MainWindow {
   void createDeviceContext();
 
   void nextFrame();
-
-  void loadModel(const std::string& modelFile,
-                 std::vector<Vertex>& vertices,
-                 std::vector<uint32_t>& indices);
-  void initCamera(const std::vector<Vertex>& vertices, bool is3D);
 
  private:
   Vulk::DeviceContext::shared_ptr _deviceContext;

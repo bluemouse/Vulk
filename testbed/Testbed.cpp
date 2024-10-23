@@ -68,6 +68,11 @@ void Testbed::mainLoop() {
 
 void Testbed::drawFrame() {
   _app->render();
+
+  if (_app->isPlaying()) {
+    // To force a drawFrame()
+    MainWindow::postEmptyEvent();
+  }
 }
 
 void Testbed::createDeviceContext() {

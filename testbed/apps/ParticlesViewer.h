@@ -13,7 +13,7 @@
 
 class ParticlesViewer : public App {
  public:
-  using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
+  using Particle = Vulk::VertexPC<glm::vec3, glm::vec4>;
 
  public:
   ParticlesViewer();
@@ -23,26 +23,29 @@ class ParticlesViewer : public App {
   void cleanup() override;
   void resize(uint width, uint height) override;
 
+  [[nodiscard]] bool isPlaying() const override { return true; }
+
   Vulk::Camera& camera() override { return *_camera; }
 
   static constexpr const char* ID          = "ParticlesViewer";
-  static constexpr const char* DESCRIPTION = "Basic viewer of the particle system";
+  static constexpr const char* DESCRIPTION = "Basic viewer of the particles";
 
  protected:
   void drawFrame();
 
  private:
-  void createDrawable(const std::filesystem::path& modelFile   = {},
-                      const std::filesystem::path& textureFile = {});
+  void createDrawable();
   void createRenderTask();
   void createFrames();
 
   void nextFrame();
 
-  void loadModel(const std::filesystem::path& modelFile,
-                 std::vector<Vertex>& vertices,
-                 std::vector<uint32_t>& indices);
-  void initCamera(const std::vector<Vertex>& vertices);
+  void initCamera(const std::vector<Particle>& vertices);
+
+  void initParticles();
+  void updateParticles(float deltaTime);
+
+  void updateDrawable(float deltaTime);
 
  private:
   Vulk::ParticlesRenderingTask::shared_ptr _particlesRenderingTask;
@@ -50,8 +53,7 @@ class ParticlesViewer : public App {
 
   Vulk::Camera::shared_ptr _camera;
 
-  Vulk::Drawable<Vertex, uint32_t> _drawable;
-  Vulk::Texture2D::shared_ptr _texture;
+  Vulk::PointsDrawable<Particle> _drawable;
 
   struct Frame {
     Vulk::FrameContext::shared_ptr context;
@@ -65,4 +67,6 @@ class ParticlesViewer : public App {
 
   constexpr static uint32_t _maxFramesInFlight = 3;
   uint32_t _currentFrameIdx                    = 0;
+
+  std::vector<Particle> _particles;
 };

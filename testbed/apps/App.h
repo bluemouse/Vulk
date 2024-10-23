@@ -25,6 +25,9 @@ class App {
   virtual void cleanup()                       = 0;
   virtual void resize(uint width, uint height) = 0;
 
+  // If true, the app is playing and the render loop should continue.
+  [[nodiscard]] virtual bool isPlaying() const { return false; }
+
   [[nodiscard]] virtual Vulk::Camera& camera() = 0;
 
   [[nodiscard]] const std::string& id() const { return _id; }

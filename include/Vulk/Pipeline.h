@@ -20,16 +20,49 @@ class ComputeShader;
 
 class Pipeline : public Sharable<Pipeline>, private NotCopyable {
  public:
+  struct Configuration {
+    Configuration();
+
+    VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    struct Blend {
+      bool enabled = false;
+
+      VkBlendFactor srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+      VkBlendFactor dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+      VkBlendOp colorBlendOp            = VK_BLEND_OP_ADD;
+      VkBlendFactor srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+      VkBlendFactor dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+      VkBlendOp alphaBlendOp            = VK_BLEND_OP_ADD;
+    } blend;
+
+    struct DepthTest {
+      bool enabled = true;
+      bool writeEnabled   = true;
+      VkCompareOp compareOp = VK_COMPARE_OP_LESS;
+    } depthTest;
+
+    struct StencilTest {
+      bool enabled = false;
+      VkStencilOpState front{};
+      VkStencilOpState back{};
+      //TODO Add more stencil test parameters to directly config StencilOpState front and back
+    } stencilTest;
+  };
+
+ public:
   Pipeline(const Device& device,
            const RenderPass& renderPass,
            const VertexShader& vertShader,
-           const FragmentShader& fragShader);
+           const FragmentShader& fragShader,
+           const Configuration& config = {});
   ~Pipeline() override;
 
   void create(const Device& device,
               const RenderPass& renderPass,
               const VertexShader& vertShader,
-              const FragmentShader& fragShader);
+              const FragmentShader& fragShader,
+              const Configuration& config = {});
   void create(const Device& device, const ComputeShader& compShader);
   void destroy();
 

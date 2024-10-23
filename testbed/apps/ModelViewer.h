@@ -13,7 +13,7 @@
 
 class ModelViewer : public App {
  public:
-  using Vertex = Vulk::Vertex<glm::vec3, glm::vec3, glm::vec2>;
+  using Vertex = Vulk::VertexPCT<glm::vec3, glm::vec3, glm::vec2>;
 
  public:
   ModelViewer();
@@ -50,7 +50,7 @@ class ModelViewer : public App {
 
   Vulk::Camera::shared_ptr _camera;
 
-  Vulk::Drawable<Vertex, uint32_t> _drawable;
+  Vulk::MeshDrawable<Vertex, uint32_t> _drawable;
   Vulk::Texture2D::shared_ptr _texture;
 
   struct Frame {

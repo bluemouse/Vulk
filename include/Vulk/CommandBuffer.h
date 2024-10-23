@@ -83,7 +83,8 @@ class CommandBuffer : public Sharable<CommandBuffer>, private NotCopyable {
   void bindIndexBuffer(const IndexBuffer& buffer, uint64_t offset = 0) const;
   void bindDescriptorSet(const Pipeline& pipeline, const DescriptorSet& descriptorSet) const;
 
-  void drawIndexed(uint32_t indexCount) const;
+  void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0) const;
+  void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0) const;
 
   void reset();
 

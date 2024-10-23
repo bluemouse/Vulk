@@ -166,8 +166,14 @@ void CommandBuffer::bindDescriptorSet(const Pipeline& pipeline,
       _buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout(), 0, 1, descriptorSet, 0, nullptr);
 }
 
-void CommandBuffer::drawIndexed(uint32_t indexCount) const {
-  vkCmdDrawIndexed(_buffer, indexCount, 1, 0, 0, 0);
+void CommandBuffer::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex) const {
+  vkCmdDraw(_buffer, vertexCount, instanceCount, firstVertex, 0);
+}
+
+void CommandBuffer::drawIndexed(uint32_t indexCount,
+                                uint32_t instanceCount,
+                                uint32_t firstIndex) const {
+  vkCmdDrawIndexed(_buffer, indexCount, instanceCount, firstIndex, 0, 0);
 }
 
 void CommandBuffer::beginLabel(const char* label, const glm::vec4& color) const {

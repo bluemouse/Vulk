@@ -8,54 +8,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include <tiny_obj_loader.h>
-
-#include <filesystem>
+#include <random>
+#include <chrono>
 
 namespace std {
 template <>
-struct hash<ParticlesViewer::Vertex> {
-  size_t operator()(const ParticlesViewer::Vertex& vertex) const {
-    return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-           (hash<glm::vec2>()(vertex.texCoord) << 1);
+struct hash<ParticlesViewer::Particle> {
+  size_t operator()(const ParticlesViewer::Particle& particle) const {
+    return ((hash<glm::vec3>()(particle.pos) ^ (hash<glm::vec3>()(particle.color) << 1)) >> 1);
   }
 };
 } // namespace std
 
 namespace {
-struct Checkerboard : public std::vector<uint8_t> {
-  Checkerboard(glm::uvec2 numBlocks,
-               glm::uvec2 blockSize,
-               glm::uvec4 black = {0, 0, 0, 255},
-               glm::uvec4 white = {255, 255, 255, 255})
-      : extent{numBlocks * blockSize} {
-    resize(extent.x * extent.y * kNumColorChannels);
-
-    for (unsigned int x = 0; x < extent.x; ++x) {
-      for (unsigned int y = 0; y < extent.y; ++y) {
-        auto p     = at(x, y);
-        auto color = (((x & blockSize.x) == 0) ^ ((y & blockSize.y) == 0)) ? white : black;
-
-        p[0] = color[0];
-        p[1] = color[1];
-        p[2] = color[2];
-        p[3] = color[3];
-      }
-    }
-  }
-
-  glm::uvec4 operator()(uint32_t x, uint32_t y) {
-    uint8_t* pixel = at(x, y);
-    return {pixel[0], pixel[1], pixel[2], pixel[3]};
-  }
-
-  glm::uvec2 extent;
-
- private:
-  static constexpr unsigned int kNumColorChannels = 4;
-  uint8_t* at(uint32_t x, uint32_t y) { return data() + (x + y * extent.x) * kNumColorChannels; }
-};
-
 struct Uniforms {
   alignas(sizeof(glm::vec4)) glm::mat4 model;
   alignas(sizeof(glm::vec4)) glm::mat4 view;
@@ -77,10 +42,7 @@ ParticlesViewer::ParticlesViewer() : App{ID, DESCRIPTION} {
 void ParticlesViewer::init(Vulk::DeviceContext::shared_ptr deviceContext, const Params& params) {
   App::init(deviceContext, params);
 
-  auto* modelFile   = params[PARAM_MODEL_FILE];
-  auto* textureFile = params[PARAM_TEXTURE_FILE];
-  createDrawable(modelFile ? modelFile->value<std::filesystem::path>() : "",
-                 textureFile ? textureFile->value<std::filesystem::path>() : "");
+  createDrawable();
   createRenderTask();
   createFrames();
 
@@ -96,7 +58,6 @@ void ParticlesViewer::cleanup() {
   _particlesRenderingTask.reset();
   _presentTask.reset();
 
-  _texture->destroy();
   _drawable.destroy();
 
   for (auto& frame : _frames) {
@@ -115,10 +76,19 @@ void ParticlesViewer::resize(uint width, uint height) {
 }
 
 void ParticlesViewer::drawFrame() {
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  // Calculate the elapsed time in seconds
+  const auto currentTime  = std::chrono::high_resolution_clock::now();
+  const float elapsedTime = std::chrono::duration<float>(currentTime - startTime).count();
+  startTime               = currentTime;
+
   try {
     nextFrame(); // Move to the next frame.
 
     // TODO Label the drawFrame() function in the queue
+
+    updateDrawable(elapsedTime);
 
     // The new current frame may be in use so make sure the last time this frame is rendered to has
     // been finished.
@@ -129,13 +99,12 @@ void ParticlesViewer::drawFrame() {
     _presentTask->setFrameContext(*_currentFrame->context);
 
     //
-    // Texture Mapping Task
     //
-    _particlesRenderingTask->prepareGeometry(
-        _drawable.vertexBuffer(), _drawable.indexBuffer(), _drawable.numIndices());
+    //
+    _particlesRenderingTask->prepareGeometry(_drawable.vertexBuffer());
     _particlesRenderingTask->prepareUniforms(
         glm::mat4{1.0F}, _camera->viewMatrix(), _camera->projectionMatrix());
-    _particlesRenderingTask->prepareInputs(*_texture);
+    _particlesRenderingTask->prepareInputs();
     _particlesRenderingTask->prepareOutputs(*_currentFrame->colorBuffer,
                                             *_currentFrame->depthBuffer);
     _particlesRenderingTask->prepareSynchronization();
@@ -167,45 +136,9 @@ void ParticlesViewer::createRenderTask() {
   _presentTask            = Vulk::PresentTask::make_shared(deviceContext());
 }
 
-void ParticlesViewer::loadModel(const std::filesystem::path& modelFile,
-                               std::vector<Vertex>& vertices,
-                               std::vector<uint32_t>& indices) {
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string warn, err;
-
-  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelFile.c_str())) {
-    throw std::runtime_error(warn + err);
-  }
-
-  std::unordered_map<Vertex, uint32_t> uniqueVertices;
-
-  for (const auto& shape : shapes) {
-    for (const auto& index : shape.mesh.indices) {
-      Vertex vertex{};
-
-      vertex.pos = {attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]};
-
-      vertex.texCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
-                         attrib.texcoords[2 * index.texcoord_index + 1]};
-
-      vertex.color = {1.0F, 1.0F, 1.0F};
-
-      if (uniqueVertices.count(vertex) == 0) {
-        uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-        vertices.push_back(vertex);
-      }
-      indices.push_back(uniqueVertices[vertex]);
-    }
-  }
-}
-
-void ParticlesViewer::initCamera(const std::vector<Vertex>& vertices) {
+void ParticlesViewer::initCamera(const std::vector<Particle>& particles) {
   auto bbox = Vulk::Camera::BBox::null();
-  for (const auto& vertex : vertices) {
+  for (const auto& vertex : particles) {
     bbox += vertex.pos;
   }
   bbox.expandPlanarSide(1.0F);
@@ -214,64 +147,55 @@ void ParticlesViewer::initCamera(const std::vector<Vertex>& vertices) {
   _camera     = Vulk::ArcCamera::make_shared(glm::vec2{extent.width, extent.height}, bbox);
 }
 
-void ParticlesViewer::createDrawable(const std::filesystem::path& modelFile,
-                                    const std::filesystem::path& textureFile) {
-  if (textureFile.empty()) {
-    const glm::uvec2 numBlocks{4, 4};
-    const glm::uvec2 blockSize{128, 128};
-    const glm::uvec4 black{60, 60, 60, 255};
-    const glm::uvec4 white{255, 255, 255, 255};
-    Checkerboard checkerboard{numBlocks, blockSize, black, white};
-    _texture = Vulk::Toolbox(deviceContext())
-                   .createTexture2D(Vulk::Toolbox::TextureFormat::RGBA,
-                                    checkerboard.data(),
-                                    checkerboard.extent.x,
-                                    checkerboard.extent.y);
+void ParticlesViewer::initParticles() {
+  std::default_random_engine rndEngine((unsigned)time(nullptr));
+  std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
 
-    VkImage image = *_texture;
-    deviceContext().device().setObjectName(
-        VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "Created texture (checkerboard)");
-  } else {
-    _texture = Vulk::Toolbox(deviceContext()).createTexture2D(textureFile.c_str());
+  constexpr uint32_t numParticles = 32 * 1024U;
+  _particles.resize(numParticles);
 
-    std::string name = "Loaded texture (" + textureFile.string() + ")";
-    VkImage image    = *_texture;
-    deviceContext().device().setObjectName(VK_OBJECT_TYPE_IMAGE, (uint64_t)image, name.c_str());
+  for (auto& particle : _particles) {
+    // Cube root to ensure uniform distribution on the sphere surface
+    float r = 0.25F;
+    // Azimuthal angle
+    float theta = rndDist(rndEngine) * 2.0f * 3.14159265358979323846f;
+    // Polar angle
+    float phi = acos(2.0f * rndDist(rndEngine) - 1.0f);
+
+    float x = r * sin(phi) * cos(theta);
+    float y = r * sin(phi) * sin(theta);
+    float z = r * cos(phi);
+
+    particle.pos   = glm::vec3(x, y, z);
+    particle.color = glm::vec4(x * x * 2, y * y * 2, z * z * 2, 1.0f);
   }
+}
 
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
-  if (modelFile.empty()) {
-    float left{-1.0F};
-    float right{1.0F};
-    float bottom{-1.0F};
-    float top{1.0F};
+void ParticlesViewer::createDrawable() {
+  initParticles();
 
-    if (_texture->isValid()) {
-      // to make sure the texture and the quad has the same aspect ratio
-      auto [textureW, textureH] = _texture->extent();
-      const float textureAspect = static_cast<float>(textureW) / static_cast<float>(textureH);
+  _drawable.create(deviceContext().device(), _particles);
 
-      if (textureAspect > 1.0F) {
-        left  = -textureAspect;
-        right = textureAspect;
-      } else {
-        bottom = -1.0F / textureAspect;
-        top    = 1.0F / textureAspect;
-      }
-    }
-    vertices = {{{left, bottom, 0.0F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F}},
-                {{left, top, 0.0F}, {0.0F, 1.0F, 0.0F}, {0.0F, 0.0F}},
-                {{right, top, 0.0F}, {0.0F, 0.0F, 1.0F}, {1.0F, 0.0F}},
-                {{right, bottom, 0.0F}, {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F}}};
-    indices  = {0, 1, 2, 2, 3, 0};
+  initCamera(_particles);
+}
 
-  } else {
-    loadModel(modelFile, vertices, indices);
+void ParticlesViewer::updateParticles(float deltaTime) {
+  // Define the rotation angle based on the delta time (in seconds)
+  float angle = glm::radians(12.0F) * deltaTime; // Rotate by 12 degree per second
+
+  // Create the rotation matrix around the y-axis
+  glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0F), angle, glm::vec3(0.0F, 1.0F, 0.0F));
+
+  for (auto& particle : _particles) {
+    glm::vec4 pos = glm::vec4(particle.pos, 1.0F);
+    pos           = rotationMatrix * pos;
+    particle.pos  = glm::vec3(pos);
   }
-  _drawable.create(deviceContext().device(), vertices, indices);
+}
 
-  initCamera(vertices);
+void ParticlesViewer::updateDrawable(float deltaTime) {
+  updateParticles(deltaTime);
+  _drawable.update(_particles);
 }
 
 void ParticlesViewer::createFrames() {

@@ -13,11 +13,15 @@
 
 MI_NAMESPACE_BEGIN(Vulk)
 
+Pipeline::Configuration::Configuration() {
+}
+
 Pipeline::Pipeline(const Device &device,
                    const RenderPass &renderPass,
                    const VertexShader &vertShader,
-                   const FragmentShader &fragShader) {
-  create(device, renderPass, vertShader, fragShader);
+                   const FragmentShader &fragShader,
+                   const Configuration &config) {
+  create(device, renderPass, vertShader, fragShader, config);
 }
 
 Pipeline::~Pipeline() {
@@ -29,7 +33,8 @@ Pipeline::~Pipeline() {
 void Pipeline::create(const Device &device,
                       const RenderPass &renderPass,
                       const VertexShader &vertShader,
-                      const FragmentShader &fragShader) {
+                      const FragmentShader &fragShader,
+                      const Configuration &config) {
   MI_VERIFY(!isCreated());
   _device = device.get_weak();
 
@@ -63,7 +68,7 @@ void Pipeline::create(const Device &device,
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
   inputAssembly.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssembly.topology = config.topology;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
 
   VkPipelineViewportStateCreateInfo viewportState{};
@@ -87,17 +92,37 @@ void Pipeline::create(const Device &device,
   multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
   VkPipelineDepthStencilStateCreateInfo depthStencil{};
-  depthStencil.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable       = VK_TRUE;
-  depthStencil.depthWriteEnable      = VK_TRUE;
-  depthStencil.depthCompareOp        = VK_COMPARE_OP_LESS;
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.stencilTestEnable     = VK_FALSE;
+  depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  if (config.depthTest.enabled) {
+    depthStencil.depthTestEnable       = VK_TRUE;
+    depthStencil.depthWriteEnable      = config.depthTest.writeEnabled ? VK_TRUE : VK_FALSE;
+    depthStencil.depthCompareOp        = config.depthTest.compareOp;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+  } else {
+    depthStencil.depthTestEnable = VK_FALSE;
+  }
+  if (config.stencilTest.enabled) {
+    depthStencil.stencilTestEnable = VK_TRUE;
+    depthStencil.front             = config.stencilTest.front;
+    depthStencil.back              = config.stencilTest.back;
+  } else {
+    depthStencil.stencilTestEnable = VK_FALSE;
+  }
 
   VkPipelineColorBlendAttachmentState colorBlendAttachment{};
   colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colorBlendAttachment.blendEnable = VK_FALSE;
+  if (config.blend.enabled) {
+    colorBlendAttachment.blendEnable         = VK_TRUE;
+    colorBlendAttachment.colorBlendOp        = config.blend.colorBlendOp;
+    colorBlendAttachment.srcColorBlendFactor = config.blend.srcColorBlendFactor;
+    colorBlendAttachment.dstColorBlendFactor = config.blend.dstColorBlendFactor;
+    colorBlendAttachment.alphaBlendOp        = config.blend.alphaBlendOp;
+    colorBlendAttachment.srcAlphaBlendFactor = config.blend.srcAlphaBlendFactor;
+    colorBlendAttachment.dstAlphaBlendFactor = config.blend.dstAlphaBlendFactor;
+  } else {
+    colorBlendAttachment.blendEnable = VK_FALSE;
+  }
 
   VkPipelineColorBlendStateCreateInfo colorBlending{};
   colorBlending.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -159,8 +184,8 @@ void Pipeline::create(const Device &device, const ComputeShader &compShader) {
   compShaderStageInfo.module = compShader;
   compShaderStageInfo.pName  = compShader.entry();
 
-   MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
-   _descriptorSetLayout = DescriptorSetLayout::make_shared(device, compShader);
+  MI_VERIFY(!_descriptorSetLayout || !_descriptorSetLayout->isCreated());
+  _descriptorSetLayout = DescriptorSetLayout::make_shared(device, compShader);
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
